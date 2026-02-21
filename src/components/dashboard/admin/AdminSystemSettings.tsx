@@ -54,7 +54,7 @@ export default function AdminSystemSettings() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-7xl mx-auto">
       <Section title={t("admin.generalSettings")} icon={Globe}>
         <div className="space-y-3">
           <div>

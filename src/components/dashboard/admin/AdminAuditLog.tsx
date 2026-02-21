@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef, useEffect } from "react";
 import {
   Search, Shield, FileText, Settings, LogIn, LogOut, UserCheck,
@@ -15,29 +17,29 @@ import type { DateRange } from "react-day-picker";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const ACTION_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
-  login:           { icon: LogIn,        color: "text-emerald-600" },
-  logout:          { icon: LogOut,       color: "text-muted-foreground" },
-  role_change:     { icon: UserCheck,    color: "text-amber-600" },
-  role_approve:    { icon: CheckCircle,  color: "text-emerald-600" },
-  role_reject:     { icon: XCircle,      color: "text-destructive" },
-  content_delete:  { icon: Trash2,       color: "text-destructive" },
-  content_approve: { icon: FileText,     color: "text-emerald-600" },
-  settings_change: { icon: Settings,     color: "text-primary" },
-  user_suspend:    { icon: UserX,        color: "text-destructive" },
-  user_unsuspend:  { icon: Shield,       color: "text-emerald-600" },
+  login: { icon: LogIn, color: "text-emerald-600" },
+  logout: { icon: LogOut, color: "text-muted-foreground" },
+  role_change: { icon: UserCheck, color: "text-amber-600" },
+  role_approve: { icon: CheckCircle, color: "text-emerald-600" },
+  role_reject: { icon: XCircle, color: "text-destructive" },
+  content_delete: { icon: Trash2, color: "text-destructive" },
+  content_approve: { icon: FileText, color: "text-emerald-600" },
+  settings_change: { icon: Settings, color: "text-primary" },
+  user_suspend: { icon: UserX, color: "text-destructive" },
+  user_unsuspend: { icon: Shield, color: "text-emerald-600" },
 };
 
 const ACTION_TYPES = Object.keys(ACTION_ICONS);
 
 const STATIC_LOGS = [
-  { id: "sl1", action: "role_change",     actor: "admin@ummahthoughts.com", target: "safiya@example.com",  detail: "Role changed: user → writer",                   time: "Feb 19, 2026 · 09:14", ip: "192.168.1.1" },
-  { id: "sl2", action: "content_approve", actor: "admin@ummahthoughts.com", target: "Article #2841",       detail: "Flagged content approved and restored",          time: "Feb 19, 2026 · 08:52", ip: "192.168.1.1" },
-  { id: "sl3", action: "user_suspend",    actor: "admin@ummahthoughts.com", target: "yusuf@example.com",   detail: "Account suspended: repeated policy violations",  time: "Feb 18, 2026 · 17:30", ip: "10.0.0.42" },
-  { id: "sl4", action: "login",           actor: "admin@ummahthoughts.com", target: "",                   detail: "Admin logged in",                                time: "Feb 18, 2026 · 09:00", ip: "10.0.0.42" },
-  { id: "sl5", action: "content_delete",  actor: "admin@ummahthoughts.com", target: "Comment #9921",      detail: "Removed for misattributed hadith",               time: "Feb 17, 2026 · 14:22", ip: "192.168.1.1" },
-  { id: "sl6", action: "settings_change", actor: "admin@ummahthoughts.com", target: "Platform Settings",  detail: "New user registration: set to moderated",        time: "Feb 17, 2026 · 11:05", ip: "192.168.1.1" },
-  { id: "sl7", action: "role_change",     actor: "admin@ummahthoughts.com", target: "nadia@example.com",  detail: "Role upgrade approved: user → researcher",       time: "Feb 16, 2026 · 10:48", ip: "172.16.0.5" },
-  { id: "sl8", action: "logout",          actor: "admin@ummahthoughts.com", target: "",                   detail: "Admin logged out",                               time: "Feb 15, 2026 · 18:00", ip: "172.16.0.5" },
+  { id: "sl1", action: "role_change", actor: "admin@ummahthoughts.com", target: "safiya@example.com", detail: "Role changed: user → writer", time: "Feb 19, 2026 · 09:14", ip: "192.168.1.1" },
+  { id: "sl2", action: "content_approve", actor: "admin@ummahthoughts.com", target: "Article #2841", detail: "Flagged content approved and restored", time: "Feb 19, 2026 · 08:52", ip: "192.168.1.1" },
+  { id: "sl3", action: "user_suspend", actor: "admin@ummahthoughts.com", target: "yusuf@example.com", detail: "Account suspended: repeated policy violations", time: "Feb 18, 2026 · 17:30", ip: "10.0.0.42" },
+  { id: "sl4", action: "login", actor: "admin@ummahthoughts.com", target: "", detail: "Admin logged in", time: "Feb 18, 2026 · 09:00", ip: "10.0.0.42" },
+  { id: "sl5", action: "content_delete", actor: "admin@ummahthoughts.com", target: "Comment #9921", detail: "Removed for misattributed hadith", time: "Feb 17, 2026 · 14:22", ip: "192.168.1.1" },
+  { id: "sl6", action: "settings_change", actor: "admin@ummahthoughts.com", target: "Platform Settings", detail: "New user registration: set to moderated", time: "Feb 17, 2026 · 11:05", ip: "192.168.1.1" },
+  { id: "sl7", action: "role_change", actor: "admin@ummahthoughts.com", target: "nadia@example.com", detail: "Role upgrade approved: user → researcher", time: "Feb 16, 2026 · 10:48", ip: "172.16.0.5" },
+  { id: "sl8", action: "logout", actor: "admin@ummahthoughts.com", target: "", detail: "Admin logged out", time: "Feb 15, 2026 · 18:00", ip: "172.16.0.5" },
 ];
 
 type LogRow = ActivityEntry | typeof STATIC_LOGS[0];
@@ -179,11 +181,11 @@ export default function AdminAuditLog() {
   const { t } = useTranslation();
   const { sessionLogs } = useAdminActivity();
 
-  const [search, setSearch]         = useState("");
-  const [actionFilter, setAction]   = useState("all");
-  const [dateRange, setDateRange]   = useState<DateRange | undefined>();
-  const [showIP, setShowIP]         = useState(false);
-  const [page, setPage]             = useState(1);
+  const [search, setSearch] = useState("");
+  const [actionFilter, setAction] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [showIP, setShowIP] = useState(false);
+  const [page, setPage] = useState(1);
 
   const allLogs: LogRow[] = [...sessionLogs, ...STATIC_LOGS];
 
@@ -212,10 +214,10 @@ export default function AdminAuditLog() {
   // Reset to page 1 whenever filters change
   const resetPage = () => setPage(1);
 
-  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage    = Math.min(page, totalPages);
-  const pageStart   = (safePage - 1) * PAGE_SIZE;
-  const paginated   = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const paginated = filtered.slice(pageStart, pageStart + PAGE_SIZE);
 
   const exportCSV = () => {
     const headers = ["Action", "Actor", "Target", "Detail", "Timestamp", "IP"];
@@ -458,4 +460,3 @@ export default function AdminAuditLog() {
     </div>
   );
 }
-

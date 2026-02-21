@@ -12,7 +12,7 @@ const notifications = [
 
 export default function UserNotifications() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex gap-2 flex-wrap">
           {["All", "Unread", "Learning", "Community"].map((f, i) => (

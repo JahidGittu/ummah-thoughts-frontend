@@ -1,21 +1,63 @@
+"use client";
+
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, Lock, Mail, GraduationCap, AlertCircle, Sparkles, BookOpen, Users, MessageSquare, Globe } from "lucide-react";
+import { 
+  Eye, 
+  EyeOff, 
+  Lock, 
+  Mail, 
+  GraduationCap, 
+  AlertCircle, 
+  Sparkles, 
+  BookOpen, 
+  MessageSquare, 
+  Globe 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 
-const DEMO_ACCOUNTS: { email: string; role: UserRole; label: string; labelBn: string; icon: React.ElementType; gradient: string }[] = [
-  { email: "scholar@ummahthoughts.com", role: "scholar", label: "Scholar", labelBn: "আলেম", icon: GraduationCap, gradient: "from-primary/20 to-primary/5 border-primary/30 text-primary hover:border-primary/50" },
-  { email: "user@ummahthoughts.com", role: "user", label: "Learner", labelBn: "শিক্ষার্থী", icon: BookOpen, gradient: "from-blue-500/20 to-blue-500/5 border-blue-400/30 text-blue-600 hover:border-blue-400/50" },
-  { email: "writer@ummahthoughts.com", role: "writer", label: "Writer", labelBn: "লেখক", icon: MessageSquare, gradient: "from-secondary/20 to-secondary/5 border-secondary/30 text-secondary hover:border-secondary/50" },
+const DEMO_ACCOUNTS: { 
+  email: string; 
+  role: UserRole; 
+  label: string; 
+  labelBn: string; 
+  icon: React.ElementType; 
+  gradient: string 
+}[] = [
+  { 
+    email: "scholar@ummahthoughts.com", 
+    role: "scholar", 
+    label: "Scholar", 
+    labelBn: "আলেম", 
+    icon: GraduationCap, 
+    gradient: "from-primary/20 to-primary/5 border-primary/30 text-primary hover:border-primary/50" 
+  },
+  { 
+    email: "user@ummahthoughts.com", 
+    role: "user", 
+    label: "Learner", 
+    labelBn: "শিক্ষার্থী", 
+    icon: BookOpen, 
+    gradient: "from-blue-500/20 to-blue-500/5 border-blue-400/30 text-blue-600 hover:border-blue-400/50" 
+  },
+  { 
+    email: "writer@ummahthoughts.com", 
+    role: "writer", 
+    label: "Writer", 
+    labelBn: "লেখক", 
+    icon: MessageSquare, 
+    gradient: "from-secondary/20 to-secondary/5 border-secondary/30 text-secondary hover:border-secondary/50" 
+  },
 ];
 
-export default function Login() {
+export default function LoginPage() {
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
 
@@ -29,10 +71,19 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await login(email, password);
-    setLoading(false);
-    if (res.success) navigate("/dashboard");
-    else setError(res.error ?? "Login failed.");
+    
+    try {
+      const res = await login(email, password);
+      if (res.success) {
+        router.push("/dashboard");
+      } else {
+        setError(res.error ?? "Login failed.");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fillDemo = (demoEmail: string) => {
@@ -41,11 +92,21 @@ export default function Login() {
     setError("");
   };
 
+  // Stats data for the branding panel
+  const stats = [
+    { number: "12K+", label: lang === "bn" ? "আলেম" : "Scholars" },
+    { number: "45K+", label: lang === "bn" ? "শিক্ষার্থী" : "Learners" },
+    { number: "3K+", label: lang === "bn" ? "নিবন্ধ" : "Articles" },
+    { number: "200+", label: lang === "bn" ? "বিতর্ক" : "Debates" }
+  ];
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left – premium branding panel */}
-      <div className="hidden lg:flex flex-col justify-between w-[44%] relative overflow-hidden"
-        style={{ background: "var(--gradient-emerald)" }}>
+      <div 
+        className="hidden lg:flex flex-col justify-between w-[44%] relative overflow-hidden"
+        style={{ background: "var(--gradient-emerald)" }}
+      >
         {/* Geometric overlay */}
         <div className="absolute inset-0 islamic-pattern opacity-100" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
@@ -56,7 +117,9 @@ export default function Login() {
             <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-white font-display text-lg font-bold tracking-tight">Ummah Thoughts</span>
+            <span className="text-white font-display text-lg font-bold tracking-tight">
+              Ummah Thoughts
+            </span>
           </div>
         </div>
 
@@ -78,15 +141,13 @@ export default function Login() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3 max-w-xs">
-            {[
-              { n: "12K+", l: lang === "bn" ? "আলেম" : "Scholars" },
-              { n: "45K+", l: lang === "bn" ? "শিক্ষার্থী" : "Learners" },
-              { n: "3K+", l: lang === "bn" ? "নিবন্ধ" : "Articles" },
-              { n: "200+", l: lang === "bn" ? "বিতর্ক" : "Debates" }
-            ].map(s => (
-              <div key={s.l} className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/10">
-                <p className="text-white font-bold text-xl">{s.n}</p>
-                <p className="text-white/55 text-sm">{s.l}</p>
+            {stats.map((stat) => (
+              <div 
+                key={stat.label} 
+                className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/10"
+              >
+                <p className="text-white font-bold text-xl">{stat.number}</p>
+                <p className="text-white/55 text-sm">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -98,7 +159,9 @@ export default function Login() {
             <p className="text-white/50 text-xs font-arabic leading-loose text-right">
               وَفَوْقَ كُلِّ ذِي عِلْمٍ عَلِيمٌ
             </p>
-            <p className="text-white/40 text-xs mt-1">Quran 12:76 · {lang === "bn" ? "প্রতিটি জ্ঞানীর উপরে আরও জ্ঞানী আছেন" : "Above every knower is a higher knower"}</p>
+            <p className="text-white/40 text-xs mt-1">
+              Quran 12:76 · {lang === "bn" ? "প্রতিটি জ্ঞানীর উপরে আরও জ্ঞানী আছেন" : "Above every knower is a higher knower"}
+            </p>
           </div>
         </div>
       </div>
@@ -137,9 +200,14 @@ export default function Login() {
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                <Input 
+                  type="email" 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)}
                   placeholder={lang === "bn" ? "আপনার@ইমেইল.com" : "you@example.com"}
-                  className="pl-10 h-11 rounded-xl bg-muted/30 border-border focus:border-primary/50 transition-colors" required />
+                  className="pl-10 h-11 rounded-xl bg-muted/30 border-border focus:border-primary/50 transition-colors" 
+                  required 
+                />
               </div>
             </div>
 
@@ -149,26 +217,40 @@ export default function Login() {
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                <Input 
+                  type={showPw ? "text" : "password"} 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)}
                   placeholder={lang === "bn" ? "পাসওয়ার্ড দিন" : "Enter password"}
-                  className="pl-10 pr-10 h-11 rounded-xl bg-muted/30 border-border focus:border-primary/50 transition-colors" required />
-                <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  className="pl-10 pr-10 h-11 rounded-xl bg-muted/30 border-border focus:border-primary/50 transition-colors" 
+                  required 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 bg-destructive/8 border border-destructive/20 rounded-xl px-4 py-3">
+              <motion.div 
+                initial={{ opacity: 0, y: -4 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 bg-destructive/8 border border-destructive/20 rounded-xl px-4 py-3"
+              >
                 <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
                 <p className="text-sm text-destructive">{error}</p>
               </motion.div>
             )}
 
-            <Button type="submit" disabled={loading}
-              className="w-full h-11 rounded-xl font-semibold text-sm shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-shadow">
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="w-full h-11 rounded-xl font-semibold text-sm shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] transition-shadow"
+            >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
@@ -195,19 +277,19 @@ export default function Login() {
             </p>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              {DEMO_ACCOUNTS.map((d, i) => (
+              {DEMO_ACCOUNTS.map((account, index) => (
                 <motion.button
-                  key={d.role}
+                  key={account.role}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.06 }}
-                  onClick={() => fillDemo(d.email)}
-                  className={`bg-gradient-to-br ${d.gradient} border rounded-xl px-3.5 py-3 text-xs font-semibold transition-all hover:scale-[1.02] hover:shadow-md text-left flex items-center gap-2.5`}
+                  transition={{ delay: 0.3 + index * 0.06 }}
+                  onClick={() => fillDemo(account.email)}
+                  className={`bg-gradient-to-br ${account.gradient} border rounded-xl px-3.5 py-3 text-xs font-semibold transition-all hover:scale-[1.02] hover:shadow-md text-left flex items-center gap-2.5`}
                 >
-                  <d.icon className="h-4 w-4 flex-shrink-0" />
+                  <account.icon className="h-4 w-4 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p>{lang === "bn" ? d.labelBn : d.label}</p>
-                    <p className="text-[10px] font-normal opacity-55 mt-0.5 truncate">{d.email}</p>
+                    <p>{lang === "bn" ? account.labelBn : account.label}</p>
+                    <p className="text-[10px] font-normal opacity-55 mt-0.5 truncate">{account.email}</p>
                   </div>
                 </motion.button>
               ))}
@@ -216,7 +298,10 @@ export default function Login() {
 
           <p className="text-center text-sm text-muted-foreground">
             {lang === "bn" ? "অ্যাকাউন্ট নেই?" : "Don't have an account?"}{" "}
-            <Link to="/register" className="text-primary font-semibold hover:underline">
+            <Link 
+              href="/auth/register" 
+              className="text-primary font-semibold hover:underline"
+            >
               {lang === "bn" ? "একটি তৈরি করুন" : "Create one"}
             </Link>
           </p>

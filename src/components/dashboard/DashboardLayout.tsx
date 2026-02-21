@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useContext, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Menu, Bell, Globe, Sun, Moon, Trash2, CheckCheck, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,19 +17,22 @@ interface DashboardLayoutProps {
 }
 
 const NOTIF_TYPE_COLORS: Record<NotifEntry["type"], { dot: string; bg: string }> = {
-  flag:     { dot: "bg-destructive",   bg: "bg-destructive/10" },
-  role_req: { dot: "bg-amber-500",     bg: "bg-amber-500/10" },
-  verify:   { dot: "bg-primary",       bg: "bg-primary/10" },
-  info:     { dot: "bg-muted-foreground", bg: "bg-muted" },
-  success:  { dot: "bg-emerald-500",   bg: "bg-emerald-500/10" },
-  error:    { dot: "bg-destructive",   bg: "bg-destructive/10" },
+  flag: { dot: "bg-destructive", bg: "bg-destructive/10" },
+  role_req: { dot: "bg-amber-500", bg: "bg-amber-500/10" },
+  verify: { dot: "bg-primary", bg: "bg-primary/10" },
+  info: { dot: "bg-muted-foreground", bg: "bg-muted" },
+  success: { dot: "bg-emerald-500", bg: "bg-emerald-500/10" },
+  error: { dot: "bg-destructive", bg: "bg-destructive/10" },
 };
 
 function useDarkMode() {
-  const stored = typeof window !== "undefined" ? localStorage.getItem("ummahthoughts-theme") : null;
   const [dark, setDark] = useState<boolean>(() => {
-    if (stored) return stored === "dark";
-    return document.documentElement.classList.contains("dark");
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("ummahthoughts-theme");
+      if (stored) return stored === "dark";
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
   });
 
   const toggle = () => {
@@ -42,6 +47,14 @@ function useDarkMode() {
     }
   };
 
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [dark]);
+
   return { dark, toggle };
 }
 
@@ -52,7 +65,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
   const [livePulse, setLivePulse] = useState(false);
   const prevSessionLen = useRef(0);
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const { dark, toggle: toggleDark } = useDarkMode();
@@ -72,7 +85,13 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
     prevSessionLen.current = sessionLogs.length;
   }, [sessionLogs.length]);
 
-  if (!user) { navigate("/login"); return null; }
+  useEffect(() => {
+    if (!user) {
+      router.push("/auth/login");
+    }
+  }, [user, router]);
+
+  if (!user) return null;
 
   const toggleLang = () => {
     const next = currentLang === "bn" ? "en" : "bn";
@@ -112,10 +131,12 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-[68px] flex items-center justify-between px-4 sm:px-6 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 gap-3">
+        <header className="h-[70px] flex items-center justify-between px-4 sm:px-6 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0 gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center flex-shrink-0">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center flex-shrink-0"
+            >
               <Menu className="h-4 w-4 text-muted-foreground" />
             </button>
             {title && (
@@ -189,7 +210,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                     </div>
                     {unreadCount > 0 && notifData && (
                       <button
-                        onClick={() => { notifData!.markAllRead(); }}
+                        onClick={() => { notifData.markAllRead(); }}
                         className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
                       >
                         <CheckCheck className="h-3 w-3" /> {t("admin.markAllRead")}
@@ -243,7 +264,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                           </div>
                           {notifData && (
                             <button
-                              onClick={e => { e.stopPropagation(); notifData!.dismissNotif(n.id); }}
+                              onClick={e => { e.stopPropagation(); notifData.dismissNotif(n.id); }}
                               className="text-muted-foreground hover:text-destructive flex-shrink-0 mt-0.5 transition-colors"
                             >
                               <Trash2 className="h-3 w-3" />
@@ -258,7 +279,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                   {notifData && (
                     <div className="border-t border-border px-4 py-2.5">
                       <button
-                        onClick={() => { setBellOpen(false); navigate("/dashboard/notifications"); }}
+                        onClick={() => { setBellOpen(false); router.push("/dashboard/notifications"); }}
                         className="w-full text-xs font-semibold text-primary hover:underline text-center"
                       >
                         {t("admin.viewAllNotifications")}

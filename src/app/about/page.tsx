@@ -1,12 +1,13 @@
+"use client"
+
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import {
   BookOpen, Heart, Target, Shield, Users, Mail, Phone,
   MapPin, Twitter, Youtube, Facebook, MessageSquare,
-  PenTool, DollarSign, HandHeart, Send, ArrowRight
+  PenTool, DollarSign, HandHeart, Send, ArrowRight,
+  GraduationCap
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RedLinesSection, CorrectionPolicy } from '@/components/about/RedLinesSection';
@@ -74,18 +75,18 @@ const About = () => {
 
   const participationWays = [
     {
+      icon: GraduationCap,
+      titleEn: 'Lerner',
+      titleBn: 'শিক্ষার্থী',
+      descEn: 'Begin Increse you Islamic knowledge',
+      descBn: 'এখনই শরু করুন আপনার ইসলামিক জ্ঞান চর্চা'
+    },
+    {
       icon: PenTool,
       titleEn: 'Become a Writer',
       titleBn: 'লেখক হন',
       descEn: 'Contribute articles, research, and insights',
       descBn: 'প্রবন্ধ, গবেষণা এবং অন্তর্দৃষ্টি অবদান রাখুন'
-    },
-    {
-      icon: BookOpen,
-      titleEn: 'Research Assistance',
-      titleBn: 'গবেষণা সহায়তা',
-      descEn: 'Help verify sources and compile references',
-      descBn: 'সূত্র যাচাই এবং রেফারেন্স সংকলনে সাহায্য করুন'
     },
     {
       icon: DollarSign,
@@ -94,18 +95,10 @@ const About = () => {
       descEn: 'Help fund our operations and growth',
       descBn: 'আমাদের কার্যক্রম ও বৃদ্ধিতে সহায়তা করুন'
     },
-    {
-      icon: HandHeart,
-      titleEn: 'Volunteer',
-      titleBn: 'স্বেচ্ছাসেবক',
-      descEn: 'Join our team in various capacities',
-      descBn: 'বিভিন্ন ক্ষমতায় আমাদের দলে যোগ দিন'
-    },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       {/* Hero */}
       <section className="page-hero">
@@ -159,7 +152,7 @@ const About = () => {
       {/* Main Sections */}
       <section className="py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto space-y-16">
+          <div className="container mx-auto space-y-16">
             {sections.map((section, index) => (
               <motion.div
                 key={section.id}
@@ -262,7 +255,7 @@ const About = () => {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {participationWays.map((way, index) => (
               <motion.div
                 key={index}
@@ -423,8 +416,6 @@ const About = () => {
           <CorrectionPolicy />
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

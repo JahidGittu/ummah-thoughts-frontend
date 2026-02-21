@@ -1,3 +1,6 @@
+// app/tools/page.tsx
+"use client";
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -24,15 +27,33 @@ import {
   ArrowRight,
   type LucideIcon
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { HijriConverterTool } from '@/components/tools/HijriConverterTool';
-import { ZakatCalculatorTool } from '@/components/tools/ZakatCalculatorTool';
-import { PrayerTimesTool } from '@/components/tools/PrayerTimesTool';
-import { QuranSearchTool } from '@/components/tools/QuranSearchTool';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import dynamic from 'next/dynamic';
+
+// Dynamically import tool components to reduce initial bundle size
+const HijriConverterTool = dynamic(() => import('@/components/tools/HijriConverterTool').then(mod => mod.HijriConverterTool), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center min-h-screen">Loading...</div>
+});
+
+const ZakatCalculatorTool = dynamic(() => import('@/components/tools/ZakatCalculatorTool').then(mod => mod.ZakatCalculatorTool), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center min-h-screen">Loading...</div>
+});
+
+const PrayerTimesTool = dynamic(() => import('@/components/tools/PrayerTimesTool').then(mod => mod.PrayerTimesTool), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center min-h-screen">Loading...</div>
+});
+
+const QuranSearchTool = dynamic(() => import('@/components/tools/QuranSearchTool').then(mod => mod.QuranSearchTool), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center min-h-screen">Loading...</div>
+});
+
 import { ToolCredibilityLabel, ToolJustification } from '@/components/shared/ToolCredibilityLabel';
 
 interface Tool {
@@ -47,7 +68,7 @@ interface Tool {
   justificationBn: string;
 }
 
-const Tools = () => {
+export default function ToolsPage() {
   const { t, i18n } = useTranslation();
   const isBengali = i18n.language === 'bn';
   const [searchQuery, setSearchQuery] = useState('');
@@ -278,133 +299,130 @@ const Tools = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
 
-      {/* Header */}
-      <section className="page-hero border-b border-border/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl"
-          >
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
-              <Calculator className="w-3.5 h-3.5" />
-              {t('tools.badge')}
-            </span>
-            <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-3 text-balance">
-              {t('tools.title')}
-            </h1>
-            <div className="w-16 h-0.5 rounded-full bg-secondary mb-4" />
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              {t('tools.subtitle')}
-            </p>
-          </motion.div>
-        </div>
-      </section>
+        {/* Header */}
+        <section className="page-hero border-b border-border/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-2xl"
+            >
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
+                <Calculator className="w-3.5 h-3.5" />
+                {t('tools.badge')}
+              </span>
+              <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-3 text-balance">
+                {t('tools.title')}
+              </h1>
+              <div className="w-16 h-0.5 rounded-full bg-secondary mb-4" />
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                {t('tools.subtitle')}
+              </p>
+            </motion.div>
+          </div>
+        </section>
 
-      {/* Search and Filter */}
-      <section className="py-4 border-b border-border/50 bg-card/60 backdrop-blur sticky top-16 z-40 shadow-[var(--shadow-xs)]">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={t('tools.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9 text-sm rounded-xl"
-              />
-            </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="flex-shrink-0 text-xs h-8 rounded-xl"
-                >
-                  {t(category.nameKey)}
-                </Button>
-              ))}
+        {/* Search and Filter */}
+        <section className="py-4 border-b border-border/50 bg-card/60 backdrop-blur sticky top-16 z-40 shadow-[var(--shadow-xs)]">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={t('tools.searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9 text-sm rounded-xl"
+                />
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="flex-shrink-0 text-xs h-8 rounded-xl"
+                  >
+                    {t(category.nameKey)}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tools Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredTools.map((tool, index) => {
-            const Icon = tool.icon;
-            return (
-              <motion.button
-                key={tool.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-                onClick={() => handleToolClick(tool.id, tool.isWorking)}
-                disabled={!tool.isWorking}
-                className={`group flex flex-col items-start gap-3 p-4 rounded-lg border text-left transition-all ${
-                  tool.isWorking
-                    ? 'border-border/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
-                    : 'border-border/30 opacity-60 cursor-not-allowed'
-                }`}
-              >
-                <div className="w-full flex items-start justify-between">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Tools Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredTools.map((tool, index) => {
+              const Icon = tool.icon;
+              return (
+                <motion.button
+                  key={tool.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  onClick={() => handleToolClick(tool.id, tool.isWorking)}
+                  disabled={!tool.isWorking}
+                  className={`group flex flex-col items-start gap-3 p-4 rounded-lg border text-left transition-all ${
                     tool.isWorking
-                      ? 'bg-primary/10 text-primary group-hover:bg-primary/20'
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
-                    <Icon className="w-5 h-5" />
+                      ? 'border-border/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
+                      : 'border-border/30 opacity-60 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="w-full flex items-start justify-between">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                      tool.isWorking
+                        ? 'bg-primary/10 text-primary group-hover:bg-primary/20'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    {/* Tool Credibility Label - Now works because of TooltipProvider */}
+                    <ToolCredibilityLabel status={tool.credibility} />
                   </div>
-                  {/* NEW: Tool Credibility Label */}
-                  <ToolCredibilityLabel status={tool.credibility} />
-                </div>
-                <div className="flex-1 min-w-0 w-full">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-sm text-foreground truncate">
-                      {t(tool.nameKey)}
-                    </h3>
-                    {tool.isWorking && (
-                      <ArrowRight className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-sm text-foreground truncate">
+                        {t(tool.nameKey)}
+                      </h3>
+                      {tool.isWorking && (
+                        <ArrowRight className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                      {t(tool.descKey)}
+                    </p>
+                    {!tool.isWorking && (
+                      <Badge variant="outline" className="text-[10px] mt-1.5 px-1.5 py-0">
+                        {t('tools.comingSoon')}
+                      </Badge>
                     )}
+                    {/* Why This Tool Exists */}
+                    <ToolJustification
+                      justificationEn={tool.justificationEn}
+                      justificationBn={tool.justificationBn}
+                    />
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {t(tool.descKey)}
-                  </p>
-                  {!tool.isWorking && (
-                    <Badge variant="outline" className="text-[10px] mt-1.5 px-1.5 py-0">
-                      {t('tools.comingSoon')}
-                    </Badge>
-                  )}
-                  {/* NEW: Why This Tool Exists */}
-                  <ToolJustification
-                    justificationEn={tool.justificationEn}
-                    justificationBn={tool.justificationBn}
-                  />
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {filteredTools.length === 0 && (
-          <div className="text-center py-12">
-            <Compass className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-muted-foreground">{t('tools.noResults')}</p>
+                </motion.button>
+              );
+            })}
           </div>
-        )}
-      </main>
 
-      <Footer />
-    </div>
+          {filteredTools.length === 0 && (
+            <div className="text-center py-12">
+              <Compass className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">{t('tools.noResults')}</p>
+            </div>
+          )}
+        </main>
+      </div>
+    </TooltipProvider>
   );
-};
-
-export default Tools;
+}

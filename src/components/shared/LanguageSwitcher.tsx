@@ -1,3 +1,6 @@
+// components/shared/LanguageSwitcher.tsx
+'use client';
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,7 +62,7 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className }: LanguageSw
           'text-muted-foreground hover:text-foreground hover:bg-muted transition-colors',
           className
         )}
-        title={t('language.' + (i18n.language === 'en' ? 'bn' : 'en'))}
+        title={i18n.language === 'en' ? 'বাংলা' : 'English'}
       >
         <Globe className="w-4 h-4" />
         <span>{currentLang.nativeName}</span>
@@ -67,7 +70,7 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className }: LanguageSw
     );
   }
 
-  // Dropdown variant (default)
+  // Dropdown variant (default) - FIXED: Menu items always show both languages
   return (
     <div className={cn('relative', className)}>
       <button
@@ -79,7 +82,7 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className }: LanguageSw
         )}
       >
         <Globe className="w-4 h-4 text-muted-foreground" />
-        <span>{currentLang.flag}</span>
+        <span className="text-base">{currentLang.flag}</span>
         <span className="hidden sm:inline">{currentLang.nativeName}</span>
         <ChevronDown className={cn(
           'w-4 h-4 text-muted-foreground transition-transform',
@@ -96,29 +99,34 @@ export const LanguageSwitcher = ({ variant = 'dropdown', className }: LanguageSw
               onClick={() => setIsOpen(false)}
             />
             
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu - Always show both languages clearly */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full mt-2 z-50 min-w-[160px] py-1 bg-card border border-border rounded-lg shadow-lg"
+              className="absolute right-0 top-full mt-2 z-50 min-w-[200px] py-1 bg-card border border-border rounded-lg shadow-lg"
             >
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => handleLanguageChange(lang.code)}
                   className={cn(
-                    'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors',
+                    'w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors',
                     i18n.language === lang.code
                       ? 'bg-primary/10 text-primary'
                       : 'text-foreground hover:bg-muted'
                   )}
                 >
                   <span className="text-lg">{lang.flag}</span>
-                  <span className="flex-1 text-left">{lang.nativeName}</span>
+                  <div className="flex-1 flex flex-col items-start">
+                    <span className="font-medium">{lang.nativeName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {lang.name} {/* Always show English name for clarity */}
+                    </span>
+                  </div>
                   {i18n.language === lang.code && (
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4 ml-2" />
                   )}
                 </button>
               ))}

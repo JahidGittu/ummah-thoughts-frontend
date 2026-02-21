@@ -1,3 +1,6 @@
+// app/scholars/page.tsx
+"use client";
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -6,8 +9,6 @@ import {
   FileText, Headphones, ExternalLink, Mail, Globe,
   Award, Quote, ArrowRight, Filter, GitBranch
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ScholarMethodologyTag, ScholarDisclaimer } from '@/components/shared/ScholarMethodologyTag';
 
 interface Scholar {
@@ -42,11 +44,12 @@ interface Scholar {
   influences?: { en: string; bn: string }[];
 }
 
-const Scholars = () => {
+export default function ScholarsPage() {
   const { t, i18n } = useTranslation();
   const isBengali = i18n.language === 'bn';
-  const [selectedScholar, setSelectedScholar] = useState<string | null>('mannan');
+  const [selectedScholar, setSelectedScholar] = useState<string>('mannan');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>('all');
 
   const specializations = [
     { id: 'all', nameEn: 'All Specializations', nameBn: 'সকল বিশেষজ্ঞতা' },
@@ -168,335 +171,351 @@ const Scholars = () => {
     },
   ];
 
+  // Filter scholars based on search query
+  const filteredScholars = scholars.filter(scholar => {
+    const searchLower = searchQuery.toLowerCase();
+    const nameMatch = isBengali 
+      ? scholar.nameBn.toLowerCase().includes(searchLower)
+      : scholar.nameEn.toLowerCase().includes(searchLower);
+    const specializationMatch = isBengali
+      ? scholar.specializationBn.toLowerCase().includes(searchLower)
+      : scholar.specializationEn.toLowerCase().includes(searchLower);
+    
+    return nameMatch || specializationMatch;
+  });
+
+  // Sort scholars by citation count for "Most Cited" section
+  const mostCitedScholars = [...scholars].sort((a, b) => b.citationCount - a.citationCount);
+
   const currentScholar = scholars.find(s => s.id === selectedScholar) || scholars[0];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
 
-      {/* Header */}
-      <section className="page-hero border-b border-border/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-3xl mb-8"
-          >
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              {t('scholars.badge')}
-            </span>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance">
-              {t('scholars.title')}
-            </h1>
-            <div className="w-16 h-0.5 rounded-full bg-secondary mb-5" />
-            <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
-              {t('scholars.subtitle')}
-            </p>
-          </motion.div>
+        {/* Header */}
+        <section className="page-hero border-b border-border/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="max-w-3xl mb-8"
+            >
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                {t('scholars.badge')}
+              </span>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-4 text-balance">
+                {t('scholars.title')}
+              </h1>
+              <div className="w-16 h-0.5 rounded-full bg-secondary mb-5" />
+              <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
+                {t('scholars.subtitle')}
+              </p>
+            </motion.div>
 
-          {/* Search & Filter */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t('scholars.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 h-11 rounded-xl border border-border bg-card/80 backdrop-blur focus:border-primary focus:ring-2 focus:ring-primary/15 outline-none transition-all text-sm"
-              />
-            </div>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-11 w-full sm:w-56 rounded-xl">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {specializations.map(spec => (
-                  <SelectItem key={spec.id} value={spec.id}>
-                    {isBengali ? spec.nameBn : spec.nameEn}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Scholars List */}
-            <div className="space-y-4">
-              <h2 className="font-display font-semibold text-foreground flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-primary" />
-                {t('scholars.mostCited')}
-              </h2>
-
-              {scholars.map((scholar, index) => (
-                <motion.button
-                  key={scholar.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => setSelectedScholar(scholar.id)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    selectedScholar === scholar.id
-                      ? 'bg-primary/5 border-primary/30'
-                      : 'bg-card border-border hover:border-primary/20'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl font-display font-bold text-primary">
-                        {(isBengali ? scholar.nameBn : scholar.nameEn).charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-display font-semibold text-foreground truncate">
-                        {isBengali ? scholar.nameBn : scholar.nameEn}
-                      </h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {isBengali ? scholar.specializationBn : scholar.specializationEn}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{scholar.citationCount} {t('scholars.citations')}</span>
-                        <span>•</span>
-                        <span>{scholar.discussionCount} {t('scholars.discussions')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-
-              {/* Scholar Network */}
-              <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-dashed border-border">
-                <h3 className="font-display font-semibold text-foreground mb-2">
-                  {t('scholars.network')}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t('scholars.networkDesc')}
-                </p>
-                <Button variant="outline" size="sm" className="w-full gap-2">
-                  {t('scholars.viewNetwork')}
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+            {/* Search & Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={t('scholars.searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 h-11 rounded-xl border border-border bg-card/80 backdrop-blur focus:border-primary focus:ring-2 focus:ring-primary/15 outline-none transition-all text-sm"
+                />
               </div>
-            </div>
-
-            {/* Scholar Profile */}
-            <div className="lg:col-span-2">
-              <motion.div
-                key={currentScholar.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-card rounded-2xl border border-border overflow-hidden"
+              <Select 
+                value={selectedSpecialization} 
+                onValueChange={setSelectedSpecialization}
               >
-                {/* Profile Header */}
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-secondary/5 border-b border-border">
-                  <div className="flex items-start gap-6">
-                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-4xl font-display font-bold text-primary">
-                        {(isBengali ? currentScholar.nameBn : currentScholar.nameEn).charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <h2 className="font-display text-2xl font-bold text-foreground">
-                        {isBengali ? currentScholar.nameBn : currentScholar.nameEn}
-                      </h2>
-                      <p className="text-primary font-medium mt-1">
-                        {isBengali ? currentScholar.specializationBn : currentScholar.specializationEn}
-                      </p>
-                      <p className="text-muted-foreground text-sm mt-2">
-                        {isBengali ? currentScholar.currentPositionBn : currentScholar.currentPositionEn}
-                      </p>
+                <SelectTrigger className="h-11 w-full sm:w-56 rounded-xl">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder={isBengali ? 'বিশেষজ্ঞতা নির্বাচন' : 'Select specialization'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {specializations.map(spec => (
+                    <SelectItem key={spec.id} value={spec.id}>
+                      {isBengali ? spec.nameBn : spec.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
 
-                      <div className="flex items-center gap-4 mt-4">
-                        <div className="flex items-center gap-1 text-sm">
-                          <Award className="w-4 h-4 text-secondary" />
-                          <span className="font-semibold text-foreground">{currentScholar.citationCount}</span>
-                          <span className="text-muted-foreground">{t('scholars.timesCited')}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <MessageSquare className="w-4 h-4 text-primary" />
-                          <span className="font-semibold text-foreground">{currentScholar.discussionCount}</span>
-                          <span className="text-muted-foreground">{t('scholars.discussions')}</span>
+        {/* Main Content */}
+        <section className="py-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Scholars List */}
+              <div className="space-y-4">
+                <h2 className="font-display font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-primary" />
+                  {t('scholars.mostCited')}
+                </h2>
+
+                {mostCitedScholars.map((scholar, index) => (
+                  <motion.button
+                    key={scholar.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => setSelectedScholar(scholar.id)}
+                    className={`w-full text-left p-4 rounded-xl border transition-all ${
+                      selectedScholar === scholar.id
+                        ? 'bg-primary/5 border-primary/30'
+                        : 'bg-card border-border hover:border-primary/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl font-display font-bold text-primary">
+                          {(isBengali ? scholar.nameBn : scholar.nameEn).charAt(0)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-display font-semibold text-foreground truncate">
+                          {isBengali ? scholar.nameBn : scholar.nameEn}
+                        </h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {isBengali ? scholar.specializationBn : scholar.specializationEn}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>{scholar.citationCount} {t('scholars.citations')}</span>
+                          <span>•</span>
+                          <span>{scholar.discussionCount} {t('scholars.discussions')}</span>
                         </div>
                       </div>
-
-                      {/* NEW: Methodology Tags */}
-                      <div className="mt-4">
-                        <ScholarMethodologyTag methodology={currentScholar.methodology} />
-                      </div>
                     </div>
-                  </div>
+                  </motion.button>
+                ))}
+
+                {/* Scholar Network */}
+                <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-dashed border-border">
+                  <h3 className="font-display font-semibold text-foreground mb-2">
+                    {t('scholars.network')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('scholars.networkDesc')}
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    {t('scholars.viewNetwork')}
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
+              </div>
 
-                {/* Profile Content */}
-                <div className="p-8 space-y-8">
-                  {/* Biography */}
-                  <div>
-                    <h3 className="font-display font-semibold text-foreground mb-3">
-                      {t('scholars.biography')}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {isBengali ? currentScholar.bioBn : currentScholar.bioEn}
-                    </p>
+              {/* Scholar Profile */}
+              <div className="lg:col-span-2">
+                <motion.div
+                  key={currentScholar.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card rounded-2xl border border-border overflow-hidden"
+                >
+                  {/* Profile Header */}
+                  <div className="p-8 bg-gradient-to-br from-primary/5 to-secondary/5 border-b border-border">
+                    <div className="flex items-start gap-6">
+                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-4xl font-display font-bold text-primary">
+                          {(isBengali ? currentScholar.nameBn : currentScholar.nameEn).charAt(0)}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="font-display text-2xl font-bold text-foreground">
+                          {isBengali ? currentScholar.nameBn : currentScholar.nameEn}
+                        </h2>
+                        <p className="text-primary font-medium mt-1">
+                          {isBengali ? currentScholar.specializationBn : currentScholar.specializationEn}
+                        </p>
+                        <p className="text-muted-foreground text-sm mt-2">
+                          {isBengali ? currentScholar.currentPositionBn : currentScholar.currentPositionEn}
+                        </p>
+
+                        <div className="flex items-center gap-4 mt-4">
+                          <div className="flex items-center gap-1 text-sm">
+                            <Award className="w-4 h-4 text-secondary" />
+                            <span className="font-semibold text-foreground">{currentScholar.citationCount}</span>
+                            <span className="text-muted-foreground">{t('scholars.timesCited')}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <MessageSquare className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-foreground">{currentScholar.discussionCount}</span>
+                            <span className="text-muted-foreground">{t('scholars.discussions')}</span>
+                          </div>
+                        </div>
+
+                        {/* Methodology Tags - Now works because of TooltipProvider */}
+                        <div className="mt-4">
+                          <ScholarMethodologyTag methodology={currentScholar.methodology} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* NEW: Influence Map */}
-                  {currentScholar.influences && currentScholar.influences.length > 0 && (
+                  {/* Profile Content */}
+                  <div className="p-8 space-y-8">
+                    {/* Biography */}
                     <div>
-                      <h3 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <GitBranch className="w-4 h-4 text-primary" />
-                        {isBengali ? 'প্রভাবিত দ্বারা' : 'Influenced by'}
+                      <h3 className="font-display font-semibold text-foreground mb-3">
+                        {t('scholars.biography')}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {isBengali ? currentScholar.bioBn : currentScholar.bioEn}
+                      </p>
+                    </div>
+
+                    {/* Influence Map */}
+                    {currentScholar.influences && currentScholar.influences.length > 0 && (
+                      <div>
+                        <h3 className="font-display font-semibold text-foreground mb-3 flex items-center gap-2">
+                          <GitBranch className="w-4 h-4 text-primary" />
+                          {isBengali ? 'প্রভাবিত দ্বারা' : 'Influenced by'}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {currentScholar.influences.map((influence, index) => (
+                            <Badge key={index} variant="outline" className="cursor-pointer hover:bg-muted">
+                              {isBengali ? influence.bn : influence.en}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Research Areas */}
+                    <div>
+                      <h3 className="font-display font-semibold text-foreground mb-3">
+                        {t('scholars.researchAreas')}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {currentScholar.influences.map((influence, index) => (
-                          <Badge key={index} variant="outline" className="cursor-pointer hover:bg-muted">
-                            {isBengali ? influence.bn : influence.en}
+                        {currentScholar.researchAreas.map((area, index) => (
+                          <Badge key={index} variant="outline">
+                            {isBengali ? area.bn : area.en}
                           </Badge>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* Research Areas */}
-                  <div>
-                    <h3 className="font-display font-semibold text-foreground mb-3">
-                      {t('scholars.researchAreas')}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {currentScholar.researchAreas.map((area, index) => (
-                        <Badge key={index} variant="outline">
-                          {isBengali ? area.bn : area.en}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Publications */}
-                  <div>
-                    <h3 className="font-display font-semibold text-foreground mb-3">
-                      {t('scholars.publications')}
-                    </h3>
-                    <div className="space-y-2">
-                      {currentScholar.publications.map((pub, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                        >
-                          <div className="flex items-center gap-3">
-                            <BookOpen className="w-4 h-4 text-primary" />
-                            <span className="text-foreground">
-                              {isBengali ? pub.titleBn : pub.titleEn}
-                            </span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">({pub.year})</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Featured In */}
-                  <div>
-                    <h3 className="font-display font-semibold text-foreground mb-3">
-                      {t('scholars.featuredIn')}
-                    </h3>
-                    <div className="space-y-2">
-                      {currentScholar.featuredIn.map((topic, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Quote className="w-4 h-4 text-secondary" />
-                            <span className="text-foreground">
-                              {isBengali ? topic.topicBn : topic.topicEn}
-                            </span>
-                          </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {topic.count}x {t('scholars.cited')}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Media */}
-                  {currentScholar.media.length > 0 && (
+                    {/* Publications */}
                     <div>
                       <h3 className="font-display font-semibold text-foreground mb-3">
-                        {t('scholars.mediaLectures')}
+                        {t('scholars.publications')}
                       </h3>
-                      <div className="grid sm:grid-cols-3 gap-3">
-                        {currentScholar.media.map((item, index) => {
-                          const Icon = item.type === 'video' ? Video : item.type === 'audio' ? Headphones : FileText;
-                          return (
-                            <button
-                              key={index}
-                              className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                            >
-                              <Icon className="w-5 h-5 text-primary" />
-                              <span className="text-sm text-foreground text-left">
-                                {isBengali ? item.titleBn : item.titleEn}
+                      <div className="space-y-2">
+                        {currentScholar.publications.map((pub, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <BookOpen className="w-4 h-4 text-primary" />
+                              <span className="text-foreground">
+                                {isBengali ? pub.titleBn : pub.titleEn}
                               </span>
-                            </button>
-                          );
-                        })}
+                            </div>
+                            <span className="text-sm text-muted-foreground">({pub.year})</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* Contact */}
-                  {currentScholar.contact && (
-                    <div className="pt-6 border-t border-border">
+                    {/* Featured In */}
+                    <div>
                       <h3 className="font-display font-semibold text-foreground mb-3">
-                        {t('scholars.contact')}
+                        {t('scholars.featuredIn')}
                       </h3>
-                      <div className="flex flex-wrap gap-3">
-                        {currentScholar.contact.email && (
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Mail className="w-4 h-4" />
-                            {currentScholar.contact.email}
-                          </Button>
-                        )}
-                        {currentScholar.contact.website && (
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Globe className="w-4 h-4" />
-                            {currentScholar.contact.website}
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
-                        )}
+                      <div className="space-y-2">
+                        {currentScholar.featuredIn.map((topic, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Quote className="w-4 h-4 text-secondary" />
+                              <span className="text-foreground">
+                                {isBengali ? topic.topicBn : topic.topicEn}
+                              </span>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {topic.count}x {t('scholars.cited')}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* View Related */}
-                  <Button className="w-full gap-2">
-                    {t('scholars.viewRelated')}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </motion.div>
+                    {/* Media */}
+                    {currentScholar.media.length > 0 && (
+                      <div>
+                        <h3 className="font-display font-semibold text-foreground mb-3">
+                          {t('scholars.mediaLectures')}
+                        </h3>
+                        <div className="grid sm:grid-cols-3 gap-3">
+                          {currentScholar.media.map((item, index) => {
+                            const Icon = item.type === 'video' ? Video : item.type === 'audio' ? Headphones : FileText;
+                            return (
+                              <button
+                                key={index}
+                                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                              >
+                                <Icon className="w-5 h-5 text-primary" />
+                                <span className="text-sm text-foreground text-left">
+                                  {isBengali ? item.titleBn : item.titleEn}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contact */}
+                    {currentScholar.contact && (
+                      <div className="pt-6 border-t border-border">
+                        <h3 className="font-display font-semibold text-foreground mb-3">
+                          {t('scholars.contact')}
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                          {currentScholar.contact.email && (
+                            <Button variant="outline" size="sm" className="gap-2">
+                              <Mail className="w-4 h-4" />
+                              {currentScholar.contact.email}
+                            </Button>
+                          )}
+                          {currentScholar.contact.website && (
+                            <Button variant="outline" size="sm" className="gap-2">
+                              <Globe className="w-4 h-4" />
+                              {currentScholar.contact.website}
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View Related */}
+                    <Button className="w-full gap-2">
+                      {t('scholars.viewRelated')}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* NEW: Scholarly Disclaimer */}
-      <section className="py-8 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <ScholarDisclaimer />
-        </div>
-      </section>
-
-      <Footer />
-    </div>
+        {/* Scholarly Disclaimer */}
+        <section className="py-8 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <ScholarDisclaimer />
+          </div>
+        </section>
+      </div>
+    </TooltipProvider>
   );
-};
-
-export default Scholars;
+}

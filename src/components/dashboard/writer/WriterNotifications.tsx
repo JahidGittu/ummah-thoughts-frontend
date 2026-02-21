@@ -14,7 +14,7 @@ const filters = ["All", "Unread", "Comments", "Reviews", "Milestones"];
 
 export default function WriterNotifications() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex gap-2 flex-wrap">
           {filters.map((f, i) => (

@@ -41,7 +41,7 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Profile Card */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
         className="bg-card border border-border rounded-2xl p-6">

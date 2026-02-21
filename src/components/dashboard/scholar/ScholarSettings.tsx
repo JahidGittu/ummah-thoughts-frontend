@@ -44,7 +44,7 @@ export default function ScholarSettings() {
   const toggle = (key: string) => setToggles(p => ({ ...p, [key]: !p[key] }));
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-bold text-foreground">Settings</h2>
         <button className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">

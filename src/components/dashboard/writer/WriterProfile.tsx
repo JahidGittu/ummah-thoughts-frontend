@@ -5,7 +5,7 @@ import { PenSquare, Save, FileText, Eye, ThumbsUp, Award } from "lucide-react";
 export default function WriterProfile() {
   const { user } = useAuth();
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
         className="bg-card border border-border rounded-2xl p-6">
         <div className="flex items-start gap-5">

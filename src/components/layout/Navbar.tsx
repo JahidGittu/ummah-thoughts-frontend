@@ -99,7 +99,7 @@ export const Navbar = () => {
     if (user) {
       router.push('/dashboard');
     } else {
-      router.push('/login');
+      router.push('/auth/login');
     }
   };
 
@@ -249,7 +249,7 @@ export const Navbar = () => {
                     </div>
                   ) : (
                     <Button
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push('/auth/login')}
                       className="hidden sm:flex h-9 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-sm px-4 gap-1.5"
                       size="sm"
                     >
@@ -349,7 +349,7 @@ export const Navbar = () => {
                     <Button
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        router.push('/login');
+                        router.push('/auth/login');
                       }}
                       className="flex-1 rounded-xl h-9 text-sm gap-2"
                       variant="default"

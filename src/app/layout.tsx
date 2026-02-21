@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Amiri } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { BackToTop } from "@/components/shared/BackToTop";
-import { LiveStatusBar } from "@/components/home/LiveStatusBar";
 import { Providers } from "./providers";
+import { LayoutManager } from "@/components/layout/LayoutManager";
 
 // Font configurations
 const inter = Inter({
@@ -100,13 +97,9 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background font-body antialiased">
         <Providers>
-          <Navbar />
-          <main className="flex-1">
+          <LayoutManager>
             {children}
-          </main>
-          <LiveStatusBar />
-          <Footer />
-          <BackToTop />
+          </LayoutManager>
         </Providers>
       </body>
     </html>

@@ -38,7 +38,7 @@ function Toggle({ on }: { on: boolean }) {
 
 export default function WriterSettings() {
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {sections.map((sec, i) => (
         <motion.div key={sec.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
           className="bg-card border border-border rounded-2xl p-6">

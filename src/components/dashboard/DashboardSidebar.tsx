@@ -1,4 +1,6 @@
-import { useLocation, useNavigate } from "react-router-dom";
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
@@ -8,6 +10,9 @@ import {
   Trophy, Bell, ChevronLeft, GraduationCap, Library, Scale, Scroll,
   CheckSquare, Calendar, Target, TrendingUp, UserCheck, Globe, Archive,
   ShieldAlert, Flag, ShieldCheck, ClipboardList, FileBarChart2, ScrollText,
+  Shield,
+  User,
+  MoreVertical,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -239,14 +244,14 @@ interface DashboardSidebarProps {
 
 export default function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps) {
   const { user, logout } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
 
   if (!user) return null;
 
   const groups = NAV_BY_ROLE[user.role];
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => pathname === path;
   const lang = i18n.language;
 
   // Safe translate: tries dashboard.dashboard_nav.X first, then dashboard.X, then LABEL_FALLBACKS
@@ -268,7 +273,7 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    router.push("/auth/login");
   };
 
   return (
@@ -278,7 +283,7 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
       className="flex flex-col h-full bg-sidebar border-r border-sidebar-border overflow-hidden flex-shrink-0"
     >
       {/* Logo + toggle */}
-      <div className="flex items-center justify-between px-4 py-5 border-b border-sidebar-border min-h-[68px]">
+      <div className="flex items-center justify-between px-4 py-5 border-b border-sidebar-border h-[70px]">
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
@@ -300,28 +305,7 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
         )}
       </div>
 
-      {/* User card */}
-      {!collapsed ? (
-        <div className="px-4 py-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0", ROLE_COLORS[user.role])}>
-              {user.avatar}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {lang === "bn" ? ROLE_LABELS[user.role].bn : ROLE_LABELS[user.role].en}
-              </span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="px-3 py-4 border-b border-sidebar-border flex justify-center">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold", ROLE_COLORS[user.role])}>
-            {user.avatar}
-          </div>
-        </div>
-      )}
+
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
@@ -338,7 +322,7 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
                 return (
                   <li key={item.path}>
                     <button
-                      onClick={() => navigate(item.path)}
+                      onClick={() => router.push(item.path)}
                       title={collapsed ? (LABEL_FALLBACKS[item.labelKey] ?? item.labelKey) : undefined}
                       className={cn(
                         "w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-medium transition-all group relative",
@@ -352,9 +336,9 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
                       {!collapsed && <span className="flex-1 text-left truncate">{tSafe(item.labelKey)}</span>}
                       {!collapsed && item.badge && (
                         <span className={cn(
-                           "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                           item.badge === "Live" ? "bg-destructive text-destructive-foreground" : "bg-primary/15 text-primary"
-                         )}>
+                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                          item.badge === "Live" ? "bg-destructive text-destructive-foreground" : "bg-primary/15 text-primary"
+                        )}>
                           {item.badge}
                         </span>
                       )}
@@ -371,21 +355,184 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
       </nav>
 
       {/* Collapse toggle (when collapsed) + logout */}
-      <div className="px-3 py-3 border-t border-sidebar-border space-y-1">
-        {collapsed && (
-          <button onClick={onToggle}
-            className="w-full flex justify-center py-2 rounded-xl hover:bg-sidebar-accent text-muted-foreground hover:text-foreground transition-colors">
-            <ChevronLeft className="h-4 w-4 rotate-180" />
-          </button>
+      {/* Footer Section - User Profile & Actions */}
+      <div className="mt-auto border-t border-sidebar-border bg-sidebar/50">
+        {/* User Profile Card - Collapsed State */}
+        {collapsed ? (
+          <div className="relative group px-2 py-4">
+            {/* Profile Avatar with Status */}
+            <div className="relative flex justify-center">
+              <div className={cn(
+                "relative w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300",
+                "bg-gradient-to-br from-primary/20 to-primary/5",
+                "border border-primary/20 group-hover:border-primary/40",
+                "shadow-sm group-hover:shadow-md"
+              )}>
+                <span className="text-primary font-bold text-base">{user.avatar}</span>
+
+                {/* Online Status Indicator */}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-sidebar animate-pulse" />
+              </div>
+
+              {/* Role Indicator Dot */}
+              <div className={cn(
+                "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-sidebar",
+                user.role === 'admin' ? 'bg-destructive' :
+                  user.role === 'scholar' ? 'bg-primary' :
+                    user.role === 'writer' ? 'bg-secondary' : 'bg-blue-500'
+              )} />
+            </div>
+
+            {/* Tooltip on Hover */}
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+              <div className="bg-popover text-popover-foreground text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-lg border border-border whitespace-nowrap">
+                {user.name}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* User Profile Card - Expanded State */
+          <div className="relative group px-4 py-2 bg-gradient-to-br from-sidebar-accent/5 to-transparent">
+            <div className="flex items-center gap-4">
+              {/* Avatar with animated ring */}
+              <div className="relative">
+                <div className={cn(
+                  "relative w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold transition-all duration-300",
+                  "bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/10",
+                  "border-2 border-primary/20 group-hover:border-primary/30",
+                  "shadow-md group-hover:shadow-lg",
+                  "transform group-hover:scale-105 group-hover:-rotate-2 transition-all duration-300"
+                )}>
+                  <span className={cn(
+                    "font-bold",
+                    user.role === 'admin' ? 'text-destructive' :
+                      user.role === 'scholar' ? 'text-primary' :
+                        user.role === 'writer' ? 'text-secondary' : 'text-blue-500'
+                  )}>
+                    {user.avatar}
+                  </span>
+
+                  {/* Decorative corner accent */}
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary/30 rounded-full blur-sm" />
+                </div>
+
+                {/* Status Ring */}
+                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-[3px] border-sidebar animate-pulse shadow-lg" />
+              </div>
+
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                    {user.name}
+                  </p>
+
+                  {/* Verified Badge for Scholars/Admins */}
+                  {(user.role === 'scholar' || user.role === 'admin') && (
+                    <svg className="w-3.5 h-3.5 text-primary fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Role Badge */}
+                <div className="flex items-center gap-1.5">
+                  <span className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                    "border shadow-sm",
+                    user.role === 'admin' && "bg-destructive/10 text-destructive border-destructive/20",
+                    user.role === 'scholar' && "bg-primary/10 text-primary border-primary/20",
+                    user.role === 'writer' && "bg-secondary/10 text-secondary border-secondary/20",
+                    user.role === 'user' && "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                  )}>
+                    {/* Role Icon */}
+                    {user.role === 'admin' && <Shield className="w-2.5 h-2.5 mr-1" />}
+                    {user.role === 'scholar' && <GraduationCap className="w-2.5 h-2.5 mr-1" />}
+                    {user.role === 'writer' && <PenSquare className="w-2.5 h-2.5 mr-1" />}
+                    {user.role === 'user' && <User className="w-2.5 h-2.5 mr-1" />}
+
+                    {lang === "bn" ? ROLE_LABELS[user.role].bn : ROLE_LABELS[user.role].en}
+                  </span>
+
+                  {/* Email indicator */}
+                  <span className="text-[8px] text-muted-foreground truncate max-w-[80px] opacity-60">
+                    {user.email}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Actions Menu (dots) */}
+              <button className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            </div>
+          </div>
         )}
-        <button onClick={handleLogout}
-          className={cn(
-            "w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
-            collapsed && "justify-center px-0"
-          )}>
-          <LogOut className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span>{tSafe("dashboard.signOut")}</span>}
-        </button>
+
+        {/* Action Buttons Container */}
+        <div className="p-1">
+          {/* Collapse Toggle Button - Only in collapsed mode */}
+          {collapsed && (
+            <button
+              onClick={onToggle}
+              className={cn(
+                "w-full flex items-center justify-center rounded-xl",
+                "text-muted-foreground hover:text-foreground",
+                "bg-sidebar-accent/30 hover:bg-sidebar-accent",
+                "border border-sidebar-border hover:border-sidebar-ring",
+                "transition-all duration-200 group"
+              )}
+              title="Expand sidebar"
+            >
+              <ChevronLeft className="h-4 w-4 rotate-180 transition-transform group-hover:scale-110" />
+            </button>
+          )}
+
+          <div className="flex gap-5">
+            {/* Settings Button */}
+            <button
+              onClick={() => router.push('/dashboard/settings')}
+              className={cn(
+                "w-full flex items-center gap-3 px-2.5 rounded-xl",
+                "text-muted-foreground hover:text-foreground",
+                "bg-sidebar-accent/30 hover:bg-sidebar-accent",
+                "border border-sidebar-border hover:border-sidebar-ring",
+                "transition-all duration-200 group",
+                collapsed && "justify-center px-0"
+              )}
+              title={collapsed ? "Settings" : undefined}>
+              <Settings className={cn(
+                "h-4 w-4 flex-shrink-0 transition-transform group-hover:rotate-90",
+                collapsed ? "mx-auto" : ""
+              )} />
+              {!collapsed && (
+                <span className="flex-1 text-left text-sm font-medium">Settings</span>
+              )}
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className={cn(
+                "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl",
+                "text-muted-foreground hover:text-destructive",
+                "bg-sidebar-accent/30 hover:bg-destructive/10",
+                "border border-sidebar-border hover:border-destructive/30",
+                "transition-all duration-200 group",
+                collapsed && "justify-center px-0"
+              )}
+              title={collapsed ? "Sign out" : undefined}
+            >
+              <LogOut className={cn(
+                "h-4 w-4 flex-shrink-0 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5",
+                collapsed ? "mx-auto" : ""
+              )} />
+              {!collapsed && (
+                <span className="flex-1 text-left text-sm font-medium">Sign out</span>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </motion.aside>
   );

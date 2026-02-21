@@ -943,8 +943,6 @@ const Battles = () => {
         onClose={() => setQuizBattle(null)}
         isBn={isBn}
       />
-
-      <Footer />
     </div>
   );
 };

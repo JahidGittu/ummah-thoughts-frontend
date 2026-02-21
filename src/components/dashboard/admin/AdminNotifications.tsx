@@ -50,7 +50,7 @@ export default function AdminNotifications() {
     i18n.language === "bn" ? NOTIF_TITLES_BN[titleKey] ?? NOTIF_TITLES[titleKey] : NOTIF_TITLES[titleKey];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-primary" />
