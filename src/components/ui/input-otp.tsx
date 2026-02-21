@@ -5,10 +5,10 @@ import { Dot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const InputOTP = React.forwardRef<React.ElementRef<typeof OTPInput>, React.ComponentPropsWithoutRef<typeof OTPInput>>(
-  ({ className, containerClassName, ...props }, ref) => (
+  ({ className, max-w-11/12ClassName, ...props }, ref) => (
     <OTPInput
       ref={ref}
-      containerClassName={cn("flex items-center gap-2 has-[:disabled]:opacity-50", containerClassName)}
+      max-w-11/12ClassName={cn("flex items-center gap-2 has-[:disabled]:opacity-50", max-w-11/12ClassName)}
       className={cn("disabled:cursor-not-allowed", className)}
       {...props}
     />

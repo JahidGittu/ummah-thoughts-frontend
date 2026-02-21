@@ -31,7 +31,7 @@ export const FeaturedTopic = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

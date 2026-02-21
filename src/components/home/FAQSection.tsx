@@ -50,7 +50,7 @@ export const FAQSection = () => {
 
   return (
     <section className="py-24 relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Section Header */}
           <motion.div

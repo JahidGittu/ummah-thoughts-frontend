@@ -130,7 +130,7 @@ export const Navbar = () => {
             : 'bg-transparent'
         )}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
 
             {/* Logo */}
@@ -298,7 +298,7 @@ export const Navbar = () => {
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="lg:hidden bg-background/95 backdrop-blur-lg border-t border-border/50 overflow-hidden"
             >
-              <div className="container mx-auto px-4 py-5 space-y-1">
+              <div className="max-w-11/12 mx-auto px-4 py-5 space-y-1">
                 {/* Mobile navigation links */}
                 {navLinks.map((link, i) => (
                   <motion.div

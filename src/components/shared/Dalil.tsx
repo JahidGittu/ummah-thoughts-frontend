@@ -48,7 +48,7 @@ export const Dalil = ({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('dalil-container', className)}
+      className={cn('dalil-max-w-11/12', className)}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">

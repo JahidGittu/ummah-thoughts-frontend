@@ -61,7 +61,7 @@ export const DailyWisdom = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 via-background to-primary/5" />
       <div className="absolute inset-0 islamic-pattern opacity-20" />
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-3xl mx-auto">
           {/* Section Header */}
           <motion.div

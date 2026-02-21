@@ -78,7 +78,7 @@ export const HeroSection = () => {
         className="absolute bottom-1/3 -left-24 w-48 h-48 border border-secondary/8 rounded-full pointer-events-none"
       />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
 
           {/* Arabic Basmala — spiritual opener */}

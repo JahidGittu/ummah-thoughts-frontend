@@ -52,7 +52,7 @@ export const LiveStatusBar = () => {
 
   return (
     <section className="py-16 border-y border-border">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

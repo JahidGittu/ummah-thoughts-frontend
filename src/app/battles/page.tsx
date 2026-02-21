@@ -545,7 +545,7 @@ const Battles = () => {
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-11/12 mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -595,7 +595,7 @@ const Battles = () => {
 
       {/* Filters */}
       <section className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border-y py-4">
-        <div className="container mx-auto px-4">
+        <div className="max-w-11/12 mx-auto px-4">
           <div className="flex flex-wrap items-center gap-4 justify-center">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
@@ -652,7 +652,7 @@ const Battles = () => {
 
       {/* Main Content */}
       <section className="py-12">
-        <div className="container mx-auto px-4">
+        <div className="max-w-11/12 mx-auto px-4">
           <AnimatePresence mode="wait">
             {viewMode === 'timeline' ? (
               <motion.div

@@ -469,7 +469,7 @@ export default function DashboardSidebar({ collapsed, onToggle }: DashboardSideb
           </div>
         )}
 
-        {/* Action Buttons Container */}
+        {/* Action Buttons max-w-11/12 */}
         <div className="p-1">
           {/* Collapse Toggle Button - Only in collapsed mode */}
           {collapsed && (

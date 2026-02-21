@@ -8,8 +8,6 @@ import { FeaturedCategories } from '@/components/home/FeaturedCategories';
 import { DailyWisdom } from '@/components/home/DailyWisdom';
 import { FAQSection } from '@/components/home/FAQSection';
 import { DownloadableResources } from '@/components/home/DownloadableResources';
-import { LiveStatusBar } from '@/components/home/LiveStatusBar';
-// import { ScholarlySection } from '@/components/home/ScholarlySection';
 
 export default function HomePage() {
   return (
@@ -24,7 +22,6 @@ export default function HomePage() {
       <DailyWisdom />
       <FAQSection />
       <DownloadableResources />
-      <LiveStatusBar />
       {/* <ScholarlySection /> */}
     </>
   );

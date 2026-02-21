@@ -304,7 +304,7 @@ export default function ToolsPage() {
 
         {/* Header */}
         <section className="page-hero border-b border-border/50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
@@ -328,7 +328,7 @@ export default function ToolsPage() {
 
         {/* Search and Filter */}
         <section className="py-4 border-b border-border/50 bg-card/60 backdrop-blur sticky top-16 z-40 shadow-[var(--shadow-xs)]">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -357,7 +357,7 @@ export default function ToolsPage() {
           </div>
         </section>
 
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Tools Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredTools.map((tool, index) => {

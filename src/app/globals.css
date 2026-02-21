@@ -122,7 +122,7 @@
   /* Fonts from Next.js */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   /* Custom font families */
   --font-arabic: 'Amiri', serif;
   --font-display: 'Playfair Display', serif;
@@ -131,39 +131,39 @@
   /* Colors mapping */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  
+
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
-  
+
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
-  
+
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-primary-light: hsl(var(--primary-light));
-  
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
-  
+
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
-  
+
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
-  
+
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
-  
+
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  
+
   /* Extended tokens */
   --color-wisdom-bg: hsl(var(--wisdom-bg));
   --color-gold-light: hsl(var(--gold-light));
   --color-surface-raised: hsl(var(--surface-raised));
   --color-geometric-pattern: hsl(var(--geometric-pattern));
-  
+
   /* Sidebar */
   --color-sidebar: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
@@ -173,14 +173,14 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
-  
+
   /* Charts */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
-  
+
   /* Border Radius */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 0.25rem);
@@ -209,7 +209,7 @@
   --gradient-hero: linear-gradient(170deg, hsl(160 72% 5%) 0%, hsl(160 55% 8%) 100%);
   --gradient-card: linear-gradient(145deg, hsl(160 55% 8%), hsl(160 45% 10%));
   --gradient-primary-subtle: linear-gradient(135deg, hsl(160 48% 44% / 0.08), hsl(160 42% 28% / 0.04));
-  
+
   --shadow-xs: 0 1px 3px hsl(0 0% 0% / 0.25);
   --shadow-soft: 0 4px 16px -4px hsl(0 0% 0% / 0.35);
   --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.45);
@@ -226,6 +226,7 @@
 
   html {
     scroll-behavior: smooth;
+    font-size: 90%;
   }
 
   body {
@@ -237,7 +238,14 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Playfair Display', var(--font-display), serif;
     letter-spacing: -0.025em;
   }
@@ -251,16 +259,16 @@
   ::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.3);
     border-radius: 99px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
   }
@@ -277,11 +285,11 @@
   .font-amiri {
     font-family: 'Amiri', var(--font-arabic), serif;
   }
-  
+
   .font-display {
     font-family: 'Playfair Display', var(--font-display), serif;
   }
-  
+
   .font-body {
     font-family: 'Inter', var(--font-sans), sans-serif;
   }
@@ -312,7 +320,7 @@
   .glow-emerald {
     box-shadow: var(--shadow-glow-emerald);
   }
-  
+
   .glow-gold {
     box-shadow: var(--shadow-glow-gold);
   }
@@ -334,9 +342,9 @@
   /* Shimmer Loading */
   .shimmer {
     background: linear-gradient(90deg,
-      hsl(var(--muted)) 25%,
-      hsl(var(--muted-foreground) / 0.1) 50%,
-      hsl(var(--muted)) 75%);
+        hsl(var(--muted)) 25%,
+        hsl(var(--muted-foreground) / 0.1) 50%,
+        hsl(var(--muted)) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
@@ -346,14 +354,14 @@
     padding-top: 5rem;
     padding-bottom: 5rem;
   }
-  
+
   @media (min-width: 1024px) {
     .section-y {
       padding-top: 7rem;
       padding-bottom: 7rem;
     }
   }
-  
+
   .section-container {
     width: 100%;
     margin-left: auto;
@@ -361,14 +369,14 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
+
   @media (min-width: 640px) {
     .section-container {
       padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .section-container {
       padding-left: 2rem;
@@ -438,8 +446,13 @@
 
   /* Animations */
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   @keyframes fadeIn {
@@ -447,16 +460,18 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
+
   @keyframes slideIn {
     from {
       transform: translateX(-100%);
     }
+
     to {
       transform: translateX(0);
     }
@@ -465,7 +480,7 @@
   .animate-fade-in {
     animation: fadeIn 0.5s ease-in-out;
   }
-  
+
   .animate-slide-in {
     animation: slideIn 0.3s ease-out;
   }
@@ -473,6 +488,7 @@
 
 /* Component styles using @layer components */
 @layer components {
+
   /* ── Islamic Geometric Pattern ── */
   .islamic-pattern {
     background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.06' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3Cpath d='M40 15L65 40L40 65L15 40z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3Cline x1='40' y1='0' x2='40' y2='80'/%3E%3Cline x1='0' y1='40' x2='80' y2='40'/%3E%3C/g%3E%3C/svg%3E");
@@ -507,7 +523,7 @@
     color: hsl(var(--secondary));
   }
 
-  /* ── Dalil Container ── */
+  /* ── Dalil container ── */
   .dalil-container {
     position: relative;
     padding: 1.5rem;

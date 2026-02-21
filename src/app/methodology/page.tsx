@@ -51,7 +51,7 @@ export default function MethodologyPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-16 pt-28">
+        <main className="max-w-11/12 mx-auto px-4 py-16 pt-28">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

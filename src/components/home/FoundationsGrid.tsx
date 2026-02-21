@@ -4,15 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Crown, BookOpen, Landmark, Scale } from 'lucide-react';
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-};
 
 const item = {
   hidden: { opacity: 0, y: 30 },
@@ -59,7 +50,7 @@ export const FoundationsGrid = () => {
 
   return (
     <section className="py-24 relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -80,7 +71,6 @@ export const FoundationsGrid = () => {
 
         {/* Foundations Grid */}
         <motion.div
-          variants={container}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}

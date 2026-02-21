@@ -116,7 +116,7 @@ const Topics = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <section className="page-hero border-b border-border/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -140,7 +140,7 @@ const Topics = () => {
 
       {/* Topics Tree */}
       <section className="py-16 lg:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Left: Topics Navigation */}

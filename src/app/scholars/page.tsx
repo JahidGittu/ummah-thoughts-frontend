@@ -195,7 +195,7 @@ export default function ScholarsPage() {
 
         {/* Header */}
         <section className="page-hero border-b border-border/50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
@@ -249,7 +249,7 @@ export default function ScholarsPage() {
 
         {/* Main Content */}
         <section className="py-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Scholars List */}
               <div className="space-y-4">
@@ -511,7 +511,7 @@ export default function ScholarsPage() {
 
         {/* Scholarly Disclaimer */}
         <section className="py-8 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
             <ScholarDisclaimer />
           </div>
         </section>

@@ -38,7 +38,7 @@ export const Footer = () => {
       {/* Top gradient accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
 
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
+      <div className="relative max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-14">
 
           {/* Brand Block */}

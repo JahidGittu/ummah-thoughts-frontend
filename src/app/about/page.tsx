@@ -102,7 +102,7 @@ const About = () => {
 
       {/* Hero */}
       <section className="page-hero">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -126,7 +126,7 @@ const About = () => {
 
       {/* Mission Quote */}
       <section className="py-16 bg-primary/5 border-y border-border">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.blockquote
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -151,8 +151,8 @@ const About = () => {
 
       {/* Main Sections */}
       <section className="py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto space-y-16">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-11/12 mx-auto space-y-16">
             {sections.map((section, index) => (
               <motion.div
                 key={section.id}
@@ -197,7 +197,7 @@ const About = () => {
 
       {/* Team */}
       <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -237,7 +237,7 @@ const About = () => {
 
       {/* Ways to Participate */}
       <section className="py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -282,7 +282,7 @@ const About = () => {
 
       {/* Contact */}
       <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -412,7 +412,7 @@ const About = () => {
 
       {/* NEW: Review & Correction Policy */}
       <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
           <CorrectionPolicy />
         </div>
       </section>

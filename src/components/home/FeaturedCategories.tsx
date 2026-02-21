@@ -13,14 +13,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
-};
-
 const item = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 },
@@ -86,7 +78,7 @@ export const FeaturedCategories = () => {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -107,7 +99,6 @@ export const FeaturedCategories = () => {
 
         {/* Categories Grid */}
         <motion.div
-          variants={container}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
