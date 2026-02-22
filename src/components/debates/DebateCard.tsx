@@ -51,10 +51,8 @@ export const DebateCard = ({
       )}
       onClick={onView}
     >
-      {/* Gradient accent bar */}
       <div className={cn("h-1.5 w-full bg-gradient-to-r", cfg.bar)} />
 
-      {/* Live pulse overlay */}
       {isLive && (
         <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full z-10">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -63,8 +61,6 @@ export const DebateCard = ({
       )}
 
       <div className="p-6 space-y-5">
-
-        {/* Topic + format pills */}
         <div className="flex items-center gap-2 flex-wrap pr-16">
           <span className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full border", cfg.badge)}>
             {cfg.label}
@@ -78,7 +74,6 @@ export const DebateCard = ({
           </span>
         </div>
 
-        {/* Title */}
         <div className="space-y-1.5">
           <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-200 line-clamp-2">
             {title}
@@ -88,21 +83,15 @@ export const DebateCard = ({
           )}
         </div>
 
-        {/* Scholars VS panel */}
         <div className="relative flex items-stretch gap-0 rounded-2xl overflow-hidden border border-border">
-          {/* Position A */}
           <div className="flex-1 bg-primary/5 px-4 py-3 space-y-0.5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Position A</p>
             <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">{participants.positionA.name}</p>
             <p className="text-[11px] text-muted-foreground">{participants.positionA.role}</p>
           </div>
-
-          {/* VS divider */}
           <div className="flex items-center justify-center w-9 bg-muted flex-shrink-0">
             <Swords className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-
-          {/* Position B */}
           <div className="flex-1 bg-secondary/5 px-4 py-3 space-y-0.5 text-right">
             <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">Position B</p>
             <p className="text-sm font-semibold text-foreground leading-tight line-clamp-1">{participants.positionB.name}</p>
@@ -110,7 +99,6 @@ export const DebateCard = ({
           </div>
         </div>
 
-        {/* Meta row */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
             {scheduledDate && (
@@ -137,7 +125,6 @@ export const DebateCard = ({
           </div>
         </div>
 
-        {/* CTA Button */}
         <Button
           className={cn(
             "w-full rounded-xl font-semibold text-sm gap-2 transition-all",

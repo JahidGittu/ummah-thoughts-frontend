@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +15,11 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface DebatePosition {
   scholar: { name: string; title: string; avatar?: string };
@@ -63,26 +68,27 @@ const buildChatTurns = (posA: DebatePosition, posB: DebatePosition) => [
 
 const REACTIONS = ["👍", "🤔", "💡", "❤️", "🔥", "📖"];
 
-// ── Main Component ───────────────────────────────────────────
 export const DebatePanel = ({
   title, titleAr, topic,
   positionA, positionB,
   agreementPoints, disagreementPoints,
   conclusion, status, clarityVotes,
 }: DebatePanelProps) => {
+  const { user } = useAuth();
+  const router = useRouter();
+  const isAuthenticated = !!user;
+
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [bookmarked, setBookmarked] = useState(false);
   const [myVote, setMyVote] = useState<"A" | "B" | null>(null);
   const [expandedEvidence, setExpandedEvidence] = useState<Record<number, boolean>>({});
   const [hoveredTurn, setHoveredTurn] = useState<number | null>(null);
-  // reactions: { [turnIdx]: { [emoji]: count } }
   const [reactions, setReactions] = useState<Record<number, Record<string, number>>>({});
-  // myReactions: { [turnIdx]: emoji } — one reaction per turn per user
   const [myReactions, setMyReactions] = useState<Record<number, string>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const totalVotes = clarityVotes.positionA + clarityVotes.positionB;
-  const pctA = Math.round((clarityVotes.positionA / totalVotes) * 100);
+  const pctA = totalVotes ? Math.round((clarityVotes.positionA / totalVotes) * 100) : 0;
   const pctB = 100 - pctA;
   const chatTurns = buildChatTurns(positionA, positionB);
 
@@ -96,6 +102,10 @@ export const DebatePanel = ({
     setExpandedEvidence(prev => ({ ...prev, [idx]: !prev[idx] }));
 
   const handleReact = (turnIdx: number, emoji: string) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
     const prev = myReactions[turnIdx];
     setReactions(r => {
       const turnR = { ...(r[turnIdx] || {}) };
@@ -107,10 +117,18 @@ export const DebatePanel = ({
     setHoveredTurn(null);
   };
 
+  const handleVote = (side: "A" | "B") => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    if (myVote) return;
+    setMyVote(side);
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-
-      {/* ─── Hero Header ─────────────────────────────────── */}
+      {/* Hero Header */}
       <div className="relative rounded-3xl overflow-hidden border border-border bg-gradient-to-br from-card to-muted/40 p-8 md:p-10">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23064E3B' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
@@ -161,7 +179,7 @@ export const DebatePanel = ({
         </div>
       </div>
 
-      {/* ─── Action Bar + Tabs ───────────────────────────── */}
+      {/* Action Bar + Tabs */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setBookmarked(!bookmarked)}
@@ -185,13 +203,10 @@ export const DebatePanel = ({
         </div>
       </div>
 
-      {/* ─── Tab Content ─────────────────────────────────── */}
+      {/* Tab Content */}
       <AnimatePresence mode="wait">
-
-        {/* ── CHAT THREAD ── */}
         {activeTab === "chat" && (
           <motion.div key="chat" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
-
             {/* Scholar header strip */}
             <div className="grid grid-cols-2 gap-4 mb-5 sticky top-20 z-10">
               <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-2xl px-4 py-3 backdrop-blur-sm">
@@ -210,7 +225,7 @@ export const DebatePanel = ({
               </div>
             </div>
 
-            {/* ── Chat bubbles ── */}
+            {/* Chat bubbles */}
             <div className="space-y-4">
               {chatTurns.map((turn, idx) => {
                 const isA = turn.side === "A";
@@ -248,9 +263,9 @@ export const DebatePanel = ({
                           )}
                         </div>
 
-                        {/* Hover reaction picker */}
+                        {/* Hover reaction picker - only for authenticated users */}
                         <AnimatePresence>
-                          {hoveredTurn === idx && (
+                          {isAuthenticated && hoveredTurn === idx && (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.85, y: 6 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -276,7 +291,7 @@ export const DebatePanel = ({
                         </AnimatePresence>
                       </div>
 
-                      {/* Reaction counts below bubble */}
+                      {/* Reaction counts below bubble - always visible */}
                       {hasAnyReaction && (
                         <motion.div
                           initial={{ opacity: 0, y: 4 }}
@@ -288,12 +303,13 @@ export const DebatePanel = ({
                             .map(([emoji, count]) => (
                               <button
                                 key={emoji}
-                                onClick={() => handleReact(idx, emoji)}
+                                onClick={() => isAuthenticated && handleReact(idx, emoji)}
                                 className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5 border transition-all ${
                                   myEmoji === emoji
                                     ? "bg-primary/15 border-primary/30 text-primary"
                                     : "bg-card border-border text-muted-foreground hover:border-primary/30"
                                 }`}
+                                disabled={!isAuthenticated}
                               >
                                 <span>{emoji}</span>
                                 <span className="font-medium">{count}</span>
@@ -302,6 +318,7 @@ export const DebatePanel = ({
                         </motion.div>
                       )}
 
+                      {/* Evidence section */}
                       {hasEvidence && (
                         <div className="w-full space-y-1.5">
                           <button onClick={() => toggleEvidence(idx)}
@@ -329,7 +346,7 @@ export const DebatePanel = ({
                                         <span className="text-xs text-muted-foreground">— {ev.reference}</span>
                                       </div>
                                       {ev.arabic && <p className="text-lg leading-relaxed font-amiri text-foreground text-right" dir="rtl">{ev.arabic}</p>}
-                                      {ev.translation && <p className="text-sm text-muted-foreground italic">"{ev.translation}"</p>}
+                                      {ev.translation && <p className="text-sm text-muted-foreground italic">&quot;{ev.translation}&quot;</p>}
                                     </div>
                                   );
                                 })}
@@ -347,37 +364,49 @@ export const DebatePanel = ({
               })}
             </div>
 
-
             <div ref={chatEndRef} />
 
-            {/* Vote strip — only for regular users */}
+            {/* Vote strip - only for authenticated users */}
             {status === "active" && (
-              <div className="mt-5 rounded-2xl border border-border bg-card p-5">
-                <p className="text-sm font-semibold text-foreground text-center mb-4">
-                  After reading the debate thread, which argument did you find clearer?
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant={myVote === "A" ? "default" : "outline"} onClick={() => setMyVote("A")}
-                    disabled={!!myVote && myVote !== "A"} className="rounded-xl h-12">
-                    <Star className="h-4 w-4 mr-2" />
-                    {myVote === "A" ? "✓ Voted A" : "Position A is clearer"}
-                  </Button>
-                  <Button variant={myVote === "B" ? "default" : "outline"} onClick={() => setMyVote("B")}
-                    disabled={!!myVote && myVote !== "B"} className="rounded-xl h-12">
-                    <Star className="h-4 w-4 mr-2" />
-                    {myVote === "B" ? "✓ Voted B" : "Position B is clearer"}
-                  </Button>
-                </div>
-                {myVote && (
-                  <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                    className="text-xs text-center text-muted-foreground mt-3">
-                    ✓ Your vote has been recorded — thank you for participating in scholarly discourse.
-                  </motion.p>
+              <>
+                {isAuthenticated ? (
+                  <div className="mt-5 rounded-2xl border border-border bg-card p-5">
+                    <p className="text-sm font-semibold text-foreground text-center mb-4">
+                      After reading the debate thread, which argument did you find clearer?
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button variant={myVote === "A" ? "default" : "outline"} onClick={() => handleVote("A")}
+                        disabled={!!myVote && myVote !== "A"} className="rounded-xl h-12">
+                        <Star className="h-4 w-4 mr-2" />
+                        {myVote === "A" ? "✓ Voted A" : "Position A is clearer"}
+                      </Button>
+                      <Button variant={myVote === "B" ? "default" : "outline"} onClick={() => handleVote("B")}
+                        disabled={!!myVote && myVote !== "B"} className="rounded-xl h-12">
+                        <Star className="h-4 w-4 mr-2" />
+                        {myVote === "B" ? "✓ Voted B" : "Position B is clearer"}
+                      </Button>
+                    </div>
+                    {myVote && (
+                      <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-center text-muted-foreground mt-3">
+                        ✓ Your vote has been recorded — thank you for participating in scholarly discourse.
+                      </motion.p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center">
+                    <Lock className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      <button onClick={() => router.push("/login")} className="text-primary underline font-medium">
+                        Sign in
+                      </button> to vote on clarity and react to arguments.
+                    </p>
+                  </div>
                 )}
-              </div>
+              </>
             )}
 
-            {/* Adab notice */}
+            {/* Adab notice - always visible */}
             <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-6 py-4 flex items-start gap-3">
               <Scale className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -389,7 +418,7 @@ export const DebatePanel = ({
           </motion.div>
         )}
 
-        {/* ── COMPARISON ── */}
+        {/* Comparison tab - unchanged */}
         {activeTab === "comparison" && (
           <motion.div key="comparison" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
             className="grid md:grid-cols-2 gap-6">
@@ -426,7 +455,7 @@ export const DebatePanel = ({
           </motion.div>
         )}
 
-        {/* ── CONCLUSION ── */}
+        {/* Conclusion tab - unchanged */}
         {activeTab === "conclusion" && (
           <motion.div key="conclusion" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <div className="rounded-3xl border border-border bg-card overflow-hidden">
@@ -441,9 +470,9 @@ export const DebatePanel = ({
                     <p className="text-muted-foreground leading-relaxed text-base">{conclusion}</p>
                     <div className="bg-primary/5 border border-primary/15 rounded-2xl p-6">
                       <p className="text-sm text-muted-foreground italic leading-relaxed">
-                        "This conclusion represents the synthesis of both positions and does not necessarily
+                        &quot;This conclusion represents the synthesis of both positions and does not necessarily
                         reflect the official stance of Ummah Thoughts. Readers are encouraged to study both
-                        positions thoroughly."
+                        positions thoroughly.&quot;
                       </p>
                     </div>
                   </div>
@@ -460,7 +489,6 @@ export const DebatePanel = ({
             </div>
           </motion.div>
         )}
-
       </AnimatePresence>
     </div>
   );

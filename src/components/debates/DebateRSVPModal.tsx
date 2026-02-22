@@ -1,9 +1,13 @@
+"use client";
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, Clock, Users, MapPin, Video, BookOpen, CheckCircle2, Bell, GraduationCap, Award } from "lucide-react";
+import { X, Calendar, Clock, Users, MapPin, Video, BookOpen, CheckCircle2, Bell, GraduationCap, Award, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface Participant {
   name: string;
@@ -54,6 +58,8 @@ const EXTENDED_BIOS: Record<string, Participant> = {
 };
 
 export function DebateRSVPModal({ isOpen, onClose, debate }: DebateRSVPModalProps) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [rsvped, setRsvped] = useState(false);
   const [attendees, setAttendees] = useState(45);
   const [notifyMe, setNotifyMe] = useState(false);
@@ -77,10 +83,24 @@ export function DebateRSVPModal({ isOpen, onClose, debate }: DebateRSVPModalProp
   };
 
   const handleRSVP = () => {
+    if (!user) {
+      router.push("/login");
+      onClose();
+      return;
+    }
     if (!rsvped) {
       setRsvped(true);
       setAttendees(v => v + 1);
     }
+  };
+
+  const handleNotify = () => {
+    if (!user) {
+      router.push("/login");
+      onClose();
+      return;
+    }
+    setNotifyMe(!notifyMe);
   };
 
   return (
@@ -212,22 +232,38 @@ export function DebateRSVPModal({ isOpen, onClose, debate }: DebateRSVPModalProp
                       className="w-full rounded-xl gap-2 h-11 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm"
                       onClick={handleRSVP}
                     >
-                      <Users className="h-4 w-4" /> Confirm Attendance ({attendees} registered)
+                      {!user ? (
+                        <>
+                          <Lock className="h-4 w-4" /> Sign in to Register
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-4 w-4" /> Confirm Attendance ({attendees} registered)
+                        </>
+                      )}
                     </Button>
                   )}
 
-                  <button
-                    onClick={() => setNotifyMe(v => !v)}
-                    className={cn(
-                      "w-full flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all",
-                      notifyMe
-                        ? "border-primary/30 bg-primary/5 text-primary"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <Bell className={cn("h-4 w-4", notifyMe && "fill-current")} />
-                    {notifyMe ? "✓ Reminder set" : "Notify me 30 min before"}
-                  </button>
+                  {user ? (
+                    <button
+                      onClick={handleNotify}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all",
+                        notifyMe
+                          ? "border-primary/30 bg-primary/5 text-primary"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Bell className={cn("h-4 w-4", notifyMe && "fill-current")} />
+                      {notifyMe ? "✓ Reminder set" : "Notify me 30 min before"}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-center text-muted-foreground">
+                      <button onClick={() => router.push("/login")} className="text-primary underline">
+                        Sign in
+                      </button> to set reminders
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

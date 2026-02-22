@@ -1,11 +1,18 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { Scale, MessageSquare, BookOpen, Users, TrendingUp, Star, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Scale, MessageSquare, BookOpen, Users, TrendingUp, Star, Clock, CheckCircle2, AlertCircle, GraduationCap } from "lucide-react";
 
 export default function ScholarDashboardHome() {
   const { user } = useAuth();
   const { t } = useTranslation();
+
+  // Redirect if not scholar (handled in parent)
+  if (!user || user.role !== "scholar") {
+    return null;
+  }
 
   const stats = [
     { label: t("dashboard.recentFatwas", { defaultValue: "Fatwas Issued" }), value: "124", icon: Scale, trend: "+8 " + t("common.thisMonth", { defaultValue: "this month" }), color: "text-primary bg-primary/10" },
@@ -27,21 +34,43 @@ export default function ScholarDashboardHome() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-3xl p-6">
-        <p className="text-sm text-muted-foreground mb-1">{t("dashboard.assalamu")}</p>
-        <h2 className="font-display text-2xl font-bold text-foreground">{user?.name}</h2>
-        <p className="text-muted-foreground text-sm mt-1">{user?.specialization} · {t("dashboard.dashboard_nav.scholarship")}</p>
+      {/* Welcome Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: 16 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-3xl p-6"
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">
+              {t("dashboard.assalamu", { defaultValue: "Assalamu Alaikum" })}
+            </p>
+            <h2 className="font-display text-2xl font-bold text-foreground">{user?.name}</h2>
+            <p className="text-muted-foreground text-sm mt-1">
+              {user?.specialization || "Scholar"} · {t("dashboard.dashboard_nav.scholarship")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full">
+            <GraduationCap className="h-4 w-4 text-primary" />
+            <span className="text-xs font-medium text-primary">Verified Scholar</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2 mt-3">
-          <Star className="h-4 w-4 text-secondary" />
+          <Star className="h-4 w-4 text-secondary fill-secondary" />
           <span className="text-sm font-medium text-foreground">{t("dashboard.verifiedScholar")}</span>
         </div>
       </motion.div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow">
+          <motion.div 
+            key={s.label} 
+            initial={{ opacity: 0, y: 16 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: i * 0.08 }}
+            className="bg-card border border-border rounded-2xl p-5 hover:shadow-md transition-shadow"
+          >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
               <s.icon className="h-5 w-5" />
             </div>
@@ -52,9 +81,15 @@ export default function ScholarDashboardHome() {
         ))}
       </div>
 
+      {/* Two Column Layout */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        {/* Recent Fatwas */}
+        <motion.div 
+          initial={{ opacity: 0, y: 16 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.3 }}
+          className="bg-card border border-border rounded-2xl p-6 space-y-4"
+        >
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground">{t("dashboard.recentFatwas")}</h3>
             <button className="text-xs text-primary hover:underline">{t("dashboard.viewAll")}</button>
@@ -78,8 +113,13 @@ export default function ScholarDashboardHome() {
           </ul>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="bg-card border border-border rounded-2xl p-6 space-y-4">
+        {/* Upcoming Debates */}
+        <motion.div 
+          initial={{ opacity: 0, y: 16 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.35 }}
+          className="bg-card border border-border rounded-2xl p-6 space-y-4"
+        >
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground">{t("dashboard.upcomingDebates")}</h3>
             <button className="text-xs text-primary hover:underline">{t("dashboard.schedule")}</button>
@@ -96,6 +136,8 @@ export default function ScholarDashboardHome() {
               </li>
             ))}
           </ul>
+          
+          {/* Engagement Card */}
           <div className="rounded-xl bg-muted/50 p-4 flex items-center gap-3">
             <TrendingUp className="h-5 w-5 text-primary" />
             <div>
