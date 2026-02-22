@@ -64,10 +64,9 @@ export function AdminActivityProvider({ children }: { children: React.ReactNode 
       time: new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       ip: "192.168.1.1",
     };
-
     setSessionLogs(prev => [entry, ...prev]);
 
-    // Also push a notification for key actions
+    // Push a notification for key actions
     if (["role_approve", "role_reject", "user_suspend", "content_delete"].includes(action)) {
       const notifType: NotifEntry["type"] =
         action === "user_suspend" ? "error"

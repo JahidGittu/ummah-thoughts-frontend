@@ -34,6 +34,16 @@ export interface RegisterData {
 
 // Mock users database
 const MOCK_USERS: Record<string, AuthUser & { password: string }> = {
+  "user@ummahthoughts.com": {
+    id: "u1",
+    name: "Omar Abdullah",
+    email: "user@ummahthoughts.com",
+    password: "demo1234",
+    role: "user",
+    avatar: "O",
+    joinedAt: "2024-03-10",
+    bio: "Enthusiastic learner of Islamic sciences.",
+  },
   "scholar@ummahthoughts.com": {
     id: "s1",
     name: "Dr. Ahmad Al-Rashid",
@@ -44,16 +54,6 @@ const MOCK_USERS: Record<string, AuthUser & { password: string }> = {
     joinedAt: "2023-01-15",
     specialization: "Fiqh al-Siyasah",
     bio: "Professor of Islamic Political Thought with 20 years of experience.",
-  },
-  "user@ummahthoughts.com": {
-    id: "u1",
-    name: "Omar Abdullah",
-    email: "user@ummahthoughts.com",
-    password: "demo1234",
-    role: "user",
-    avatar: "O",
-    joinedAt: "2024-03-10",
-    bio: "Enthusiastic learner of Islamic sciences.",
   },
   "writer@ummahthoughts.com": {
     id: "w1",
