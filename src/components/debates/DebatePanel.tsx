@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,6 +77,7 @@ export const DebatePanel = ({
   const { user } = useAuth();
   const router = useRouter();
   const isAuthenticated = !!user;
+  const tablistId = useId();
 
   const [activeTab, setActiveTab] = useState<Tab>("chat");
   const [bookmarked, setBookmarked] = useState(false);
@@ -101,10 +102,10 @@ export const DebatePanel = ({
     }
   }, [activeTab]);
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "chat", label: "💬 Debate Thread" },
-    { key: "comparison", label: "⚖️ Comparison" },
-    { key: "conclusion", label: "📋 Conclusion" },
+  const tabs: { key: Tab; label: string; ariaLabel: string }[] = [
+    { key: "chat", label: "💬 Debate Thread", ariaLabel: "Debate Thread" },
+    { key: "comparison", label: "⚖️ Comparison", ariaLabel: "Comparison of positions" },
+    { key: "conclusion", label: "📋 Conclusion", ariaLabel: "Scholarly Conclusion" },
   ];
 
   const toggleEvidence = (idx: number) =>
@@ -191,20 +192,43 @@ export const DebatePanel = ({
       {/* Action Bar + Tabs */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setBookmarked(!bookmarked)}
-            className={bookmarked ? "text-primary border-primary/40" : ""}>
-            <Bookmark className={`h-4 w-4 mr-1.5 ${bookmarked ? "fill-current" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBookmarked(!bookmarked)}
+            className={bookmarked ? "text-primary border-primary/40" : ""}
+            aria-label={bookmarked ? "Remove bookmark" : "Bookmark this debate"}
+            aria-pressed={bookmarked}
+          >
+            <Bookmark className={`h-4 w-4 mr-1.5 ${bookmarked ? "fill-current" : ""}`} aria-hidden="true" />
             {bookmarked ? "Bookmarked" : "Bookmark"}
           </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-1.5" /> Share
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Share this debate"
+          >
+            <Share2 className="h-4 w-4 mr-1.5" aria-hidden="true" /> Share
           </Button>
         </div>
-        <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+        <div
+          role="tablist"
+          id={tablistId}
+          aria-label="Debate view tabs"
+          className="flex items-center gap-1 bg-muted rounded-xl p-1"
+        >
           {tabs.map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === t.key ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}>
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={activeTab === t.key}
+              aria-controls={`debate-panel-${t.key}`}
+              id={`debate-tab-${t.key}`}
+              onClick={() => setActiveTab(t.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${activeTab === t.key ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              aria-label={t.ariaLabel}
+            >
               {t.label}
             </button>
           ))}
@@ -214,7 +238,13 @@ export const DebatePanel = ({
       {/* Tab Content */}
       <AnimatePresence mode="wait">
         {activeTab === "chat" && (
-          <motion.div key="chat" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+          <motion.div
+            key="chat"
+            role="tabpanel"
+            id="debate-panel-chat"
+            aria-labelledby="debate-tab-chat"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
+          >
             {/* Scholar header strip */}
             <div className="grid grid-cols-2 gap-4 mb-5 sticky top-20 z-10">
               <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-2xl px-4 py-3 backdrop-blur-sm">
@@ -279,16 +309,25 @@ export const DebatePanel = ({
                               className={`absolute -top-11 z-20 flex items-center gap-1 bg-card border border-border rounded-2xl px-2.5 py-1.5 shadow-lg ${isA ? "left-0" : "right-0"
                                 }`}
                             >
-                              {REACTIONS.map(emoji => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => handleReact(idx, emoji)}
-                                  className={`text-lg w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-125 active:scale-95 ${myEmoji === emoji ? "bg-primary/15 ring-1 ring-primary/30" : "hover:bg-muted"
-                                    }`}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
+                              {REACTIONS.map(emoji => {
+                                const emojiNames: Record<string, string> = {
+                                  "👍": "Thumbs up", "🤔": "Thinking", "💡": "Insightful",
+                                  "❤️": "Heart", "🔥": "Fire", "📖": "Reading"
+                                };
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handleReact(idx, emoji)}
+                                    aria-label={`React with ${emojiNames[emoji] ?? emoji}${myEmoji === emoji ? " (active)" : ""}`}
+                                    aria-pressed={myEmoji === emoji}
+                                    title={emojiNames[emoji] ?? emoji}
+                                    className={`text-lg w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-125 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${myEmoji === emoji ? "bg-primary/15 ring-1 ring-primary/30" : "hover:bg-muted"
+                                      }`}
+                                  >
+                                    <span aria-hidden="true">{emoji}</span>
+                                  </button>
+                                );
+                              })}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -415,8 +454,14 @@ export const DebatePanel = ({
         )}
 
         {activeTab === "comparison" && (
-          <motion.div key="comparison" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
-            className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            key="comparison"
+            role="tabpanel"
+            id="debate-panel-comparison"
+            aria-labelledby="debate-tab-comparison"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
+            className="grid md:grid-cols-2 gap-6"
+          >
             <div className="rounded-3xl border border-primary/20 bg-card overflow-hidden">
               <div className="bg-primary/5 px-7 py-5 border-b border-primary/10">
                 <h3 className="font-bold text-foreground flex items-center gap-2">
@@ -451,7 +496,13 @@ export const DebatePanel = ({
         )}
 
         {activeTab === "conclusion" && (
-          <motion.div key="conclusion" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
+          <motion.div
+            key="conclusion"
+            role="tabpanel"
+            id="debate-panel-conclusion"
+            aria-labelledby="debate-tab-conclusion"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
+          >
             <div className="rounded-3xl border border-border bg-card overflow-hidden">
               <div className="bg-primary/5 px-8 py-6 border-b border-primary/10">
                 <h3 className="font-bold text-foreground flex items-center gap-2 text-lg">

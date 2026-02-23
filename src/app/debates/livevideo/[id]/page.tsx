@@ -39,27 +39,28 @@ export default function LiveVideoDebatePage() {
   useEffect(() => {
     setMounted(true);
 
-    // Disable native browser scroll restoration for this page
+    // Disable browser scroll restoration to prevent auto-scroll
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
     const scrollToTop = () => {
       window.scrollTo(0, 0);
-      document.documentElement.scrollTo(0, 0);
-      document.body.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     };
 
-    requestAnimationFrame(() => {
-      scrollToTop();
-      setTimeout(scrollToTop, 50);
-      setTimeout(scrollToTop, 200);
-    });
+    // Scroll to top immediately and multiple times to ensure it sticks
+    scrollToTop();
+    const timer1 = setTimeout(scrollToTop, 0);
+    const timer2 = setTimeout(scrollToTop, 50);
+    const timer3 = setTimeout(scrollToTop, 100);
 
     return () => {
-      if ("scrollRestoration" in window.history) {
-        window.history.scrollRestoration = "auto";
-      }
+      // Clear timers
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
     };
   }, []);
 

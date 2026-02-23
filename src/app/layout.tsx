@@ -90,12 +90,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html 
-      lang="en" 
+    <html
+      lang="en"
       dir="ltr"
       className={`${inter.variable} ${playfair.variable} ${amiri.variable}`}
     >
       <body className="min-h-screen bg-background font-body antialiased">
+        {/* Skip to main content — WCAG 2.4.1 Bypass Blocks */}
+        <a href="#main-content" className="skip-nav">
+          Skip to main content
+        </a>
         <Providers>
           <LayoutManager>
             {children}

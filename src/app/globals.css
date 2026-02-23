@@ -224,6 +224,45 @@
     border-color: hsl(var(--border));
   }
 
+  /* ── Global focus-visible ring (WCAG 2.4.7 / 2.4.11) ── */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Remove default outline only when focus-visible is supported */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Skip to main content link (screen readers & keyboard) */
+  .skip-nav {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .skip-nav:focus-visible {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 9999;
+    width: auto;
+    height: auto;
+    padding: 0.75rem 1.5rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    outline: none;
+    box-shadow: 0 4px 16px hsl(var(--primary) / 0.35);
+  }
+
   html {
     scroll-behavior: smooth;
     font-size: 90%;
@@ -484,152 +523,177 @@
   .animate-slide-in {
     animation: slideIn 0.3s ease-out;
   }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
+  }
+
+  /* Screen reader only text */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Component styles using @layer components */
+  @layer components {
+
+    /* ── Islamic Geometric Pattern ── */
+    .islamic-pattern {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.06' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3Cpath d='M40 15L65 40L40 65L15 40z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3Cline x1='40' y1='0' x2='40' y2='80'/%3E%3Cline x1='0' y1='40' x2='80' y2='40'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 80px 80px;
+    }
+
+    .islamic-pattern-sm {
+      background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.05' stroke-width='0.6'%3E%3Cpath d='M20 0L40 20L20 40L0 20z'/%3E%3Ccircle cx='20' cy='20' r='7'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 40px 40px;
+    }
+
+    /* ── Wisdom/Quote Block ── */
+    .wisdom-block {
+      position: relative;
+      padding: 1.75rem;
+      border-radius: 1rem;
+      background: hsl(var(--wisdom-bg));
+      border-left: 3px solid hsl(var(--secondary));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .wisdom-block::before {
+      content: '\201C';
+      position: absolute;
+      top: -0.25rem;
+      left: 1.25rem;
+      font-size: 4.5rem;
+      line-height: 1;
+      opacity: 0.15;
+      pointer-events: none;
+      font-family: 'Playfair Display', var(--font-display), serif;
+      color: hsl(var(--secondary));
+    }
+
+    /* ── Dalil container ── */
+    .dalil-container {
+      position: relative;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid;
+      border-color: hsl(var(--primary) / 0.18);
+      background: var(--gradient-card);
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* ── Analogy Card ── */
+    .analogy-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      padding: 1.75rem;
+      background: hsl(var(--card));
+      box-shadow: var(--shadow-card);
+    }
+
+    .analogy-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0L80 40L40 80L0 40z' fill='none' stroke='%23064E3B' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='15' fill='none' stroke='%23064E3B' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 40px 40px;
+    }
+
+    /* ── Category Cards ── */
+    .category-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: all 0.3s;
+      background: hsl(var(--card));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .category-card:hover {
+      box-shadow: var(--shadow-elevated);
+      transform: translateY(-5px);
+    }
+
+    .category-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0.125rem;
+      transition: transform 0.3s;
+      transform-origin: left;
+      transform: scaleX(0);
+      background: var(--gradient-emerald);
+    }
+
+    .category-card:hover::after {
+      transform: scaleX(1);
+    }
+
+    /* ── Premium Card ── */
+    .premium-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid;
+      transition: all 0.3s;
+      background: var(--gradient-card);
+      border-color: hsl(var(--border));
+      box-shadow: var(--shadow-card);
+    }
+
+    .premium-card:hover {
+      box-shadow: var(--shadow-elevated);
+      border-color: hsl(var(--primary) / 0.2);
+      transform: translateY(-3px);
+    }
+
+    /* ── Section Hero Banner ── */
+    .page-hero {
+      position: relative;
+      overflow: hidden;
+      padding-top: 8rem;
+      padding-bottom: 4rem;
+      background: var(--gradient-hero);
+    }
+
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.04' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 80px 80px;
+    }
+
+    /* ── Glow Ring Decoration ── */
+    .glow-ring {
+      position: absolute;
+      border-radius: 9999px;
+      pointer-events: none;
+      background: radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%);
+    }
+  }
+
 }
-
-/* Component styles using @layer components */
-@layer components {
-
-  /* ── Islamic Geometric Pattern ── */
-  .islamic-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.06' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3Cpath d='M40 15L65 40L40 65L15 40z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3Cline x1='40' y1='0' x2='40' y2='80'/%3E%3Cline x1='0' y1='40' x2='80' y2='40'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 80px 80px;
-  }
-
-  .islamic-pattern-sm {
-    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.05' stroke-width='0.6'%3E%3Cpath d='M20 0L40 20L20 40L0 20z'/%3E%3Ccircle cx='20' cy='20' r='7'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 40px 40px;
-  }
-
-  /* ── Wisdom/Quote Block ── */
-  .wisdom-block {
-    position: relative;
-    padding: 1.75rem;
-    border-radius: 1rem;
-    background: hsl(var(--wisdom-bg));
-    border-left: 3px solid hsl(var(--secondary));
-    box-shadow: var(--shadow-soft);
-  }
-
-  .wisdom-block::before {
-    content: '\201C';
-    position: absolute;
-    top: -0.25rem;
-    left: 1.25rem;
-    font-size: 4.5rem;
-    line-height: 1;
-    opacity: 0.15;
-    pointer-events: none;
-    font-family: 'Playfair Display', var(--font-display), serif;
-    color: hsl(var(--secondary));
-  }
-
-  /* ── Dalil container ── */
-  .dalil-container {
-    position: relative;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    border: 1px solid;
-    border-color: hsl(var(--primary) / 0.18);
-    background: var(--gradient-card);
-    box-shadow: var(--shadow-soft);
-  }
-
-  /* ── Analogy Card ── */
-  .analogy-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1rem;
-    padding: 1.75rem;
-    background: hsl(var(--card));
-    box-shadow: var(--shadow-card);
-  }
-
-  .analogy-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0.04;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0L80 40L40 80L0 40z' fill='none' stroke='%23064E3B' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='15' fill='none' stroke='%23064E3B' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: 40px 40px;
-  }
-
-  /* ── Category Cards ── */
-  .category-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    transition: all 0.3s;
-    background: hsl(var(--card));
-    box-shadow: var(--shadow-soft);
-  }
-
-  .category-card:hover {
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-5px);
-  }
-
-  .category-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 0.125rem;
-    transition: transform 0.3s;
-    transform-origin: left;
-    transform: scaleX(0);
-    background: var(--gradient-emerald);
-  }
-
-  .category-card:hover::after {
-    transform: scaleX(1);
-  }
-
-  /* ── Premium Card ── */
-  .premium-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1rem;
-    border: 1px solid;
-    transition: all 0.3s;
-    background: var(--gradient-card);
-    border-color: hsl(var(--border));
-    box-shadow: var(--shadow-card);
-  }
-
-  .premium-card:hover {
-    box-shadow: var(--shadow-elevated);
-    border-color: hsl(var(--primary) / 0.2);
-    transform: translateY(-3px);
-  }
-
-  /* ── Section Hero Banner ── */
-  .page-hero {
-    position: relative;
-    overflow: hidden;
-    padding-top: 8rem;
-    padding-bottom: 4rem;
-    background: var(--gradient-hero);
-  }
-
-  .page-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23064E3B' stroke-opacity='0.04' stroke-width='0.8'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3Ccircle cx='40' cy='40' r='12'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 80px 80px;
-  }
-
-  /* ── Glow Ring Decoration ── */
-  .glow-ring {
-    position: absolute;
-    border-radius: 9999px;
-    pointer-events: none;
-    background: radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%);
-  }
-}
-
-/* Remove Vite-specific styles that aren't needed in Next.js */

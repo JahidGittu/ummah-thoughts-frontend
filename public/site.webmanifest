@@ -1,0 +1,42 @@
+{
+  "name": "Ummah Thoughts - Islamic Knowledge Platform",
+  "short_name": "Ummah Thoughts",
+  "description": "A comprehensive Islamic knowledge platform for debates, discussions, and scholarly exchange",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0a3224",
+  "background_color": "#f5f8f5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": [
+    "education",
+    "reference"
+  ],
+  "shortcuts": [
+    {
+      "name": "View Debates",
+      "short_name": "Debates",
+      "description": "Access the debates section",
+      "url": "/debates"
+    },
+    {
+      "name": "View Topics",
+      "short_name": "Topics",
+      "description": "Browse Islamic topics",
+      "url": "/topics"
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your dashboard",
+      "url": "/dashboard"
+    }
+  ]
+}
