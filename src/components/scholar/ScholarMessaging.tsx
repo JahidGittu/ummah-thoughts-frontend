@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -185,7 +184,7 @@ export const ScholarMessaging = () => {
                               <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                                 <User className="h-3 w-3 text-primary" />
                               </div>
-                              <span className="text-sm font-medium text-primary">Scholar's Response</span>
+                              <span className="text-sm font-medium text-primary">Scholar&apos;s Response</span>
                               <span className="text-xs text-muted-foreground">• {q.answeredAt}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">{q.answer}</p>
@@ -259,7 +258,10 @@ export const ScholarMessaging = () => {
                           {oh.time}
                         </p>
                       </div>
-                      <Button className="w-full" variant={oh.slotsAvailable <= 3 ? "hero" : "outline"}>
+                      <Button
+                        className="w-full"
+                        variant={oh.slotsAvailable <= 3 ? "default" : "outline"}
+                      >
                         Reserve Slot
                       </Button>
                     </CardContent>
