@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,22 +48,22 @@ interface DebatePanelProps {
 }
 
 const evidenceIcons = {
-  quran:    { icon: "📖", label: "Quran",     color: "bg-primary/10 text-primary border-primary/20" },
-  hadith:   { icon: "📜", label: "Hadith",    color: "bg-secondary/10 text-secondary border-secondary/20" },
-  ijma:     { icon: "🤝", label: "Ijma",      color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  qiyas:    { icon: "⚖️", label: "Qiyas",    color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  scholarly:{ icon: "📚", label: "Scholarly", color: "bg-muted text-muted-foreground border-border" },
+  quran: { icon: "📖", label: "Quran", color: "bg-primary/10 text-primary border-primary/20" },
+  hadith: { icon: "📜", label: "Hadith", color: "bg-secondary/10 text-secondary border-secondary/20" },
+  ijma: { icon: "🤝", label: "Ijma", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+  qiyas: { icon: "⚖️", label: "Qiyas", color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+  scholarly: { icon: "📚", label: "Scholarly", color: "bg-muted text-muted-foreground border-border" },
 };
 
 type Tab = "chat" | "comparison" | "conclusion";
 
 const buildChatTurns = (posA: DebatePosition, posB: DebatePosition) => [
-  { side: "A" as const, label: "Opening Statement",   text: posA.position,  detail: posA.summary, evidence: posA.evidence.slice(0, 1), timestamp: "Day 1 · 09:00" },
-  { side: "B" as const, label: "Opening Statement",   text: posB.position,  detail: posB.summary, evidence: posB.evidence.slice(0, 1), timestamp: "Day 1 · 14:00" },
+  { side: "A" as const, label: "Opening Statement", text: posA.position, detail: posA.summary, evidence: posA.evidence.slice(0, 1), timestamp: "Day 1 · 09:00" },
+  { side: "B" as const, label: "Opening Statement", text: posB.position, detail: posB.summary, evidence: posB.evidence.slice(0, 1), timestamp: "Day 1 · 14:00" },
   { side: "A" as const, label: "Evidence Submission", text: `My methodology is grounded in ${posA.methodology.toLowerCase()}. The dalils I present establish this position conclusively.`, detail: null, evidence: posA.evidence.slice(1), timestamp: "Day 3 · 10:30" },
   { side: "B" as const, label: "Rebuttal & Evidence", text: `While I respect the textual evidence cited, my approach differs: ${posB.methodology.toLowerCase()}. The following dalils support my position:`, detail: null, evidence: posB.evidence.slice(1), timestamp: "Day 4 · 16:00" },
-  { side: "A" as const, label: "Closing Argument",    text: `In summary: the weight of evidence — Quranic, prophetic, and historical — consistently supports the binding nature of Shura. The Ummah's right to governance is not merely advisory.`, detail: null, evidence: [], timestamp: "Day 14 · 11:00" },
-  { side: "B" as const, label: "Closing Argument",    text: `To conclude: while the process of Shura is obligatory, the ruler's ultimate authority and accountability to Allah means the decision rests with him. This preserves both consultation and decisive leadership.`, detail: null, evidence: [], timestamp: "Day 14 · 18:00" },
+  { side: "A" as const, label: "Closing Argument", text: `In summary: the weight of evidence — Quranic, prophetic, and historical — consistently supports the binding nature of Shura. The Ummah's right to governance is not merely advisory.`, detail: null, evidence: [], timestamp: "Day 14 · 11:00" },
+  { side: "B" as const, label: "Closing Argument", text: `To conclude: while the process of Shura is obligatory, the ruler's ultimate authority and accountability to Allah means the decision rests with him. This preserves both consultation and decisive leadership.`, detail: null, evidence: [], timestamp: "Day 14 · 18:00" },
 ];
 
 const REACTIONS = ["👍", "🤔", "💡", "❤️", "🔥", "📖"];
@@ -86,14 +86,23 @@ export const DebatePanel = ({
   const [reactions, setReactions] = useState<Record<number, Record<string, number>>>({});
   const [myReactions, setMyReactions] = useState<Record<number, string>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const initialMountRef = useRef(true);
 
   const totalVotes = clarityVotes.positionA + clarityVotes.positionB;
   const pctA = totalVotes ? Math.round((clarityVotes.positionA / totalVotes) * 100) : 0;
   const pctB = 100 - pctA;
   const chatTurns = buildChatTurns(positionA, positionB);
 
+  const prevTabRef = useRef<Tab>(activeTab);
+
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      prevTabRef.current = activeTab;
+    }
+  }, [activeTab]);
+
   const tabs: { key: Tab; label: string }[] = [
-    { key: "chat",       label: "💬 Debate Thread" },
+    { key: "chat", label: "💬 Debate Thread" },
     { key: "comparison", label: "⚖️ Comparison" },
     { key: "conclusion", label: "📋 Conclusion" },
   ];
@@ -194,9 +203,8 @@ export const DebatePanel = ({
         <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === t.key ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}>
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === t.key ? "bg-card shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}>
               {t.label}
             </button>
           ))}
@@ -252,18 +260,15 @@ export const DebatePanel = ({
                         <span className="text-[10px] text-muted-foreground/60">{turn.timestamp}</span>
                       </div>
 
-                      {/* Bubble + hover reaction picker */}
                       <div className={`relative group ${isA ? "" : "self-end"}`}>
-                        <div className={`rounded-3xl px-5 py-4 ${
-                          isA ? "bg-primary/10 border border-primary/20 rounded-tl-sm" : "bg-secondary/10 border border-secondary/20 rounded-tr-sm"
-                        }`}>
+                        <div className={`rounded-3xl px-5 py-4 ${isA ? "bg-primary/10 border border-primary/20 rounded-tl-sm" : "bg-secondary/10 border border-secondary/20 rounded-tr-sm"
+                          }`}>
                           <p className="text-foreground leading-relaxed text-sm">{turn.text}</p>
                           {turn.detail && (
                             <p className="text-muted-foreground text-sm mt-2 leading-relaxed border-t border-border/50 pt-2">{turn.detail}</p>
                           )}
                         </div>
 
-                        {/* Hover reaction picker - only for authenticated users */}
                         <AnimatePresence>
                           {isAuthenticated && hoveredTurn === idx && (
                             <motion.div
@@ -271,17 +276,15 @@ export const DebatePanel = ({
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.85, y: 6 }}
                               transition={{ duration: 0.15 }}
-                              className={`absolute -top-11 z-20 flex items-center gap-1 bg-card border border-border rounded-2xl px-2.5 py-1.5 shadow-lg ${
-                                isA ? "left-0" : "right-0"
-                              }`}
+                              className={`absolute -top-11 z-20 flex items-center gap-1 bg-card border border-border rounded-2xl px-2.5 py-1.5 shadow-lg ${isA ? "left-0" : "right-0"
+                                }`}
                             >
                               {REACTIONS.map(emoji => (
                                 <button
                                   key={emoji}
                                   onClick={() => handleReact(idx, emoji)}
-                                  className={`text-lg w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-125 active:scale-95 ${
-                                    myEmoji === emoji ? "bg-primary/15 ring-1 ring-primary/30" : "hover:bg-muted"
-                                  }`}
+                                  className={`text-lg w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-125 active:scale-95 ${myEmoji === emoji ? "bg-primary/15 ring-1 ring-primary/30" : "hover:bg-muted"
+                                    }`}
                                 >
                                   {emoji}
                                 </button>
@@ -291,7 +294,6 @@ export const DebatePanel = ({
                         </AnimatePresence>
                       </div>
 
-                      {/* Reaction counts below bubble - always visible */}
                       {hasAnyReaction && (
                         <motion.div
                           initial={{ opacity: 0, y: 4 }}
@@ -304,11 +306,10 @@ export const DebatePanel = ({
                               <button
                                 key={emoji}
                                 onClick={() => isAuthenticated && handleReact(idx, emoji)}
-                                className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5 border transition-all ${
-                                  myEmoji === emoji
-                                    ? "bg-primary/15 border-primary/30 text-primary"
-                                    : "bg-card border-border text-muted-foreground hover:border-primary/30"
-                                }`}
+                                className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5 border transition-all ${myEmoji === emoji
+                                  ? "bg-primary/15 border-primary/30 text-primary"
+                                  : "bg-card border-border text-muted-foreground hover:border-primary/30"
+                                  }`}
                                 disabled={!isAuthenticated}
                               >
                                 <span>{emoji}</span>
@@ -318,13 +319,11 @@ export const DebatePanel = ({
                         </motion.div>
                       )}
 
-                      {/* Evidence section */}
                       {hasEvidence && (
                         <div className="w-full space-y-1.5">
                           <button onClick={() => toggleEvidence(idx)}
-                            className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                              isA ? "text-primary hover:text-primary/80" : "text-secondary hover:text-secondary/80"
-                            } ${isA ? "" : "ml-auto"}`}>
+                            className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${isA ? "text-primary hover:text-primary/80" : "text-secondary hover:text-secondary/80"
+                              } ${isA ? "" : "ml-auto"}`}>
                             <BookOpen className="h-3 w-3" />
                             {turn.evidence.length} dalil{turn.evidence.length > 1 ? "s" : ""} cited
                             {evidenceOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -337,9 +336,8 @@ export const DebatePanel = ({
                                 {turn.evidence.map((ev, eIdx) => {
                                   const cfg = evidenceIcons[ev.type];
                                   return (
-                                    <div key={eIdx} className={`rounded-2xl border p-4 space-y-2 ${
-                                      isA ? "bg-primary/5 border-primary/15" : "bg-secondary/5 border-secondary/15"
-                                    }`}>
+                                    <div key={eIdx} className={`rounded-2xl border p-4 space-y-2 ${isA ? "bg-primary/5 border-primary/15" : "bg-secondary/5 border-secondary/15"
+                                      }`}>
                                       <div className="flex items-center gap-2">
                                         <span className="text-sm">{cfg.icon}</span>
                                         <Badge variant="outline" className={`text-[10px] py-0 px-2 border ${cfg.color}`}>{cfg.label}</Badge>
@@ -366,7 +364,6 @@ export const DebatePanel = ({
 
             <div ref={chatEndRef} />
 
-            {/* Vote strip - only for authenticated users */}
             {status === "active" && (
               <>
                 {isAuthenticated ? (
@@ -406,7 +403,6 @@ export const DebatePanel = ({
               </>
             )}
 
-            {/* Adab notice - always visible */}
             <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-6 py-4 flex items-start gap-3">
               <Scale className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -418,7 +414,6 @@ export const DebatePanel = ({
           </motion.div>
         )}
 
-        {/* Comparison tab - unchanged */}
         {activeTab === "comparison" && (
           <motion.div key="comparison" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
             className="grid md:grid-cols-2 gap-6">
@@ -455,7 +450,6 @@ export const DebatePanel = ({
           </motion.div>
         )}
 
-        {/* Conclusion tab - unchanged */}
         {activeTab === "conclusion" && (
           <motion.div key="conclusion" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
             <div className="rounded-3xl border border-border bg-card overflow-hidden">

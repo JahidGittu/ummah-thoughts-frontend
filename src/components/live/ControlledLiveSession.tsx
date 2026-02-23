@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -39,7 +39,7 @@ interface ControlledLiveSessionProps {
 }
 
 export const ControlledLiveSession = ({
-  sessionId,
+  sessionId: _sessionId,
   title,
   scholar,
   isLive,
@@ -48,8 +48,7 @@ export const ControlledLiveSession = ({
   const [isMuted, setIsMuted] = useState(true);
   const [handRaised, setHandRaised] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
-
-  const [questionQueue] = useState<QueuedQuestion[]>([
+  const [questionQueue, setQuestionQueue] = useState<QueuedQuestion[]>([
     {
       id: "1",
       author: "Abdullah M.",
@@ -72,6 +71,18 @@ export const ControlledLiveSession = ({
       status: "answered",
     },
   ]);
+
+  const handleApproveQuestion = (id: string) => {
+    setQuestionQueue(prev =>
+      prev.map(q => q.id === id ? { ...q, status: "approved" as const } : q)
+    );
+  };
+
+  const handleRejectQuestion = (id: string) => {
+    setQuestionQueue(prev =>
+      prev.map(q => q.id === id ? { ...q, status: "rejected" as const } : q)
+    );
+  };
 
   const getStatusBadge = (status: QueuedQuestion["status"]) => {
     switch (status) {
@@ -220,7 +231,7 @@ export const ControlledLiveSession = ({
           </CardContent>
         </Card>
 
-        {/* Moderator Controls (visible to moderators) */}
+        {/* Moderator Controls */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -274,10 +285,20 @@ export const ControlledLiveSession = ({
                           from {q.author}
                         </span>
                         <div className="flex gap-1">
-                          <Button size="sm" variant="outline" className="h-7 px-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2"
+                            onClick={() => handleApproveQuestion(q.id)}
+                          >
                             <CheckCircle className="h-3 w-3 text-emerald-400" />
                           </Button>
-                          <Button size="sm" variant="outline" className="h-7 px-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2"
+                            onClick={() => handleRejectQuestion(q.id)}
+                          >
                             <XCircle className="h-3 w-3 text-red-400" />
                           </Button>
                         </div>

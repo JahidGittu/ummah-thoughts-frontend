@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Users, Clock, Video, Plus, ChevronRight, BookOpen, Mic, Award, Calendar, Flame, CheckCircle2, AlarmClock, ArrowLeft } from "lucide-react";
@@ -78,7 +80,7 @@ export default function ScholarDebates() {
     setScheduleForm({ title: "", topic: "", date: "", time: "" });
   };
 
-  // ── Live Room View ──
+  // Live Room View
   if (inLiveRoom && activeDebate) {
     return (
       <div className="space-y-4">
@@ -97,8 +99,7 @@ export default function ScholarDebates() {
           duration="45:12"
           currentPhase="position_a"
           onLeave={() => setInLiveRoom(false)}
-          isModerator={user?.role === "admin"}
-          userRole={user?.role}
+          currentUser={user ?? null}
         />
       </div>
     );

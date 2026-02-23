@@ -1,3 +1,6 @@
+// components/debates/DebateCard.tsx
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, Clock, BookOpen, MessageSquare, Video, Calendar, ArrowRight, Bookmark, ThumbsUp, Swords } from "lucide-react";
@@ -30,14 +33,30 @@ const statusConfig = {
 };
 
 export const DebateCard = ({
-  title, titleAr, status, format, topic,
-  participants, scheduledDate, duration,
-  votesClarity = 0, bookmarks = 0, onView,
+  id,
+  title,
+  titleAr,
+  status,
+  format,
+  topic,
+  participants,
+  scheduledDate,
+  duration,
+  votesClarity = 0,
+  bookmarks = 0,
+  onView,
 }: DebateCardProps) => {
   const [saved, setSaved] = useState(false);
   const FormatIcon = format === "async" ? MessageSquare : Video;
   const cfg = statusConfig[status];
-  const isLive = status === "active";
+  const isLive = status === "active" && format === "live";
+
+  const getButtonText = () => {
+    if (status === "active" && format === "live") return "Join Live Debate";
+    if (status === "active" && format === "async") return "Read Debate";
+    if (status === "upcoming") return "View Details & RSVP";
+    return "Read Full Debate";
+  };
 
   return (
     <motion.div
@@ -135,11 +154,9 @@ export const DebateCard = ({
                 : "variant-outline"
           )}
           variant={status === "concluded" ? "outline" : "default"}
-          onClick={e => { e.stopPropagation(); onView?.(); }}
+          onClick={(e) => { e.stopPropagation(); onView?.(); }}
         >
-          {status === "active" && "Read Live Debate"}
-          {status === "upcoming" && "View Details & RSVP"}
-          {status === "concluded" && "Read Full Debate"}
+          {getButtonText()}
           <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Button>
       </div>
