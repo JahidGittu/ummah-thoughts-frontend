@@ -87,30 +87,29 @@ export default function LiveChatDebatePage() {
   useEffect(() => {
     setMounted(true);
 
-    // FORCE SCROLL TO TOP + DISABLE BROWSER SCROLL RESTORATION
+    // Disable browser scroll restoration to prevent auto-scroll
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
 
     const scrollToTop = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      document.documentElement.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      document.body.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      // Scroll all relevant elements to top
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     };
 
-    // Multiple calls to defeat any animation/layout race conditions
-    requestAnimationFrame(() => {
-      scrollToTop();
-      setTimeout(scrollToTop, 30);
-      setTimeout(scrollToTop, 80);
-      setTimeout(scrollToTop, 180);
-      setTimeout(scrollToTop, 350);
-    });
+    // Scroll to top immediately and multiple times to ensure it sticks
+    scrollToTop();
+    const timer1 = setTimeout(scrollToTop, 0);
+    const timer2 = setTimeout(scrollToTop, 50);
+    const timer3 = setTimeout(scrollToTop, 100);
 
     return () => {
-      if ("scrollRestoration" in window.history) {
-        window.history.scrollRestoration = "auto";
-      }
+      // Clear timers
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
     };
   }, []);
 

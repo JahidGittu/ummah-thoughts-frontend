@@ -1,17 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+"use client";
+
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Home, BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const { t } = useTranslation();
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background islamic-pattern">
@@ -31,14 +29,12 @@ const NotFound = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4" />
-              {t('common.goBack')}
-            </Link>
+          <Button variant="outline" className="gap-2" onClick={() => router.back()}>
+            <ArrowLeft className="w-4 h-4" />
+            {t('common.goBack')}
           </Button>
           <Button asChild className="gap-2">
-            <Link to="/">
+            <Link href="/">
               <Home className="w-4 h-4" />
               {t('common.returnToArchive')}
             </Link>

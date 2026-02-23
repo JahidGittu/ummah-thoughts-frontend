@@ -34,18 +34,18 @@ const mkBlock = (kind: BlockKind = "paragraph"): Block => ({
    BLOCK CATALOGUE
 ═══════════════════════════════════════════════════════════ */
 const BLOCK_CATALOGUE: { kind: BlockKind; icon: React.ElementType; label: string; desc: string; category: string }[] = [
-  { kind: "paragraph", icon: Type,        label: "Paragraph",     desc: "Start with the building block of all narrative.", category: "Text" },
-  { kind: "h1",        icon: Heading1,    label: "Heading",       desc: "Introduce new sections and organize content.",     category: "Text" },
-  { kind: "h2",        icon: Heading2,    label: "Heading 2",     desc: "A slightly smaller heading.",                      category: "Text" },
-  { kind: "h3",        icon: Heading3,    label: "Heading 3",     desc: "A small heading for sub-sections.",                category: "Text" },
-  { kind: "ul",        icon: List,        label: "List",          desc: "Create an unordered list.",                         category: "Text" },
-  { kind: "ol",        icon: ListOrdered, label: "List",          desc: "Create an ordered list.",                           category: "Text" },
-  { kind: "quote",     icon: Quote,       label: "Quote",         desc: "Give quoted text visual emphasis.",                 category: "Text" },
-  { kind: "code",      icon: Code,        label: "Code",          desc: "Display code snippets that respect your spacing.", category: "Text" },
-  { kind: "image",     icon: Image,       label: "Image",         desc: "Insert an image to make a visual statement.",      category: "Media" },
-  { kind: "table",     icon: Table,       label: "Table",         desc: "Insert a table — perfect for sharing data.",       category: "Design" },
-  { kind: "columns",   icon: Columns,     label: "Columns",       desc: "Display content in multiple columns.",             category: "Design" },
-  { kind: "divider",   icon: Minus,       label: "Separator",     desc: "Create a break between ideas.",                    category: "Design" },
+  { kind: "paragraph", icon: Type, label: "Paragraph", desc: "Start with the building block of all narrative.", category: "Text" },
+  { kind: "h1", icon: Heading1, label: "Heading", desc: "Introduce new sections and organize content.", category: "Text" },
+  { kind: "h2", icon: Heading2, label: "Heading 2", desc: "A slightly smaller heading.", category: "Text" },
+  { kind: "h3", icon: Heading3, label: "Heading 3", desc: "A small heading for sub-sections.", category: "Text" },
+  { kind: "ul", icon: List, label: "List", desc: "Create an unordered list.", category: "Text" },
+  { kind: "ol", icon: ListOrdered, label: "List", desc: "Create an ordered list.", category: "Text" },
+  { kind: "quote", icon: Quote, label: "Quote", desc: "Give quoted text visual emphasis.", category: "Text" },
+  { kind: "code", icon: Code, label: "Code", desc: "Display code snippets that respect your spacing.", category: "Text" },
+  { kind: "image", icon: Image, label: "Image", desc: "Insert an image to make a visual statement.", category: "Media" },
+  { kind: "table", icon: Table, label: "Table", desc: "Insert a table — perfect for sharing data.", category: "Design" },
+  { kind: "columns", icon: Columns, label: "Columns", desc: "Display content in multiple columns.", category: "Design" },
+  { kind: "divider", icon: Minus, label: "Separator", desc: "Create a break between ideas.", category: "Design" },
 ];
 
 const CATALOGUE_BY_CAT = BLOCK_CATALOGUE.reduce((acc, b) => {
@@ -58,7 +58,7 @@ const CATALOGUE_BY_CAT = BLOCK_CATALOGUE.reduce((acc, b) => {
 ═══════════════════════════════════════════════════════════ */
 const WPIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zM3.443 12c0-1.166.24-2.275.664-3.287l3.66 10.027A8.564 8.564 0 013.443 12zm8.557 8.557c-.847 0-1.664-.12-2.44-.344L12 13.298l2.527 6.922c.017.04.037.076.058.112a8.505 8.505 0 01-2.585.225zm1.2-12.598c.494-.026.94-.076.94-.076.443-.05.39-.704-.053-.679 0 0-1.332.105-2.192.105-.81 0-2.168-.105-2.168-.105-.443-.025-.497.654-.053.679 0 0 .42.05.864.076L11.44 11l-2.252 6.756L5.63 8.96c.494-.026.94-.076.94-.076.443-.05.39-.704-.053-.679 0 0-1.332.105-2.192.105-.154 0-.336-.004-.527-.011A8.548 8.548 0 0112 3.443c2.222 0 4.251.855 5.772 2.25-.037-.002-.073-.007-.111-.007-.81 0-1.384.704-1.384 1.46 0 .679.39 1.253.806 1.933.312.545.677 1.243.677 2.252 0 .699-.269 1.51-.622 2.64l-.815 2.724-2.123-6.336zM16.5 19.442l2.164-6.255c.405-1.01.537-1.819.537-2.539 0-.261-.017-.503-.049-.731A8.54 8.54 0 0120.557 12a8.555 8.555 0 01-4.057 7.442z"/>
+    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zM3.443 12c0-1.166.24-2.275.664-3.287l3.66 10.027A8.564 8.564 0 013.443 12zm8.557 8.557c-.847 0-1.664-.12-2.44-.344L12 13.298l2.527 6.922c.017.04.037.076.058.112a8.505 8.505 0 01-2.585.225zm1.2-12.598c.494-.026.94-.076.94-.076.443-.05.39-.704-.053-.679 0 0-1.332.105-2.192.105-.81 0-2.168-.105-2.168-.105-.443-.025-.497.654-.053.679 0 0 .42.05.864.076L11.44 11l-2.252 6.756L5.63 8.96c.494-.026.94-.076.94-.076.443-.05.39-.704-.053-.679 0 0-1.332.105-2.192.105-.154 0-.336-.004-.527-.011A8.548 8.548 0 0112 3.443c2.222 0 4.251.855 5.772 2.25-.037-.002-.073-.007-.111-.007-.81 0-1.384.704-1.384 1.46 0 .679.39 1.253.806 1.933.312.545.677 1.243.677 2.252 0 .699-.269 1.51-.622 2.64l-.815 2.724-2.123-6.336zM16.5 19.442l2.164-6.255c.405-1.01.537-1.819.537-2.539 0-.261-.017-.503-.049-.731A8.54 8.54 0 0120.557 12a8.555 8.555 0 01-4.057 7.442z" />
   </svg>
 );
 
@@ -130,13 +130,13 @@ function BlockToolbar({
       </div>
 
       {/* Inline format buttons (text blocks only) */}
-      {["paragraph","h1","h2","h3","quote","ul","ol"].includes(block.kind) && (
+      {["paragraph", "h1", "h2", "h3", "quote", "ul", "ol"].includes(block.kind) && (
         <>
           {[
-            { icon: Bold,          f: "bold",          title: "Bold" },
-            { icon: Italic,        f: "italic",        title: "Italic" },
-            { icon: Link2,         f: "link",          title: "Link" },
-            { icon: Strikethrough, f: "strikethrough",  title: "Strikethrough" },
+            { icon: Bold, f: "bold", title: "Bold" },
+            { icon: Italic, f: "italic", title: "Italic" },
+            { icon: Link2, f: "link", title: "Link" },
+            { icon: Strikethrough, f: "strikethrough", title: "Strikethrough" },
           ].map(({ icon: Icon, f, title }) => (
             <button key={f} onClick={() => onFormat(f)} title={title}
               className="w-10 h-10 flex items-center justify-center hover:bg-[#f0f0f0] text-[#1e1e1e] transition-colors">
@@ -205,11 +205,54 @@ function EditorBlock({
   isDragOverBlock: boolean; isDraggingBlock: boolean;
 }) {
   const [dragOver, setDragOver] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<string | null>(block.kind === "image" && block.content ? block.content : null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(block.kind === "image" && block.content ? block.content : null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
   const [slashHighlight, setSlashHighlight] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const MAX_FILE_SIZE_MB = 5;
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+
+  const processFile = (file: File) => {
+    setUploadError(null);
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Only image files (JPEG, PNG, WebP, GIF, SVG) are allowed.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setUploadError(`File is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    // Revoke old preview URL to avoid memory leaks
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(url);
+    setUploadedFileName(file.name);
+    onChange(file.name);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleClearUpload = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setUploadedFileName(null);
+    setUploadError(null);
+    onChange("");
+  };
 
   const WP_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif";
   const SERIF = "'Noto Serif', Georgia, serif";
@@ -327,13 +370,9 @@ function EditorBlock({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const files = e.dataTransfer.files;
-    if (files.length > 0) { const name = files[0].name; setUploadedFile(name); onChange(name); }
+    if (files.length > 0) processFile(files[0]);
   };
-  const handleUploadClick = () => {
-    const fakeNames = ["hero-banner.jpg", "article-cover.png", "featured-image.webp", "scholar-photo.jpg"];
-    const name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-    setUploadedFile(name); onChange(name);
-  };
+
 
   return (
     <div
@@ -346,7 +385,7 @@ function EditorBlock({
       {isSelected && (
         <BlockToolbar
           block={block}
-          onFormat={() => {}}
+          onFormat={() => { }}
           onChangeKind={onChangeKind}
           onDelete={onDelete}
           onMoveUp={onMoveUp}
@@ -355,11 +394,10 @@ function EditorBlock({
         />
       )}
 
-      <div className={`relative transition-all duration-75 ${
-        isSelected
+      <div className={`relative transition-all duration-75 ${isSelected
           ? "outline outline-[1.5px] outline-[#007cba] outline-offset-[2px]"
           : "hover:outline hover:outline-1 hover:outline-[#e0e0e0] hover:outline-offset-[2px]"
-      }`}>
+        }`}>
 
         {/* Drag handle on hover — WP style */}
         <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -386,63 +424,97 @@ function EditorBlock({
           {block.kind === "divider" ? (
             <div className="py-5"><hr className="border-[#e0e0e0]" /></div>
           ) : block.kind === "image" ? (
-            uploadedFile ? (
-              <div className="border border-[#e0e0e0] rounded bg-[#f0f0f0] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded bg-[#007cba]/10 flex items-center justify-center flex-shrink-0">
-                    <File className="h-5 w-5 text-[#007cba]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#1e1e1e] truncate">{uploadedFile}</p>
-                    <p className="text-[12px] text-[#007cba]">✓ Uploaded</p>
-                  </div>
-                  <button onClick={e => { e.stopPropagation(); setUploadedFile(null); onChange(""); }}
-                    className="text-[12px] text-[#757575] hover:text-[#cc1818] px-2 py-1 rounded hover:bg-[#cc1818]/5">
-                    Replace
-                  </button>
-                </div>
-                <div className="mt-3 bg-[#e0e0e0] rounded h-44 flex items-center justify-center text-[#757575]">
-                  <Image className="h-10 w-10 opacity-30" />
-                </div>
-              </div>
-            ) : (
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded p-12 flex flex-col items-center gap-2 transition-all cursor-pointer ${
-                  dragOver
-                    ? "border-[#007cba] bg-[#007cba]/5 scale-[1.005]"
-                    : "border-[#e0e0e0] text-[#757575] hover:border-[#007cba] hover:text-[#007cba]"
-                }`}
-                onClick={e => e.stopPropagation()}
-              >
-                {dragOver ? (
-                  <>
-                    <Upload className="h-10 w-10 animate-bounce" />
-                    <p className="text-[14px] font-medium">Drop to upload</p>
-                  </>
-                ) : (
-                  <>
-                    <Image className="h-10 w-10 opacity-40" />
-                    <p className="text-[14px] font-medium">Upload</p>
-                    <p className="text-[12px] opacity-60">Drag and drop or click to upload</p>
-                    <div className="mt-2 flex gap-2">
-                      <button onClick={handleUploadClick}
-                        className="px-4 py-2 rounded bg-[#007cba] text-white text-[13px] font-medium hover:bg-[#006ba1] transition-colors">
-                        Upload
-                      </button>
-                      <button className="px-4 py-2 rounded border border-[#757575] text-[#1e1e1e] text-[13px] font-medium hover:bg-[#f0f0f0] transition-colors">
-                        Media Library
-                      </button>
-                      <button className="px-4 py-2 rounded border border-[#757575] text-[#1e1e1e] text-[13px] font-medium hover:bg-[#f0f0f0] transition-colors">
-                        Insert from URL
-                      </button>
+            /* Hidden real file input */
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={handleFileInputChange}
+              />
+              {uploadedFileName ? (
+                <div className="border border-[#e0e0e0] rounded bg-[#f0f0f0] p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded bg-[#007cba]/10 flex items-center justify-center flex-shrink-0">
+                      <File className="h-5 w-5 text-[#007cba]" aria-hidden="true" />
                     </div>
-                  </>
-                )}
-              </div>
-            )
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-[#1e1e1e] truncate">{uploadedFileName}</p>
+                      <p className="text-[12px] text-[#007cba]">✓ Uploaded</p>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); handleClearUpload(); }}
+                      className="text-[12px] text-[#757575] hover:text-[#cc1818] px-2 py-1 rounded hover:bg-[#cc1818]/5"
+                      aria-label="Replace uploaded image"
+                    >
+                      Replace
+                    </button>
+                  </div>
+                  {/* Image preview */}
+                  {previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={previewUrl}
+                      alt="Uploaded image preview"
+                      className="mt-3 w-full max-h-64 object-cover rounded border border-[#e0e0e0]"
+                    />
+                  ) : (
+                    <div className="mt-3 bg-[#e0e0e0] rounded h-44 flex items-center justify-center text-[#757575]" aria-hidden="true">
+                      <Image className="h-10 w-10 opacity-30" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  role="button"
+                  aria-label="Image upload area — drag and drop or click to select an image"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded p-12 flex flex-col items-center gap-2 transition-all ${dragOver
+                      ? "border-[#007cba] bg-[#007cba]/5 scale-[1.005]"
+                      : "border-[#e0e0e0] text-[#757575] hover:border-[#007cba] hover:text-[#007cba]"
+                    }`}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {dragOver ? (
+                    <>
+                      <Upload className="h-10 w-10 animate-bounce" aria-hidden="true" />
+                      <p className="text-[14px] font-medium">Drop to upload</p>
+                    </>
+                  ) : (
+                    <>
+                      <Image className="h-10 w-10 opacity-40" aria-hidden="true" />
+                      <p className="text-[14px] font-medium">Upload Image</p>
+                      <p className="text-[12px] opacity-60">Drag and drop or click Upload — max 5MB, JPEG/PNG/WebP/GIF/SVG</p>
+                      {uploadError && (
+                        <p role="alert" className="text-[12px] text-[#cc1818] font-medium mt-1">
+                          ⚠ {uploadError}
+                        </p>
+                      )}
+                      <div className="mt-2 flex gap-2 flex-wrap justify-center">
+                        <button
+                          onClick={handleUploadClick}
+                          aria-label="Select image file to upload"
+                          className="px-4 py-2 rounded bg-[#007cba] text-white text-[13px] font-medium hover:bg-[#006ba1] transition-colors"
+                        >
+                          Upload
+                        </button>
+                        <button className="px-4 py-2 rounded border border-[#757575] text-[#1e1e1e] text-[13px] font-medium hover:bg-[#f0f0f0] transition-colors">
+                          Media Library
+                        </button>
+                        <button className="px-4 py-2 rounded border border-[#757575] text-[#1e1e1e] text-[13px] font-medium hover:bg-[#f0f0f0] transition-colors">
+                          Insert from URL
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </>
           ) : block.kind === "code" ? (
             <div className="bg-[#282a36] rounded">
               <textarea
@@ -483,7 +555,7 @@ function EditorBlock({
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 className={`${STYLES[block.kind]} w-full text-[#1e1e1e]`}
-                style={{ fontFamily: ["h1","h2","h3"].includes(block.kind) ? SERIF : WP_FONT }}
+                style={{ fontFamily: ["h1", "h2", "h3"].includes(block.kind) ? SERIF : WP_FONT }}
                 placeholder={PLACEHOLDERS[block.kind] ?? "Type / to choose a block"}
                 rows={1}
                 onInput={e => autoResize(e.currentTarget)}
@@ -507,13 +579,11 @@ function EditorBlock({
                           key={bt.kind}
                           onMouseDown={e => { e.preventDefault(); handleSlashSelect(bt.kind); }}
                           onMouseEnter={() => setSlashHighlight(idx)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                            idx === slashHighlight ? "bg-[#007cba]/10" : "hover:bg-[#f0f0f0]"
-                          }`}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${idx === slashHighlight ? "bg-[#007cba]/10" : "hover:bg-[#f0f0f0]"
+                            }`}
                         >
-                          <div className={`w-12 h-12 rounded border flex items-center justify-center flex-shrink-0 ${
-                            idx === slashHighlight ? "border-[#007cba] bg-[#007cba]/5" : "border-[#e0e0e0] bg-white"
-                          }`}>
+                          <div className={`w-12 h-12 rounded border flex items-center justify-center flex-shrink-0 ${idx === slashHighlight ? "border-[#007cba] bg-[#007cba]/5" : "border-[#e0e0e0] bg-white"
+                            }`}>
                             <bt.icon className={`h-6 w-6 ${idx === slashHighlight ? "text-[#007cba]" : "text-[#1e1e1e]"}`} />
                           </div>
                           <div>
@@ -623,9 +693,8 @@ function InserterPanel({
       <div className="flex border-b border-[#e0e0e0] px-2">
         {(["blocks", "patterns", "reusable"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`py-2.5 px-3 text-[13px] font-medium capitalize border-b-2 transition-colors ${
-              tab === t ? "border-[#007cba] text-[#007cba]" : "border-transparent text-[#757575] hover:text-[#1e1e1e]"
-            }`}>
+            className={`py-2.5 px-3 text-[13px] font-medium capitalize border-b-2 transition-colors ${tab === t ? "border-[#007cba] text-[#007cba]" : "border-transparent text-[#757575] hover:text-[#1e1e1e]"
+              }`}>
             {t === "reusable" ? "Reusable" : t}
           </button>
         ))}
@@ -831,9 +900,8 @@ function SettingsSidebar({
         <div className="flex flex-1">
           {(["document", "block"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-[13px] font-medium capitalize border-b-2 transition-colors ${
-                tab === t ? "border-[#007cba] text-[#007cba]" : "border-transparent text-[#757575] hover:text-[#1e1e1e]"
-              }`}>
+              className={`flex-1 py-3 text-[13px] font-medium capitalize border-b-2 transition-colors ${tab === t ? "border-[#007cba] text-[#007cba]" : "border-transparent text-[#757575] hover:text-[#1e1e1e]"
+                }`}>
               {t === "document" ? "Post" : "Block"}
             </button>
           ))}
@@ -946,7 +1014,7 @@ function SettingsSidebar({
                 <div className="px-4 py-4 border-b border-[#e0e0e0]">
                   <p className="text-[11px] font-semibold text-[#757575] uppercase tracking-wider mb-3">Settings</p>
                   <div className="space-y-3">
-                    {["h1","h2","h3","paragraph"].includes(selectedBlock.kind) && (
+                    {["h1", "h2", "h3", "paragraph"].includes(selectedBlock.kind) && (
                       <>
                         <div>
                           <label className="text-[13px] text-[#1e1e1e] block mb-1.5">Size</label>
@@ -1137,18 +1205,18 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
     <div className="max-w-[680px] mx-auto px-6 py-16" style={{ fontFamily: "'Noto Serif', Georgia, serif" }}>
       <h1 className="text-[42px] font-bold text-[#1e1e1e] mb-8 leading-[1.2]">{title || "Untitled"}</h1>
       {blocks.map(b => {
-        if (!b.content && !["divider","image","columns"].includes(b.kind)) return null;
+        if (!b.content && !["divider", "image", "columns"].includes(b.kind)) return null;
         switch (b.kind) {
-          case "divider":  return <hr key={b.id} className="border-[#e0e0e0] my-8" />;
-          case "image":    return <div key={b.id} className="bg-[#f0f0f0] rounded h-52 my-6 flex items-center justify-center text-[#757575] text-[14px]">[Image: {b.content}]</div>;
-          case "h1":       return <h2 key={b.id} className="text-[36px] font-bold text-[#1e1e1e] mt-10 mb-4 leading-[1.2]">{b.content}</h2>;
-          case "h2":       return <h3 key={b.id} className="text-[28px] font-bold text-[#1e1e1e] mt-8 mb-3 leading-[1.3]">{b.content}</h3>;
-          case "h3":       return <h4 key={b.id} className="text-[22px] font-semibold text-[#1e1e1e] mt-6 mb-2 leading-[1.4]">{b.content}</h4>;
-          case "quote":    return <blockquote key={b.id} className="border-l-4 border-[#1e1e1e] pl-6 italic text-[#757575] text-[18px] my-6">{b.content}</blockquote>;
-          case "code":     return <pre key={b.id} className="bg-[#282a36] text-[#f8f8f2] rounded p-5 text-[14px] font-mono overflow-x-auto my-6">{b.content}</pre>;
-          case "ul":       return <ul key={b.id} className="list-disc pl-6 text-[16px] text-[#1e1e1e] leading-[1.8] my-3 space-y-1">{b.content.split("\n").filter(Boolean).map((l, i) => <li key={i}>{l}</li>)}</ul>;
-          case "ol":       return <ol key={b.id} className="list-decimal pl-6 text-[16px] text-[#1e1e1e] leading-[1.8] my-3 space-y-1">{b.content.split("\n").filter(Boolean).map((l, i) => <li key={i}>{l}</li>)}</ol>;
-          default:         return <p key={b.id} className="text-[16px] text-[#1e1e1e] leading-[1.8] mb-4" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>{b.content}</p>;
+          case "divider": return <hr key={b.id} className="border-[#e0e0e0] my-8" />;
+          case "image": return <div key={b.id} className="bg-[#f0f0f0] rounded h-52 my-6 flex items-center justify-center text-[#757575] text-[14px]">[Image: {b.content}]</div>;
+          case "h1": return <h2 key={b.id} className="text-[36px] font-bold text-[#1e1e1e] mt-10 mb-4 leading-[1.2]">{b.content}</h2>;
+          case "h2": return <h3 key={b.id} className="text-[28px] font-bold text-[#1e1e1e] mt-8 mb-3 leading-[1.3]">{b.content}</h3>;
+          case "h3": return <h4 key={b.id} className="text-[22px] font-semibold text-[#1e1e1e] mt-6 mb-2 leading-[1.4]">{b.content}</h4>;
+          case "quote": return <blockquote key={b.id} className="border-l-4 border-[#1e1e1e] pl-6 italic text-[#757575] text-[18px] my-6">{b.content}</blockquote>;
+          case "code": return <pre key={b.id} className="bg-[#282a36] text-[#f8f8f2] rounded p-5 text-[14px] font-mono overflow-x-auto my-6">{b.content}</pre>;
+          case "ul": return <ul key={b.id} className="list-disc pl-6 text-[16px] text-[#1e1e1e] leading-[1.8] my-3 space-y-1">{b.content.split("\n").filter(Boolean).map((l, i) => <li key={i}>{l}</li>)}</ul>;
+          case "ol": return <ol key={b.id} className="list-decimal pl-6 text-[16px] text-[#1e1e1e] leading-[1.8] my-3 space-y-1">{b.content.split("\n").filter(Boolean).map((l, i) => <li key={i}>{l}</li>)}</ol>;
+          default: return <p key={b.id} className="text-[16px] text-[#1e1e1e] leading-[1.8] mb-4" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>{b.content}</p>;
         }
       })}
     </div>
@@ -1177,9 +1245,8 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
           {/* Block inserter + */}
           <button
             onClick={() => setShowInserter(s => !s)}
-            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${
-              showInserter ? "bg-[#007cba] text-white" : "text-white hover:bg-[#333]"
-            }`}
+            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${showInserter ? "bg-[#007cba] text-white" : "text-white hover:bg-[#333]"
+              }`}
             title="Toggle block inserter (Ctrl+Shift+P)">
             <Plus className="h-6 w-6" />
           </button>
@@ -1230,20 +1297,18 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
 
           {/* Save draft */}
           <button onClick={handleSave}
-            className={`h-8 px-3 rounded text-[13px] font-medium transition-colors ${
-              saved
+            className={`h-8 px-3 rounded text-[13px] font-medium transition-colors ${saved
                 ? "bg-[#007cba]/20 text-[#4db8ff]"
                 : "text-white hover:bg-[#333]"
-            }`}>
+              }`}>
             {saved ? "Saved!" : "Save draft"}
           </button>
 
           {/* Preview — desktop/tablet/mobile icons */}
           <button
             onClick={() => setPreviewMode(p => !p)}
-            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${
-              previewMode ? "text-[#4db8ff] bg-[#333]" : "text-white hover:bg-[#333]"
-            }`}
+            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${previewMode ? "text-[#4db8ff] bg-[#333]" : "text-white hover:bg-[#333]"
+              }`}
             title="Preview">
             <Monitor className="h-5 w-5" />
           </button>
@@ -1256,9 +1321,8 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
 
           {/* Settings toggle */}
           <button onClick={() => setShowSettings(s => !s)}
-            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${
-              showSettings ? "text-white bg-[#333]" : "text-[#ccc] hover:bg-[#333] hover:text-white"
-            }`}
+            className={`w-[48px] h-[48px] flex items-center justify-center transition-colors ${showSettings ? "text-white bg-[#333]" : "text-[#ccc] hover:bg-[#333] hover:text-white"
+              }`}
             title="Settings">
             <PanelRight className="h-5 w-5" />
           </button>
