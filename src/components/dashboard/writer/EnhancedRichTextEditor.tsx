@@ -500,6 +500,31 @@ function SegmentRenderer({
   uploadedImages: Record<string, string>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const contentEditRef = useRef<HTMLDivElement>(null);
+
+  const executeCommand = useCallback((command: string, value?: string) => {
+    const elem = contentEditRef.current;
+    if (!elem) return;
+
+    elem.focus();
+    
+    try {
+      if (value !== undefined) {
+        document.execCommand(command, false, value);
+      } else {
+        document.execCommand(command, false);
+      }
+      
+      // Update the content
+      onUpdate(segment.id, { content: elem.innerHTML });
+    } catch (e) {
+      console.error('Command failed:', command, e);
+    }
+  }, [segment.id, onUpdate]);
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className="space-y-2">
@@ -520,66 +545,216 @@ function SegmentRenderer({
 
       {/* Content input based on type */}
       {segment.type === 'heading' && (
-        <input
-          value={segment.content}
-          onChange={e => onUpdate(segment.id, { content: e.target.value })}
-          placeholder={`Enter heading ${segment.level || 1}...`}
-          className={`w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 font-bold ${
-            segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
-          }`}
-        />
+        <div className="space-y-2">
+          <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
+            <button
+              onClick={() => executeCommand('bold')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('italic')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('underline')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Underline"
+            >
+              <Underline className="h-3 w-3" />
+            </button>
+          </div>
+          <div
+            ref={contentEditRef}
+            onInput={e => {
+              const html = (e.currentTarget as HTMLDivElement).innerHTML;
+              onUpdate(segment.id, { content: html });
+            }}
+            suppressContentEditableWarning
+            contentEditable
+            className={`w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 font-bold focus:ring-1 focus:ring-primary/30 rounded p-2 ${
+              segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
+            }`}
+            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+          />
+        </div>
       )}
 
       {segment.type === 'paragraph' && (
-        <textarea
-          value={segment.content}
-          onChange={e => onUpdate(segment.id, { content: e.target.value })}
-          placeholder="Start typing..."
-          rows={3}
-          className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm leading-relaxed"
-        />
+        <div className="space-y-2">
+          <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
+            <button
+              onClick={() => executeCommand('bold')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('italic')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('underline')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Underline"
+            >
+              <Underline className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('strikethrough')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Strikethrough"
+            >
+              <Strikethrough className="h-3 w-3" />
+            </button>
+            <div className="w-px h-4 bg-border/50" />
+            <button
+              onClick={() => executeCommand('createLink', prompt('Enter URL:') || '')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Link"
+            >
+              <Link2 className="h-3 w-3" />
+            </button>
+          </div>
+          <div
+            ref={contentEditRef}
+            onInput={e => {
+              const html = (e.currentTarget as HTMLDivElement).innerHTML;
+              onUpdate(segment.id, { content: html });
+            }}
+            suppressContentEditableWarning
+            contentEditable
+            className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm leading-relaxed focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[100px]"
+            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+          />
+        </div>
       )}
 
       {segment.type === 'quote' && (
-        <textarea
-          value={segment.content}
-          onChange={e => onUpdate(segment.id, { content: e.target.value })}
-          placeholder="Add quote..."
-          rows={2}
-          className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none italic text-sm"
-        />
+        <div className="space-y-2">
+          <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
+            <button
+              onClick={() => executeCommand('bold')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('italic')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </button>
+          </div>
+          <div
+            ref={contentEditRef}
+            onInput={e => {
+              const html = (e.currentTarget as HTMLDivElement).innerHTML;
+              onUpdate(segment.id, { content: html });
+            }}
+            suppressContentEditableWarning
+            contentEditable
+            className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none italic text-sm focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[60px]"
+            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+          />
+        </div>
       )}
 
       {segment.type === 'list' && (
-        <textarea
-          value={segment.content}
-          onChange={e => onUpdate(segment.id, { content: e.target.value })}
-          placeholder="One item per line..."
-          rows={3}
-          className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm"
-        />
+        <div className="space-y-2">
+          <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
+            <button
+              onClick={() => executeCommand('insertUnorderedList')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Bullet List"
+            >
+              <List className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('insertOrderedList')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Numbered List"
+            >
+              <ListOrdered className="h-3 w-3" />
+            </button>
+            <div className="w-px h-4 bg-border/50" />
+            <button
+              onClick={() => executeCommand('bold')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => executeCommand('italic')}
+              className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </button>
+          </div>
+          <div
+            ref={contentEditRef}
+            onInput={e => {
+              const html = (e.currentTarget as HTMLDivElement).innerHTML;
+              onUpdate(segment.id, { content: html });
+            }}
+            suppressContentEditableWarning
+            contentEditable
+            className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[80px]"
+            dangerouslySetInnerHTML={{ __html: segment.content || 'One item per line...' }}
+          />
+        </div>
       )}
 
       {segment.type === 'code' && (
-        <textarea
-          value={segment.content}
-          onChange={e => onUpdate(segment.id, { content: e.target.value })}
-          placeholder="Paste your code here..."
-          rows={4}
-          className="w-full bg-muted font-mono text-xs rounded p-2 outline-none border-none text-foreground resize-none"
-        />
+        <div className="space-y-2">
+          <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
+            <span className="text-xs text-muted-foreground py-1">Language:</span>
+            <select
+              value={segment.codeLanguage || 'javascript'}
+              onChange={e => onUpdate(segment.id, { codeLanguage: e.target.value })}
+              className="text-xs bg-muted rounded px-2 py-0.5 border-none outline-none text-foreground"
+            >
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="html">HTML</option>
+              <option value="css">CSS</option>
+              <option value="bash">Bash</option>
+              <option value="sql">SQL</option>
+              <option value="java">Java</option>
+            </select>
+          </div>
+          <textarea
+            value={segment.content}
+            onChange={e => onUpdate(segment.id, { content: e.target.value })}
+            placeholder="Paste your code here..."
+            rows={6}
+            className="w-full bg-muted font-mono text-xs rounded p-3 outline-none border-none text-foreground resize-none focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
       )}
 
       {segment.type === 'image' && (
         <div className="space-y-2">
-          {uploadedImages[segment.id] ? (
+          {segment.imageUrl || uploadedImages[segment.id] ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={uploadedImages[segment.id]} alt="Uploaded" className="w-full rounded-lg max-h-64 object-cover" />
+              <img src={segment.imageUrl || uploadedImages[segment.id]} alt="Content" className="w-full rounded-lg max-h-96 object-cover" />
               <button
                 onClick={() => {
-                  onUpdate(segment.id, { imageUrl: undefined, content: '' });
-                  delete uploadedImages[segment.id];
+                  onUpdate(segment.id, { imageUrl: undefined, imageCaption: '', content: '' });
                 }}
                 className="absolute top-2 right-2 p-1.5 bg-destructive/90 text-white rounded hover:bg-destructive transition-colors"
               >
@@ -588,13 +763,21 @@ function SegmentRenderer({
             </div>
           ) : (
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+              onClick={handleImageClick}
+              className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
             >
               <Upload className="h-8 w-8 text-muted-foreground mb-2" />
               <p className="text-sm font-medium text-foreground">Click to upload image</p>
               <p className="text-xs text-muted-foreground">or drag and drop</p>
             </div>
+          )}
+          {(segment.imageUrl || uploadedImages[segment.id]) && (
+            <input
+              value={segment.imageCaption || ''}
+              onChange={e => onUpdate(segment.id, { imageCaption: e.target.value })}
+              placeholder="Image caption (optional)"
+              className="w-full px-3 py-1.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-1 focus:ring-primary/30"
+            />
           )}
           <input
             ref={fileInputRef}
@@ -603,14 +786,16 @@ function SegmentRenderer({
             className="hidden"
             onChange={e => {
               const file = e.target.files?.[0];
-              if (file) onImageUpload(segment.id, file);
+              if (file) {
+                onImageUpload(segment.id, file);
+              }
             }}
           />
         </div>
       )}
 
       {segment.type === 'divider' && (
-        <div className="h-px bg-border w-full my-2" />
+        <div className="h-px bg-border w-full my-4" />
       )}
     </div>
   );

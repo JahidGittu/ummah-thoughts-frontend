@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PenSquare, Clock, Trash2, Eye, Save, Plus, X, Bold, Italic,
   Underline, List, ListOrdered, Quote, Link2, Image, AlignLeft,
   AlignCenter, AlignRight, Heading1, Heading2, ChevronLeft, Check,
-  Type, Hash, Minus,
+  Type, Hash, Minus, Upload as UploadIcon
 } from "lucide-react";
 
 const drafts = [
@@ -58,27 +58,115 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const contentEditableRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
-  const handleFormat = (action: string) => {
+  const handleFormat = useCallback((action: string) => {
+    const editable = contentEditableRef.current;
+    if (!editable) return;
+
+    editable.focus();
+    
+    // Execute formatting commands
+    switch(action) {
+      case "bold":
+        document.execCommand("bold", false);
+        break;
+      case "italic":
+        document.execCommand("italic", false);
+        break;
+      case "underline":
+        document.execCommand("underline", false);
+        break;
+      case "h1":
+        document.execCommand("formatBlock", false, "<h1>");
+        break;
+      case "h2":
+        document.execCommand("formatBlock", false, "<h2>");
+        break;
+      case "p":
+        document.execCommand("formatBlock", false, "<p>");
+        break;
+      case "ul":
+        document.execCommand("insertUnorderedList", false);
+        break;
+      case "ol":
+        document.execCommand("insertOrderedList", false);
+        break;
+      case "blockquote":
+        document.execCommand("formatBlock", false, "<blockquote>");
+        break;
+      case "alignLeft":
+        document.execCommand("justifyLeft", false);
+        break;
+      case "alignCenter":
+        document.execCommand("justifyCenter", false);
+        break;
+      case "alignRight":
+        document.execCommand("justifyRight", false);
+        break;
+      case "link":
+        const url = prompt("Enter URL:");
+        if (url) document.execCommand("createLink", false, url);
+        break;
+      case "image":
+        fileInputRef.current?.click();
+        break;
+      case "hr":
+        document.execCommand("insertHorizontalRule", false);
+        break;
+    }
+
     const next = new Set(activeFormats);
     if (next.has(action)) next.delete(action);
     else next.add(action);
     setActiveFormats(next);
-  };
+    
+    // Update content state
+    if (contentEditableRef.current) {
+      setContent(contentEditableRef.current.innerHTML);
+    }
+  }, [activeFormats]);
 
   const handleSave = () => {
+    if (contentEditableRef.current) {
+      setContent(contentEditableRef.current.innerHTML);
+    }
     onSave(content, title);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const editable = contentEditableRef.current;
+      if (editable) {
+        editable.focus();
+        const img = document.createElement("img");
+        img.src = event.target?.result as string;
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "0.5rem";
+        img.style.margin = "0.5rem 0";
+        document.execCommand("insertHTML", false, img.outerHTML);
+        setContent(editable.innerHTML);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const renderPreview = () => {
-    return content.split("\n").map((line, i) => {
-      if (!line.trim()) return <div key={i} className="h-4" />;
-      return <p key={i} className="text-sm text-foreground leading-7 mb-2">{line}</p>;
-    });
+    return (
+      <div 
+        className="prose prose-sm max-w-none text-foreground"
+        dangerouslySetInnerHTML={{ __html: content || '' }}
+      />
+    );
   };
 
   return (
@@ -159,12 +247,23 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
               {previewMode ? (
                 <div className="prose prose-sm max-w-none">{renderPreview()}</div>
               ) : (
-                <textarea
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                  className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none text-sm text-foreground leading-7 placeholder:text-muted-foreground/40 font-body"
-                  placeholder="Start writing your article…"
-                />
+                <div
+                  ref={contentEditableRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(e) => {
+                    setContent((e.currentTarget as HTMLDivElement).innerHTML);
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData?.getData('text/html') || e.clipboardData?.getData('text/plain') || '';
+                    document.execCommand('insertHTML', false, text);
+                  }}
+                  className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none text-sm text-foreground leading-7 placeholder:text-muted-foreground/40 font-body focus:ring-0"
+                  style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                >
+                  {draft.content}
+                </div>
               )}
             </div>
           </div>
@@ -226,10 +325,18 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
           </div>
         </div>
       </div>
+
+      {/* Hidden file input for images */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
     </motion.div>
   );
 }
-
 export default function WriterDrafts() {
   const [editingDraft, setEditingDraft] = useState<EditorDraft | null>(null);
   const [draftList, setDraftList] = useState(drafts);
