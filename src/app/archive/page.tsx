@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -48,6 +49,7 @@ type ViewType = 'grid' | 'list' | 'timeline' | 'mindmap';
 
 const Archive = () => {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const isBengali = i18n.language === 'bn';
   const [view, setView] = useState<ViewType>('grid');
   const [filtersOpen, setFiltersOpen] = useState(true);
@@ -210,6 +212,30 @@ const Archive = () => {
 
   const clearFilters = () => setSelectedFilters([]);
 
+  const getFilteredDiscussions = () => {
+    if (selectedFilters.length === 0) return discussions;
+    
+    return discussions.filter((discussion) => {
+      const categoryMatch = selectedFilters.some(
+        (f) =>
+          f === discussion.category ||
+          f === discussion.categoryBn
+      );
+      const complexityMatch = selectedFilters.some((f) => f === discussion.complexity);
+      const scholarMatch = selectedFilters.some(
+        (f) =>
+          f === discussion.scholar ||
+          f === discussion.scholarBn
+      );
+
+      // If there are category/complexity/scholar filters, at least one must match
+      const hasFilters = selectedFilters.length > 0;
+      return hasFilters && (categoryMatch || complexityMatch || scholarMatch);
+    });
+  };
+
+  const filteredDiscussions = getFilteredDiscussions();
+
   const viewIcons = {
     grid: Grid,
     list: List,
@@ -262,7 +288,7 @@ const Archive = () => {
               <motion.aside
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="lg:w-72 flex-shrink-0"
+                className="lg:w-72 shrink-0"
               >
                 <div className="sticky top-24 space-y-6">
                   {/* Filter Header */}
@@ -547,12 +573,14 @@ const Archive = () => {
                       : 'space-y-4'
                   }
                 >
-                  {discussions.map((discussion, index) => (
+                  {filteredDiscussions.length > 0 ? (
+                    filteredDiscussions.map((discussion, index) => (
                     <motion.article
                       key={discussion.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
+                      onClick={() => router.push(`/archive/${discussion.id}`)}
                       className={`group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all cursor-pointer ${
                         view === 'list' ? 'flex gap-6' : ''
                       }`}
@@ -603,9 +631,25 @@ const Archive = () => {
                         </div>
                       </div>
 
-                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0 self-center" />
+                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 self-center" />
                     </motion.article>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-12">
+                      <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg text-muted-foreground mb-4">
+                        {isBengali ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={clearFilters}
+                        className="gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        {isBengali ? 'ফিল্টার সাফ করুন' : 'Clear filters'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Load More */}

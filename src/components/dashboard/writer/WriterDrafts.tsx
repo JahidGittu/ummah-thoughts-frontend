@@ -177,7 +177,7 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
       className="fixed inset-0 z-50 flex flex-col bg-background"
     >
       {/* WP-style top bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border shadow-sm h-12 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border shadow-sm h-12 shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={onClose} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="h-4 w-4" /> Drafts
@@ -270,7 +270,7 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
         </div>
 
         {/* Right sidebar — Document Settings */}
-        <div className="hidden xl:flex flex-col w-64 border-l border-border bg-card overflow-y-auto flex-shrink-0">
+        <div className="hidden xl:flex flex-col w-64 border-l border-border bg-card overflow-y-auto shrink-0">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-xs font-bold text-foreground uppercase tracking-wider">Document</p>
           </div>
@@ -384,7 +384,7 @@ export default function WriterDrafts() {
                     <span>{d.wordCount.toLocaleString()} words</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => setEditingDraft(d)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-primary transition-colors" title="Preview">
                     <Eye className="h-4 w-4" />

@@ -100,7 +100,7 @@ export default function MethodologyPage() {
                           transition={{ delay: 0.2 + idx * 0.1 }}
                           className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                         >
-                          <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${color}`} />
+                          <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${color}`} />
                           <div>
                             <h4 className="font-semibold text-foreground">{t(`${levelKey}.level`)}</h4>
                             <p className="text-sm text-muted-foreground">{t(`${levelKey}.description`)}</p>
@@ -136,7 +136,7 @@ export default function MethodologyPage() {
                           transition={{ delay: 0.4 + idx * 0.1 }}
                           className="flex gap-4 group"
                         >
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-semibold text-sm group-hover:bg-primary/20 transition-colors">
+                          <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-semibold text-sm group-hover:bg-primary/20 transition-colors">
                             {step}
                           </div>
                           <div>
@@ -205,7 +205,7 @@ export default function MethodologyPage() {
                             transition={{ delay: 0.3 + idx * 0.1 }}
                             className="flex items-start gap-2 text-sm"
                           >
-                            <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                            <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                             <span className="text-muted-foreground">{line}</span>
                           </motion.li>
                         ))
@@ -242,7 +242,7 @@ export default function MethodologyPage() {
                             transition={{ delay: 0.4 + idx * 0.1 }}
                             className="flex items-start gap-2 text-sm"
                           >
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/50 mt-1.5 flex-shrink-0" />
+                            <div className="h-2 w-2 rounded-full bg-muted-foreground/50 mt-1.5 shrink-0" />
                             <span className="text-muted-foreground">{position}</span>
                           </motion.li>
                         ))
