@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, MapPin, Users, Loader2 } from 'lucide-react';
@@ -29,9 +29,14 @@ interface BattlesMapProps {
   onBattleSelect: (battle: Battle) => void;
 }
 
-const BattlesMap = ({ battles, isBn, onBattleSelect }: BattlesMapProps) => {
-  // Fix default marker icons (Leaflet doesn't bundle these automatically in many bundlers)
-  useEffect(() => {
+// Global flag to prevent duplicate initialization
+let leafletInitialized = false;
+
+// Store reference to prevent remounting in Strict Mode
+const initLeaflet = () => {
+  if (leafletInitialized) return;
+  
+  try {
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl:
@@ -40,6 +45,16 @@ const BattlesMap = ({ battles, isBn, onBattleSelect }: BattlesMapProps) => {
       shadowUrl:
         'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
     });
+    leafletInitialized = true;
+  } catch (err) {
+    console.warn('Leaflet icon setup:', err);
+  }
+};
+
+const BattlesMap = ({ battles, isBn, onBattleSelect }: BattlesMapProps) => {
+  // Initialize Leaflet only once
+  useMemo(() => {
+    initLeaflet();
   }, []);
 
   const getOutcomeLabel = (outcome: string) => {
@@ -146,75 +161,75 @@ const BattlesMap = ({ battles, isBn, onBattleSelect }: BattlesMapProps) => {
       `}</style>
       
       <MapContainer
-        center={center}
-        zoom={4}
-        scrollWheelZoom={true}
-        className="w-full h-full z-0"
-        style={{ background: '#1a1a2e' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-        />
-        
-        <FitBounds />
-        
-        {battles.map((battle) => {
-          const icon = createCustomIcon(battle.outcome);
-          if (!icon) return null;
+          center={center}
+          zoom={4}
+          scrollWheelZoom={true}
+          className="w-full h-full z-0"
+          style={{ background: '#1a1a2e' }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+            url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+          />
           
-          return (
-            <Marker
-              key={battle.id}
-              position={[battle.location.lat, battle.location.lng]}
-              icon={icon}
-            >
-              <Popup>
-                <div className="p-3 min-w-[250px]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={getOutcomeColor(battle.outcome)}>
-                      {getOutcomeLabel(battle.outcome)}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {battle.hijriYear}
-                    </Badge>
+          <FitBounds />
+          
+          {battles.map((battle) => {
+            const icon = createCustomIcon(battle.outcome);
+            if (!icon) return null;
+            
+            return (
+              <Marker
+                key={battle.id}
+                position={[battle.location.lat, battle.location.lng]}
+                icon={icon}
+              >
+                <Popup>
+                  <div className="p-3 min-w-[250px]">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getOutcomeColor(battle.outcome)}>
+                        {getOutcomeLabel(battle.outcome)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {battle.hijriYear}
+                      </Badge>
+                    </div>
+                    
+                    <h3 className="font-bold text-foreground text-lg mb-1">
+                      {isBn ? battle.nameBn : battle.nameEn}
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-arabic mb-2">
+                      {battle.nameAr}
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <MapPin className="w-3 h-3" />
+                      <span>{battle.location.name}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                      <Users className="w-3 h-3" />
+                      <span>{battle.muslimForce.toLocaleString()} vs {battle.enemyForce.toLocaleString()}</span>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {isBn ? battle.summaryBn : battle.summaryEn}
+                    </p>
+                    
+                    <Button 
+                      size="sm" 
+                      className="w-full gap-2"
+                      onClick={() => onBattleSelect(battle)}
+                    >
+                      <Eye className="w-4 h-4" />
+                      {isBn ? 'সম্পূর্ণ দেখুন' : 'View Details'}
+                    </Button>
                   </div>
-                  
-                  <h3 className="font-bold text-foreground text-lg mb-1">
-                    {isBn ? battle.nameBn : battle.nameEn}
-                  </h3>
-                  <p className="text-sm text-muted-foreground font-arabic mb-2">
-                    {battle.nameAr}
-                  </p>
-                  
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <MapPin className="w-3 h-3" />
-                    <span>{battle.location.name}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                    <Users className="w-3 h-3" />
-                    <span>{battle.muslimForce.toLocaleString()} vs {battle.enemyForce.toLocaleString()}</span>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {isBn ? battle.summaryBn : battle.summaryEn}
-                  </p>
-                  
-                  <Button 
-                    size="sm" 
-                    className="w-full gap-2"
-                    onClick={() => onBattleSelect(battle)}
-                  >
-                    <Eye className="w-4 h-4" />
-                    {isBn ? 'সম্পূর্ণ দেখুন' : 'View Details'}
-                  </Button>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-      </MapContainer>
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
       
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg z-[1000]">

@@ -32,13 +32,13 @@ export default function WriterNotifications() {
           <motion.div key={n.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
             className={`flex items-start gap-4 p-4 rounded-2xl border transition-colors cursor-pointer
               ${n.read ? "bg-card border-border hover:bg-muted/30" : "bg-primary/3 border-primary/20 hover:bg-primary/5"}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${n.color}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${n.color}`}>
               <n.icon className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <p className={`text-sm font-semibold ${n.read ? "text-foreground" : "text-foreground"}`}>{n.title}</p>
-                {!n.read && <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />}
+                {!n.read && <span className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1.5" />}
               </div>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{n.desc}</p>
               <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">

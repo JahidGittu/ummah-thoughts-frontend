@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TopicSidebarMap, ApplicationScale } from '@/components/shared/TopicSidebarMap';
+import { TopicMessengerView } from '@/components/topics/TopicMessengerView';
 
 
 interface Topic {
@@ -31,7 +31,11 @@ const Topics = () => {
   const { t, i18n } = useTranslation();
   const isBengali = i18n.language === 'bn';
   const [expandedTopics, setExpandedTopics] = useState<string[]>(['islamic-state']);
-  const [currentSection, setCurrentSection] = useState('definition');
+  const [selectedSubtopic, setSelectedSubtopic] = useState<{
+    id: string;
+    nameEn: string;
+    nameBn: string;
+  } | null>(null);
 
   const topicCategories: Topic[] = [
     {
@@ -96,22 +100,6 @@ const Topics = () => {
     );
   };
 
-  // Common misuse examples
-  const commonMisuse = [
-    {
-      en: 'Using Khilafah concept to justify violence against established governments',
-      bn: 'প্রতিষ্ঠিত সরকারের বিরুদ্ধে সহিংসতার ন্যায্যতা দিতে খিলাফাহ ধারণার ব্যবহার'
-    },
-    {
-      en: 'Ignoring gradualism and demanding immediate implementation',
-      bn: 'ক্রমান্বয়ে বাস্তবায়ন উপেক্ষা করে তাৎক্ষণিক বাস্তবায়ন দাবি করা'
-    },
-    {
-      en: 'Applying rulings meant for states to individual actions',
-      bn: 'রাষ্ট্রের জন্য প্রযোজ্য বিধান ব্যক্তিগত কাজে প্রয়োগ করা'
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -142,7 +130,7 @@ const Topics = () => {
       <section className="py-16 lg:py-24">
         <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="grid lg:grid-cols-4 gap-8">
+          <div className="grid lg:grid-cols-3 gap-8">
             {/* Left: Topics Navigation */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
@@ -183,9 +171,12 @@ const Topics = () => {
                         {topic.subtopics.map(subtopic => (
                           <button
                             key={subtopic.id}
-                            className="w-full flex items-center justify-between px-4 py-3 pl-14 hover:bg-muted/50 transition-colors text-left"
+                            onClick={() => setSelectedSubtopic(subtopic)}
+                            className={`w-full flex items-center justify-between px-4 py-3 pl-14 hover:bg-muted/50 transition-colors text-left ${
+                              selectedSubtopic?.id === subtopic.id ? 'bg-primary/10 border-l-2 border-primary' : ''
+                            }`}
                           >
-                            <span className="text-sm text-foreground">
+                            <span className={`text-sm ${selectedSubtopic?.id === subtopic.id ? 'text-primary font-semibold' : 'text-foreground'}`}>
                               {isBengali ? subtopic.nameBn : subtopic.nameEn}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -200,119 +191,37 @@ const Topics = () => {
               </div>
             </div>
 
-            {/* Middle: Topic Content Structure Preview */}
+            {/* Middle: Topic Content Structure - Messenger View */}
             <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-card rounded-2xl border border-border p-8"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Landmark className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <Badge variant="outline" className="mb-1">{t('topics.preview')}</Badge>
-                    <h2 className="font-display text-2xl font-bold text-foreground">
-                      {isBengali ? 'খিলাফাহ ব্যবস্থা' : 'Khilafah System'}
-                    </h2>
-                  </div>
-                </div>
-
-                <p className="text-muted-foreground mb-8">
-                  {isBengali
-                    ? 'ইসলামী খিলাফাহ ব্যবস্থা সম্পর্কে বিস্তারিত আলোচনা, এর ইতিহাস, মূলনীতি এবং আধুনিক প্রয়োগ।'
-                    : 'Detailed discussion on the Islamic Khilafah system, its history, principles, and modern application.'
-                  }
-                </p>
-
-                {/* Application Scale */}
-                <div className="mb-8">
-                  <ApplicationScale
-                    individual={true}
-                    social={true}
-                    state="conditional"
-                  />
-                </div>
-
-                {/* Common Misuse Warning Section */}
+              {selectedSubtopic ? (
                 <motion.div
+                  key={selectedSubtopic.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mb-8 p-5 rounded-xl bg-destructive/5 border border-destructive/20"
+                  transition={{ duration: 0.3 }}
                 >
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-display font-semibold text-foreground mb-3">
-                        {isBengali ? 'সাধারণ অপব্যবহার সতর্কতা' : 'Common Misuse Warning'}
-                      </h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {isBengali
-                          ? 'এই বিষয়টি প্রায়ই নিম্নলিখিত উপায়ে অপব্যবহার করা হয়:'
-                          : 'This topic is often misused in the following ways:'
-                        }
-                      </p>
-                      <ul className="space-y-2">
-                        {commonMisuse.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <span className="text-destructive font-bold">⚠</span>
-                            <span>{isBengali ? item.bn : item.en}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <TopicMessengerView
+                    topicTitle={selectedSubtopic.nameEn}
+                    topicTitleBn={selectedSubtopic.nameBn}
+                    videoThumbnail="https://images.unsplash.com/photo-1639348370207-a8d5d5d5b5c5?w=600&h=400&fit=crop"
+                    content="This is a comprehensive discussion about the topic. Click a topic from the sidebar to see its detailed messenger conversation."
+                    contentBn="এটি টপিক সম্পর্কে একটি বিস্তৃত আলোচনা। বিশদ বার্তা কথোপকথন দেখতে সাইডবার থেকে একটি টপিক ক্লিক করুন।"
+                    response="Our experts have prepared detailed insights on this matter, offering multiple perspectives aligned with Islamic scholarship."
+                    responseBn="আমাদের বিশেষজ্ঞরা এই বিষয়ে বিস্তারিত অনুমান প্রস্তুত করেছেন, ইসলামী বিদ্বত্তার সাথে সামঞ্জস্যপূর্ণ একাধিক দৃষ্টিভঙ্গি অফার করছেন।"
+                  />
+                </motion.div>
+              ) : (
+                <div className="flex items-center justify-center h-96 bg-card rounded-2xl border border-border">
+                  <div className="text-center">
+                    <p className="text-muted-foreground mb-2">
+                      {isBengali ? 'একটি টপিক নির্বাচন করুন' : 'Select a topic'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {isBengali ? 'বাম সাইডবার থেকে টপিক বেছে নিন' : 'Choose a topic from the left sidebar'}
+                    </p>
                   </div>
-                </motion.div>
-
-                <div className="mt-8 pt-6 border-t border-border">
-                  <Button className="gap-2">
-                    {t('topics.exploreTopic')}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
                 </div>
-              </motion.div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-4 mt-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-card rounded-xl border border-border p-6 text-center"
-                >
-                  <p className="text-3xl font-display font-bold text-primary mb-1">385</p>
-                  <p className="text-sm text-muted-foreground">{t('topics.totalDiscussions')}</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-card rounded-xl border border-border p-6 text-center"
-                >
-                  <p className="text-3xl font-display font-bold text-secondary mb-1">16</p>
-                  <p className="text-sm text-muted-foreground">{t('topics.mainCategories')}</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-card rounded-xl border border-border p-6 text-center"
-                >
-                  <p className="text-3xl font-display font-bold text-primary mb-1">50+</p>
-                  <p className="text-sm text-muted-foreground">{t('topics.scholars')}</p>
-                </motion.div>
-              </div>
-            </div>
-
-            {/* Right: Topic Sidebar Map */}
-            <div className="lg:col-span-1 hidden lg:block">
-              <div className="sticky top-24">
-                <TopicSidebarMap
-                  currentSection={currentSection}
-                  onSectionClick={setCurrentSection}
-                />
-              </div>
+              )}
             </div>
           </div>
         </div>

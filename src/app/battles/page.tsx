@@ -32,6 +32,11 @@ const BattlesMap = dynamic(
   () => import('@/components/battles/BattlesMap'),
   { ssr: false }
 );
+const InteractiveBattlesMap = dynamic(
+  () => import('@/components/battles/InteractiveBattlesMap'),
+  { ssr: false }
+);
+import { MapErrorBoundary } from '@/components/battles/MapErrorBoundary';
 import TimelineView from '@/components/battles/TimelineView';
 import BattleQuiz from '@/components/battles/BattleQuiz';
 import { EthicsWarningBox } from '@/components/shared/EthicsWarningBox';
@@ -539,7 +544,7 @@ const Battles = () => {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-background to-secondary/5" />
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
@@ -675,66 +680,16 @@ const Battles = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="max-w-6xl mx-auto"
+                className="w-full -mx-4 -my-4 px-4 py-4"
               >
-                {/* Interactive Leaflet Map */}
-                <BattlesMap
-                  battles={filteredBattles}
-                  isBn={isBn}
-                  onBattleSelect={(battle) => setSelectedBattle(battle as typeof selectedBattle)}
-                />
-
-                {/* Battle Grid below map */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-                  {filteredBattles.map((battle, index) => (
-                    <motion.div
-                      key={battle.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <Card
-                        className="cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1"
-                        onClick={() => setSelectedBattle(battle)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <Badge className={getPeriodColor(battle.period)} variant="outline">
-                              {battle.hijriYear}
-                            </Badge>
-                            <Badge className={getOutcomeColor(battle.outcome)}>
-                              {battle.outcome === 'victory' ? (isBn ? 'বিজয়' : 'Victory') :
-                               battle.outcome === 'defeat' ? (isBn ? 'পরাজয়' : 'Defeat') :
-                               battle.outcome === 'setback' ? (isBn ? 'বিপর্যয়' : 'Setback') :
-                               battle.outcome === 'stalemate' ? (isBn ? 'অচলাবস্থা' : 'Stalemate') :
-                               (isBn ? 'কৌশলগত' : 'Strategic')}
-                            </Badge>
-                          </div>
-                          <h3 className="font-bold text-foreground mb-1">
-                            {isBn ? battle.nameBn : battle.nameEn}
-                          </h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {isBn ? battle.summaryBn : battle.summaryEn}
-                          </p>
-
-                          {/* Casualty preview */}
-                          {battle.casualties && (
-                            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/50 text-xs">
-                              <span className="flex items-center gap-1">
-                                <Skull className="w-3 h-3 text-green-600" />
-                                <span className="text-green-600 font-medium">{battle.casualties.muslimMartyrs}</span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Skull className="w-3 h-3 text-red-600" />
-                                <span className="text-red-600 font-medium">{battle.casualties.enemyDeaths}</span>
-                              </span>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* Interactive Map Full View */}
+                <MapErrorBoundary>
+                  <InteractiveBattlesMap
+                    battles={filteredBattles}
+                    isBn={isBn}
+                    onBattleSelect={(battle) => setSelectedBattle(battle as typeof selectedBattle)}
+                  />
+                </MapErrorBoundary>
               </motion.div>
             )}
           </AnimatePresence>

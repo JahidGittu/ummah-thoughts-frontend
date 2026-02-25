@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useId, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,11 +34,12 @@ export const ScholarLoginModal = ({ isOpen, onClose, onLogin }: ScholarLoginModa
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, close modal
-  if (user) {
-    onClose();
-    return null;
-  }
+  // If already logged in, close modal using useEffect
+  useEffect(() => {
+    if (user && isOpen) {
+      onClose();
+    }
+  }, [user, isOpen, onClose]);
 
   const validateFields = (): boolean => {
     const errors: FieldErrors = {};

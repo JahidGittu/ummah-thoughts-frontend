@@ -1,0 +1,317 @@
+/* Avatar Styling - Question */
+.avatarQuestion {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Avatar Styling - Answer */
+.avatarAnswer {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Message Bubble - Left (Question) */
+.messageBubbleLeft {
+  position: relative;
+  padding: 18px 22px;
+  max-width: 100%;
+}
+
+.messageBubbleLeft::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: 15px;
+  left: -15px;
+  border-top: 15px solid rgba(229, 231, 235, 1);
+  border-left: 15px solid transparent;
+}
+
+.messageBubbleLeft.dark::after {
+  border-top-color: rgb(30, 41, 59);
+}
+
+/* Message Bubble - Right (Answer) */
+.messageBubbleRight {
+  position: relative;
+  padding: 18px 22px;
+  max-width: 100%;
+}
+
+.messageBubbleRight::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: 15px;
+  right: -15px;
+  border-top: 15px solid rgb(34, 197, 94);
+  border-right: 15px solid transparent;
+}
+
+.messageBubbleRight.dark::after {
+  border-top-color: rgb(22, 163, 74);
+}
+
+/* Title Styling */
+.title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  letter-spacing: -0.3px;
+}
+
+.messageBubbleLeft .title {
+  color: #1f2937;
+}
+
+.dark .messageBubbleLeft .title {
+  color: #f1f5f9;
+}
+
+.messageBubbleRight .title {
+  color: #ffffff;
+}
+
+/* Content Text */
+.contentText {
+  font-size: 16px;
+  line-height: 1.9;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.messageBubbleLeft .contentText {
+  color: #374151;
+}
+
+.dark .messageBubbleLeft .contentText {
+  color: #cbd5e1;
+}
+
+.messageBubbleRight .contentText {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Paragraph Spacing */
+.contentText p {
+  margin: 14px 0;
+}
+
+.contentText p:first-child {
+  margin-top: 0;
+}
+
+.contentText p:last-child {
+  margin-bottom: 0;
+}
+
+/* Quote Block */
+.quoteBlock {
+  margin: 14px 0;
+  padding: 14px 16px;
+  border-left: 5px solid currentColor;
+  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  font-style: italic;
+  font-size: 15px;
+}
+
+.messageBubbleRight .quoteBlock {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.dark .messageBubbleLeft .quoteBlock {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: #64748b;
+}
+
+.dark .messageBubbleRight .quoteBlock {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.6);
+}
+
+/* List Styling */
+.contentText ul,
+.contentText ol {
+  margin: 14px 0 14px 24px;
+  padding: 0;
+}
+
+.contentText li {
+  margin: 8px 0;
+  line-height: 1.9;
+}
+
+/* Emphasis */
+.contentText strong {
+  font-weight: 700;
+}
+
+.contentText em {
+  font-style: italic;
+}
+
+/* Code Styling */
+.contentText code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.messageBubbleRight .contentText code {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.dark .messageBubbleLeft .contentText code {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .messageBubbleRight .contentText code {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Video Section */
+.videoSection {
+  margin: 16px 0;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .videoSection {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.videoContainer {
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.videoContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Message Container */
+.messageContainer {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  animation: slideIn 0.4s ease-out;
+}
+
+.messageContainerRight {
+  flex-direction: row-reverse;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .messageBubbleLeft,
+  .messageBubbleRight {
+    padding: 14px 16px;
+  }
+
+  .title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .contentText {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .avatarQuestion,
+  .avatarAnswer {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .messageContainer {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .videoSection {
+    margin: 12px 0;
+    padding-bottom: 12px;
+  }
+
+  .contentText p {
+    margin: 10px 0;
+  }
+
+  .contentText ul,
+  .contentText ol {
+    margin: 10px 0 10px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageBubbleLeft,
+  .messageBubbleRight {
+    padding: 12px 14px;
+  }
+
+  .title {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .contentText {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .avatarQuestion,
+  .avatarAnswer {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
