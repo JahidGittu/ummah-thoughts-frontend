@@ -14,6 +14,16 @@ interface FormattingState {
   italic: boolean;
   underline: boolean;
   strikethrough: boolean;
+  h1: boolean;
+  h2: boolean;
+  h3: boolean;
+  p: boolean;
+  blockquote: boolean;
+  ul: boolean;
+  ol: boolean;
+  alignLeft: boolean;
+  alignCenter: boolean;
+  alignRight: boolean;
 }
 
 interface AdvancedRichTextEditorProps {
@@ -44,32 +54,69 @@ export default function AdvancedRichTextEditor({
     italic: false,
     underline: false,
     strikethrough: false,
+    alignLeft: false,
+    alignCenter: false,
+    alignRight: false,
+    h1: false,
+    h2: false,
+    h3: false,
+    p: false,
+    blockquote: false,
+    ul: false,
+    ol: false,
   });
 
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
+  // Update formatting state based on current selection
+  const updateFormattingState = useCallback(() => {
+    const states = {
+      bold: document.queryCommandState('bold'),
+      italic: document.queryCommandState('italic'),
+      underline: document.queryCommandState('underline'),
+      strikethrough: document.queryCommandState('strikethrough'),
+      h1: false,
+      h2: false,
+      h3: false,
+      p: false,
+      blockquote: false,
+      ul: document.queryCommandState('insertUnorderedList'),
+      ol: document.queryCommandState('insertOrderedList'),
+      alignLeft: document.queryCommandState('justifyLeft'),
+      alignCenter: document.queryCommandState('justifyCenter'),
+      alignRight: document.queryCommandState('justifyRight'),
+    };
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      let node: Node | null = selection.getRangeAt(0).startContainer;
+      while (node && node !== editorRef.current) {
+        if (node.nodeType === 1) {
+          const tag = (node as HTMLElement).tagName.toLowerCase();
+          if (tag === 'h1') states.h1 = true;
+          if (tag === 'h2') states.h2 = true;
+          if (tag === 'h3') states.h3 = true;
+          if (tag === 'blockquote') states.blockquote = true;
+          if (tag === 'p') states.p = true;
+        }
+        node = node.parentNode;
+      }
+    }
+
+    setFormatting(prev => ({ ...prev, ...states }));
+  }, []);
+
   // Apply formatting command
   const applyFormat = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
-    editorRef.current?.focus();
 
     // Update state after a small delay
     setTimeout(() => {
       updateFormattingState();
     }, 0);
-  }, []);
-
-  // Update formatting state based on current selection
-  const updateFormattingState = useCallback(() => {
-    setFormatting({
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline'),
-      strikethrough: document.queryCommandState('strikethrough'),
-    });
-  }, []);
+  }, [updateFormattingState]);
 
   // Handle content change
   const handleContentChange = useCallback(() => {
@@ -90,19 +137,29 @@ export default function AdvancedRichTextEditor({
   const applyBlockFormat = useCallback((format: string) => {
     switch (format) {
       case 'h1':
-        document.execCommand('formatBlock', false, '<h1>');
+        document.execCommand('formatBlock', false, formatting.h1 ? 'p' : 'h1');
         break;
       case 'h2':
-        document.execCommand('formatBlock', false, '<h2>');
+        document.execCommand('formatBlock', false, formatting.h2 ? 'p' : 'h2');
         break;
       case 'h3':
-        document.execCommand('formatBlock', false, '<h3>');
+        document.execCommand('formatBlock', false, formatting.h3 ? 'p' : 'h3');
         break;
       case 'p':
-        document.execCommand('formatBlock', false, '<p>');
+        document.execCommand('formatBlock', false, 'p');
         break;
       case 'blockquote':
-        document.execCommand('formatBlock', false, '<blockquote>');
+        if (formatting.blockquote) {
+          document.execCommand('formatBlock', false, 'p');
+          setTimeout(() => {
+            if (document.queryCommandValue('formatBlock').includes('blockquote')) {
+              document.execCommand('outdent', false);
+            }
+            updateFormattingState();
+          }, 0);
+        } else {
+          document.execCommand('formatBlock', false, 'blockquote');
+        }
         break;
       case 'ul':
         document.execCommand('insertUnorderedList', false);
@@ -116,8 +173,8 @@ export default function AdvancedRichTextEditor({
       default:
         break;
     }
-    editorRef.current?.focus();
-  }, []);
+    setTimeout(updateFormattingState, 0);
+  }, [formatting, updateFormattingState]);
 
   // Apply alignment
   const applyAlignment = useCallback((alignment: string) => {
@@ -134,7 +191,6 @@ export default function AdvancedRichTextEditor({
       default:
         break;
     }
-    editorRef.current?.focus();
   }, []);
 
   // Add link
@@ -143,7 +199,6 @@ export default function AdvancedRichTextEditor({
     if (url) {
       document.execCommand('createLink', false, url);
     }
-    editorRef.current?.focus();
   }, []);
 
   // Add image
@@ -157,13 +212,11 @@ export default function AdvancedRichTextEditor({
       html += '</figure>';
       document.execCommand('insertHTML', false, html);
     }
-    editorRef.current?.focus();
   }, []);
 
   // Add divider
   const addDivider = useCallback(() => {
     document.execCommand('insertHTML', false, '<hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;" />');
-    editorRef.current?.focus();
   }, []);
 
   // Handle image upload
@@ -257,11 +310,10 @@ export default function AdvancedRichTextEditor({
 
           <button
             onClick={handleSaveDraft}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              saved
-                ? 'bg-emerald-500 text-white'
-                : 'bg-muted text-foreground hover:bg-muted/80'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${saved
+              ? 'bg-emerald-500 text-white'
+              : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
           >
             {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Saved' : 'Save Draft'}
@@ -452,13 +504,15 @@ interface ToolbarButtonProps {
 function ToolbarButton({ icon: Icon, label, onClick, active }: ToolbarButtonProps) {
   return (
     <button
-      onClick={onClick}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
       title={label}
-      className={`w-8 h-8 rounded-md flex items-center justify-center text-sm transition-colors ${
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-      }`}
+      className={`w-8 h-8 rounded-md flex items-center justify-center text-sm transition-colors ${active
+        ? 'bg-primary text-primary-foreground'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        }`}
     >
       <Icon className="h-4 w-4" />
     </button>

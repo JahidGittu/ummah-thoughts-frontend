@@ -3,8 +3,9 @@
 // ============================================================
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 import {
   Plus, X, Save, Send, Eye, Settings, Image as ImageIcon,
   Trash2, Bold, Italic, Heading1, Heading2, Quote, Code, List,
@@ -56,7 +57,29 @@ function BlockEditor({
 }: BlockEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localContent, setLocalContent] = useState(content);
+  const textareaRef = useRef<HTMLDivElement>(null);
   const { uploadImage, applyFormatting } = useWriter();
+  const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
+  const contentRef = useRef(content);
+
+  useLayoutEffect(() => {
+    if (textareaRef.current && content !== contentRef.current) {
+      textareaRef.current.innerHTML = content || "";
+      contentRef.current = content;
+    }
+  }, [content]);
+
+  const updateActiveActions = useCallback(() => {
+    if (!textareaRef.current) return;
+    const actions = new Set<string>();
+
+    if (document.queryCommandState("bold")) actions.add("bold");
+    if (document.queryCommandState("italic")) actions.add("italic");
+    if (document.queryCommandState("underline")) actions.add("underline");
+    if (document.queryCommandState("insertUnorderedList")) actions.add("insertUnorderedList");
+
+    setActiveActions(actions);
+  }, []);
 
   const handleSave = useCallback(async () => {
     onUpdate({
@@ -141,22 +164,50 @@ function BlockEditor({
                     <p className="text-sm text-muted-foreground">Click to upload image</p>
                   </label>
                 </div>
-              ) : blockType === 'heading' ? (
-                <Input
-                  value={localContent}
-                  onChange={(e) => setLocalContent(e.target.value)}
-                  placeholder="Enter heading..."
-                  className="text-lg font-bold"
-                  autoFocus
-                />
               ) : (
-                <Textarea
-                  value={localContent}
-                  onChange={(e) => setLocalContent(e.target.value)}
-                  placeholder={`Enter ${blockLabel.toLowerCase()} content...`}
-                  className="min-h-[120px] font-mono text-sm"
-                  autoFocus
-                />
+                <div className="space-y-2">
+                  <div className="flex bg-muted/50 p-1 rounded-md mb-1 gap-1">
+                    {[
+                      { icon: Bold, action: 'bold' },
+                      { icon: Italic, action: 'italic' },
+                      { icon: List, action: 'insertUnorderedList' },
+                    ].map(({ icon: Icon, action }) => (
+                      <Button
+                        key={action}
+                        size="sm"
+                        variant={activeActions.has(action) ? "secondary" : "ghost"}
+                        className={clsx("h-8 w-8 p-0", activeActions.has(action) && "bg-primary/20 text-primary")}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          document.execCommand(action, false);
+                          setLocalContent(textareaRef.current?.innerHTML || '');
+                          updateActiveActions();
+                        }}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </Button>
+                    ))}
+                  </div>
+                  <div
+                    ref={textareaRef as any}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={(e) => {
+                      const html = e.currentTarget.innerHTML;
+                      contentRef.current = html;
+                      setLocalContent(html);
+                      updateActiveActions();
+                    }}
+                    onBlur={() => handleSave()}
+                    onMouseUp={updateActiveActions}
+                    onKeyUp={updateActiveActions}
+                    onFocus={updateActiveActions}
+                    className={clsx(
+                      "p-3 rounded bg-muted/30 min-h-[120px] outline-none border border-transparent focus:border-primary/30 transition-all",
+                      blockType === 'heading' ? "text-lg font-bold" : "text-sm"
+                    )}
+                  />
+                </div>
               )}
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSave} variant="default">
@@ -273,7 +324,7 @@ export default function WriterArticleBuilderEnhanced({
       // Save to undo stack
       setUndoStack(prev => [...prev, JSON.parse(JSON.stringify(currentArticle))]);
       setRedoStack([]);
-      
+
       await updateBlock(currentArticle.id, blockId, updates);
       // Auto-save to localStorage
       localStorage.setItem(`article-${currentArticle.id}`, JSON.stringify(currentArticle));
@@ -290,7 +341,7 @@ export default function WriterArticleBuilderEnhanced({
       // Save to undo stack
       setUndoStack(prev => [...prev, JSON.parse(JSON.stringify(currentArticle))]);
       setRedoStack([]);
-      
+
       await deleteBlock(currentArticle.id, blockId);
       // Auto-save to localStorage
       localStorage.setItem(`article-${currentArticle.id}`, JSON.stringify(currentArticle));
