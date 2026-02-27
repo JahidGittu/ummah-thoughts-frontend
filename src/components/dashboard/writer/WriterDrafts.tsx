@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PenSquare, Clock, Trash2, Eye, Save, Plus, X, Bold, Italic,
@@ -8,14 +8,22 @@ import {
 } from "lucide-react";
 
 const drafts = [
-  { id: 1, title: "Digital Caliphate: A Critical Analysis", category: "Contemporary", wordCount: 2840, lastEdited: "2 hours ago", progress: 70,
-    content: "The notion of a 'Digital Caliphate' has emerged as one of the most contested concepts in contemporary Islamic discourse. Proponents argue that the internet provides an unprecedented platform for Muslim unity across geographic boundaries...\n\nHowever, classical scholars have consistently maintained that legitimate Islamic governance requires physical jurisdiction, accountability structures, and the presence of qualified scholars in positions of authority...\n\nThis analysis examines three dimensions: theological legitimacy, practical governance, and the historical precedent of Islamic political theory." },
-  { id: 2, title: "Fiqh of Artificial Intelligence", category: "Technology & Islam", wordCount: 1200, lastEdited: "Yesterday", progress: 40,
-    content: "Artificial intelligence presents novel fiqhi questions that classical jurists could not have anticipated. At its core, AI raises questions about agency, responsibility (mas'uliyya), and the moral status of non-human decision-makers...\n\nThe Maliki tradition's emphasis on maslaha (public interest) may offer the most flexible framework for evaluating AI applications in Islamic contexts." },
-  { id: 3, title: "The Concept of Ummah in the 21st Century", category: "Governance", wordCount: 650, lastEdited: "3 days ago", progress: 20,
-    content: "The ummah — the global community of Muslims — has always been more than a sociological category. It carries theological weight, implying shared obligation, mutual care (ta'awun), and collective identity..." },
-  { id: 4, title: "Interfaith Dialogue: An Islamic Perspective", category: "Comparative Religion", wordCount: 3100, lastEdited: "1 week ago", progress: 85,
-    content: "Islamic tradition has a rich, though often underappreciated, history of interfaith engagement. From the Constitution of Medina to the scholarly exchanges of Andalusia, Muslims have participated in substantive dialogue with adherents of other faiths...\n\nContemporary interfaith dialogue must navigate between the imperative of da'wa and the ethics of respectful engagement with the religious other." },
+  {
+    id: 1, title: "Digital Caliphate: A Critical Analysis", category: "Contemporary", wordCount: 2840, lastEdited: "2 hours ago", progress: 70,
+    content: "The notion of a 'Digital Caliphate' has emerged as one of the most contested concepts in contemporary Islamic discourse. Proponents argue that the internet provides an unprecedented platform for Muslim unity across geographic boundaries...\n\nHowever, classical scholars have consistently maintained that legitimate Islamic governance requires physical jurisdiction, accountability structures, and the presence of qualified scholars in positions of authority...\n\nThis analysis examines three dimensions: theological legitimacy, practical governance, and the historical precedent of Islamic political theory."
+  },
+  {
+    id: 2, title: "Fiqh of Artificial Intelligence", category: "Technology & Islam", wordCount: 1200, lastEdited: "Yesterday", progress: 40,
+    content: "Artificial intelligence presents novel fiqhi questions that classical jurists could not have anticipated. At its core, AI raises questions about agency, responsibility (mas'uliyya), and the moral status of non-human decision-makers...\n\nThe Maliki tradition's emphasis on maslaha (public interest) may offer the most flexible framework for evaluating AI applications in Islamic contexts."
+  },
+  {
+    id: 3, title: "The Concept of Ummah in the 21st Century", category: "Governance", wordCount: 650, lastEdited: "3 days ago", progress: 20,
+    content: "The ummah — the global community of Muslims — has always been more than a sociological category. It carries theological weight, implying shared obligation, mutual care (ta'awun), and collective identity..."
+  },
+  {
+    id: 4, title: "Interfaith Dialogue: An Islamic Perspective", category: "Comparative Religion", wordCount: 3100, lastEdited: "1 week ago", progress: 85,
+    content: "Islamic tradition has a rich, though often underappreciated, history of interfaith engagement. From the Constitution of Medina to the scholarly exchanges of Andalusia, Muslims have participated in substantive dialogue with adherents of other faiths...\n\nContemporary interfaith dialogue must navigate between the imperative of da'wa and the ethics of respectful engagement with the religious other."
+  },
 ];
 
 type FormatAction = { icon: React.ElementType; label: string; action: string };
@@ -53,9 +61,15 @@ interface EditorDraft {
 }
 
 function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: () => void; onSave: (content: string, title: string) => void }) {
-  const [content, setContent] = useState(draft.content);
+  const initialContent = useMemo(() => {
+    if (!draft.content) return "<p><br></p>";
+    if (draft.content.trim().startsWith("<")) return draft.content;
+    return draft.content.split("\n\n").map(p => `<p>${p}</p>`).join("");
+  }, [draft.content]);
+
+  const [content, setContent] = useState(initialContent);
   const [title, setTitle] = useState(draft.title);
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
+  const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const contentEditableRef = useRef<HTMLDivElement>(null);
@@ -63,14 +77,63 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
 
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
+  const updateActiveActions = useCallback(() => {
+    if (!contentEditableRef.current) return;
+
+    const actions = new Set<string>();
+
+    // Check formatting states (inline)
+    if (document.queryCommandState("bold")) actions.add("bold");
+    if (document.queryCommandState("italic")) actions.add("italic");
+    if (document.queryCommandState("underline")) actions.add("underline");
+    if (document.queryCommandState("insertUnorderedList")) actions.add("ul");
+    if (document.queryCommandState("insertOrderedList")) actions.add("ol");
+
+    // Block level elements and alignment - manual traversal is more reliable
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      let node: Node | null = selection.getRangeAt(0).startContainer;
+      while (node && node !== contentEditableRef.current) {
+        if (node.nodeType === 1) { // Element node
+          const element = node as HTMLElement;
+          const tag = element.tagName.toLowerCase();
+
+          if (tag === 'h1') actions.add('h1');
+          else if (tag === 'h2') actions.add('h2');
+          else if (tag === 'blockquote') actions.add('blockquote');
+          else if (tag === 'p' || tag === 'div') {
+            // Check if it's just a normal paragraph
+            if (!actions.has('h1') && !actions.has('h2') && !actions.has('blockquote')) {
+              actions.add('p');
+            }
+          }
+
+          // Check alignment from styles
+          const textAlign = element.style.textAlign || window.getComputedStyle(element).textAlign;
+          if (textAlign === 'center') actions.add('alignCenter');
+          else if (textAlign === 'right') actions.add('alignRight');
+          else if (textAlign === 'left' || textAlign === 'start') actions.add('alignLeft');
+        }
+        node = node.parentNode;
+      }
+    }
+
+    // Fallback for alignment if not detected in parents
+    if (!actions.has('alignCenter') && !actions.has('alignRight') && !actions.has('alignLeft')) {
+      if (document.queryCommandState("justifyCenter")) actions.add("alignCenter");
+      else if (document.queryCommandState("justifyRight")) actions.add("alignRight");
+      else actions.add("alignLeft");
+    }
+
+    setActiveActions(actions);
+  }, []);
+
   const handleFormat = useCallback((action: string) => {
     const editable = contentEditableRef.current;
     if (!editable) return;
 
-    editable.focus();
-    
     // Execute formatting commands
-    switch(action) {
+    switch (action) {
       case "bold":
         document.execCommand("bold", false);
         break;
@@ -81,13 +144,17 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
         document.execCommand("underline", false);
         break;
       case "h1":
-        document.execCommand("formatBlock", false, "<h1>");
+        document.execCommand("formatBlock", false, activeActions.has("h1") ? "p" : "h1");
         break;
       case "h2":
-        document.execCommand("formatBlock", false, "<h2>");
+        document.execCommand("formatBlock", false, activeActions.has("h2") ? "p" : "h2");
         break;
       case "p":
-        document.execCommand("formatBlock", false, "<p>");
+        document.execCommand("formatBlock", false, "p");
+        // Also try to remove unusual blocks if stuck
+        if (activeActions.has("blockquote")) {
+          document.execCommand("outdent", false);
+        }
         break;
       case "ul":
         document.execCommand("insertUnorderedList", false);
@@ -96,7 +163,19 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
         document.execCommand("insertOrderedList", false);
         break;
       case "blockquote":
-        document.execCommand("formatBlock", false, "<blockquote>");
+        if (activeActions.has("blockquote")) {
+          // Revert to paragraph
+          document.execCommand("formatBlock", false, "p");
+          // If still a blockquote (some browsers are stubborn), we might need outdent
+          setTimeout(() => {
+            if (document.queryCommandValue("formatBlock").includes("blockquote")) {
+              document.execCommand("outdent", false);
+            }
+            updateActiveActions();
+          }, 0);
+        } else {
+          document.execCommand("formatBlock", false, "blockquote");
+        }
         break;
       case "alignLeft":
         document.execCommand("justifyLeft", false);
@@ -108,8 +187,15 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
         document.execCommand("justifyRight", false);
         break;
       case "link":
-        const url = prompt("Enter URL:");
-        if (url) document.execCommand("createLink", false, url);
+        const currentUrl = document.queryCommandValue("createLink");
+        const url = prompt("Enter URL:", currentUrl || "https://");
+        if (url !== null) {
+          if (url === "") {
+            document.execCommand("unlink", false);
+          } else {
+            document.execCommand("createLink", false, url);
+          }
+        }
         break;
       case "image":
         fileInputRef.current?.click();
@@ -119,16 +205,9 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
         break;
     }
 
-    const next = new Set(activeFormats);
-    if (next.has(action)) next.delete(action);
-    else next.add(action);
-    setActiveFormats(next);
-    
-    // Update content state
-    if (contentEditableRef.current) {
-      setContent(contentEditableRef.current.innerHTML);
-    }
-  }, [activeFormats]);
+    updateActiveActions();
+    setContent(editable.innerHTML);
+  }, [updateActiveActions]);
 
   const handleSave = () => {
     if (contentEditableRef.current) {
@@ -162,7 +241,7 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
 
   const renderPreview = () => {
     return (
-      <div 
+      <div
         className="prose prose-sm max-w-none text-foreground"
         dangerouslySetInnerHTML={{ __html: content || '' }}
       />
@@ -219,8 +298,12 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
                 <div key={gi} className="flex items-center gap-0.5">
                   {gi > 0 && <div className="w-px h-5 bg-border mx-1" />}
                   {group.map(btn => (
-                    <button key={btn.action} title={btn.label} onClick={() => handleFormat(btn.action)}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center text-xs transition-colors ${activeFormats.has(btn.action) ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
+                    <button key={btn.action} title={btn.label}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleFormat(btn.action);
+                      }}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center text-xs transition-colors ${activeActions.has(btn.action) ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
                       <btn.icon className="h-3.5 w-3.5" />
                     </button>
                   ))}
@@ -253,14 +336,18 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
                   suppressContentEditableWarning
                   onInput={(e) => {
                     setContent((e.currentTarget as HTMLDivElement).innerHTML);
+                    updateActiveActions();
                   }}
+                  onSelect={updateActiveActions}
+                  onKeyUp={updateActiveActions}
+                  onMouseUp={updateActiveActions}
                   onPaste={(e) => {
                     e.preventDefault();
                     const text = e.clipboardData?.getData('text/html') || e.clipboardData?.getData('text/plain') || '';
                     document.execCommand('insertHTML', false, text);
+                    updateActiveActions();
                   }}
-                  className="w-full min-h-[500px] bg-transparent border-none outline-none resize-none text-sm text-foreground leading-7 placeholder:text-muted-foreground/40 font-body focus:ring-0"
-                  style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                  className="w-full min-h-[500px] bg-transparent border-none outline-none text-sm text-foreground leading-7 placeholder:text-muted-foreground/40 font-body focus:ring-0 prose prose-sm max-w-none dark:prose-invert"
                 >
                   {draft.content}
                 </div>
@@ -289,7 +376,7 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
           <div className="px-4 py-3 border-b border-border space-y-2">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Category</p>
             <select className="w-full text-xs bg-muted rounded-lg px-2.5 py-1.5 border-none outline-none text-foreground">
-              {["Contemporary","Technology & Islam","Governance","Comparative Religion","Jurisprudence","History","Spirituality"].map(c => (
+              {["Contemporary", "Technology & Islam", "Governance", "Comparative Religion", "Jurisprudence", "History", "Spirituality"].map(c => (
                 <option key={c} selected={c === draft.category}>{c}</option>
               ))}
             </select>
@@ -299,7 +386,7 @@ function RichEditor({ draft, onClose, onSave }: { draft: EditorDraft; onClose: (
           <div className="px-4 py-3 border-b border-border space-y-2">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Tags</p>
             <div className="flex flex-wrap gap-1">
-              {["Islam","Fiqh","Modern"].map(tag => (
+              {["Islam", "Fiqh", "Modern"].map(tag => (
                 <span key={tag} className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full font-medium flex items-center gap-1">
                   {tag} <X className="h-2.5 w-2.5 cursor-pointer" />
                 </span>

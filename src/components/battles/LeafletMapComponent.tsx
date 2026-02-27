@@ -45,6 +45,10 @@ const LeafletMapComponent = ({
 }: LeafletMapComponentProps) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
+  // Stub zoom handlers (map library not fully implemented)
+  const handleZoomIn = () => console.log('Zoom in');
+  const handleZoomOut = () => console.log('Zoom out');
+
   // Compute bounds of all battles so we can "zoom" into that region
   const bounds = useMemo(() => {
     if (!battles.length) {

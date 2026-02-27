@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bold, Italic, Underline, Strikethrough, Link2, AlignLeft, AlignCenter,
@@ -66,7 +66,7 @@ const WPIcon = () => (
    BLOCK TOOLBAR (floats above selected block — WP style)
 ═══════════════════════════════════════════════════════════ */
 function BlockToolbar({
-  block, onFormat, onChangeKind, onDelete, onMoveUp, onMoveDown, onDuplicate,
+  block, onFormat, onChangeKind, onDelete, onMoveUp, onMoveDown, onDuplicate, activeActions,
 }: {
   block: Block;
   onFormat: (f: string) => void;
@@ -75,6 +75,7 @@ function BlockToolbar({
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
+  activeActions?: Set<string>;
 }) {
   const [showKindMenu, setShowKindMenu] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -138,15 +139,29 @@ function BlockToolbar({
             { icon: Link2, f: "link", title: "Link" },
             { icon: Strikethrough, f: "strikethrough", title: "Strikethrough" },
           ].map(({ icon: Icon, f, title }) => (
-            <button key={f} onClick={() => onFormat(f)} title={title}
-              className="w-10 h-10 flex items-center justify-center hover:bg-[#f0f0f0] text-[#1e1e1e] transition-colors">
+            <button key={f}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onFormat(f);
+              }}
+              title={title}
+              className={`w-10 h-10 flex items-center justify-center transition-colors ${activeActions?.has(f) ? "bg-[#007cba]/10 text-[#007cba]" : "hover:bg-[#f0f0f0] text-[#1e1e1e]"}`}>
               <Icon className="h-5 w-5" />
             </button>
           ))}
           <div className="w-px h-6 bg-[#e0e0e0] mx-0.5" />
           {/* Align */}
-          {[AlignLeft, AlignCenter, AlignRight].map((Icon, i) => (
-            <button key={i} className="w-10 h-10 flex items-center justify-center hover:bg-[#f0f0f0] text-[#1e1e1e] transition-colors">
+          {[
+            { icon: AlignLeft, action: 'justifyLeft' },
+            { icon: AlignCenter, action: 'justifyCenter' },
+            { icon: AlignRight, action: 'justifyRight' }
+          ].map(({ icon: Icon, action }, i) => (
+            <button key={i}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onFormat(action);
+              }}
+              className={`w-10 h-10 flex items-center justify-center transition-colors ${activeActions?.has(action) ? "bg-[#007cba]/10 text-[#007cba]" : "hover:bg-[#f0f0f0] text-[#1e1e1e]"}`}>
               <Icon className="h-5 w-5" />
             </button>
           ))}
@@ -212,7 +227,63 @@ function EditorBlock({
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
   const [slashHighlight, setSlashHighlight] = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLDivElement>(null);
+  const [activeActions, setActiveActions] = useState<Set<string>>(new Set());
+  const contentRef = useRef(block.content);
+
+  useLayoutEffect(() => {
+    if (textareaRef.current && block.content !== contentRef.current) {
+      textareaRef.current.innerHTML = block.content || "";
+      contentRef.current = block.content;
+    }
+  }, [block.content]);
+
+  const updateActiveActions = useCallback(() => {
+    if (!textareaRef.current) return;
+    const actions = new Set<string>();
+
+    if (document.queryCommandState("bold")) actions.add("bold");
+    if (document.queryCommandState("italic")) actions.add("italic");
+    if (document.queryCommandState("underline")) actions.add("underline");
+    if (document.queryCommandState("insertUnorderedList")) actions.add("ul");
+    if (document.queryCommandState("insertOrderedList")) actions.add("ol");
+
+    // Block level and alignment
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      let node: Node | null = selection.getRangeAt(0).startContainer;
+      while (node && node !== textareaRef.current) {
+        if (node.nodeType === 1) {
+          const element = node as HTMLElement;
+          const tag = element.tagName.toLowerCase();
+          if (tag === 'blockquote') actions.add('quote');
+
+          const textAlign = element.style.textAlign || window.getComputedStyle(element).textAlign;
+          if (textAlign === 'center') actions.add('justifyCenter');
+          else if (textAlign === 'right') actions.add('justifyRight');
+          else if (textAlign === 'left' || textAlign === 'start') actions.add('justifyLeft');
+        }
+        node = node.parentNode;
+      }
+    }
+
+    // Check command-based alignment if not found in tree
+    if (!actions.has('justifyCenter') && !actions.has('justifyRight') && !actions.has('justifyLeft')) {
+      if (document.queryCommandState("justifyCenter")) actions.add("justifyCenter");
+      else if (document.queryCommandState("justifyRight")) actions.add("justifyRight");
+      else actions.add("justifyLeft");
+    }
+
+    setActiveActions(actions);
+  }, []);
+
+  const handleFormat = useCallback((command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    updateActiveActions();
+    if (textareaRef.current) {
+      onChange(textareaRef.current.innerHTML);
+    }
+  }, [onChange, updateActiveActions]);
 
   const MAX_FILE_SIZE_MB = 5;
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
@@ -284,7 +355,7 @@ function EditorBlock({
     ol: "List",
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (showSlashMenu) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -324,30 +395,6 @@ function EditorBlock({
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (val === "/") {
-      setShowSlashMenu(true);
-      setSlashFilter("");
-      setSlashHighlight(0);
-      onChange(val);
-      return;
-    }
-    if (showSlashMenu) {
-      if (val.startsWith("/")) {
-        setSlashFilter(val.slice(1));
-        setSlashHighlight(0);
-        onChange(val);
-        return;
-      } else {
-        setShowSlashMenu(false);
-        setSlashFilter("");
-        setSlashHighlight(0);
-      }
-    }
-    onChange(val);
-  };
-
   const handleSlashSelect = (kind: BlockKind) => {
     setShowSlashMenu(false);
     setSlashFilter("");
@@ -385,7 +432,8 @@ function EditorBlock({
       {isSelected && (
         <BlockToolbar
           block={block}
-          onFormat={() => { }}
+          activeActions={activeActions}
+          onFormat={handleFormat}
           onChangeKind={onChangeKind}
           onDelete={onDelete}
           onMoveUp={onMoveUp}
@@ -395,8 +443,8 @@ function EditorBlock({
       )}
 
       <div className={`relative transition-all duration-75 ${isSelected
-          ? "outline outline-[1.5px] outline-[#007cba] outline-offset-[2px]"
-          : "hover:outline hover:outline-1 hover:outline-[#e0e0e0] hover:outline-offset-[2px]"
+        ? "outline outline-[1.5px] outline-[#007cba] outline-offset-[2px]"
+        : "hover:outline hover:outline-1 hover:outline-[#e0e0e0] hover:outline-offset-[2px]"
         }`}>
 
         {/* Drag handle on hover — WP style */}
@@ -475,8 +523,8 @@ function EditorBlock({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded p-12 flex flex-col items-center gap-2 transition-all ${dragOver
-                      ? "border-[#007cba] bg-[#007cba]/5 scale-[1.005]"
-                      : "border-[#e0e0e0] text-[#757575] hover:border-[#007cba] hover:text-[#007cba]"
+                    ? "border-[#007cba] bg-[#007cba]/5 scale-[1.005]"
+                    : "border-[#e0e0e0] text-[#757575] hover:border-[#007cba] hover:text-[#007cba]"
                     }`}
                   onClick={e => e.stopPropagation()}
                 >
@@ -527,16 +575,22 @@ function EditorBlock({
             </div>
           ) : block.kind === "quote" ? (
             <div className="border-l-[4px] border-[#1e1e1e] pl-6">
-              <textarea
-                ref={textareaRef}
-                value={block.content}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                className={`${STYLES.quote} w-full text-[#1e1e1e]`}
+              <div
+                ref={textareaRef as any}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={e => {
+                  const html = (e.currentTarget as HTMLDivElement).innerHTML;
+                  contentRef.current = html;
+                  onChange(html);
+                  updateActiveActions();
+                }}
+                onMouseUp={updateActiveActions}
+                onKeyUp={updateActiveActions}
+                onFocus={updateActiveActions}
+                className={`${STYLES.quote} w-full text-[#1e1e1e] outline-none`}
                 style={{ fontFamily: SERIF }}
-                placeholder="Add a quote"
-                rows={1}
-                onInput={e => autoResize(e.currentTarget)}
+                data-placeholder="Add a quote"
               />
             </div>
           ) : block.kind === "columns" ? (
@@ -549,16 +603,23 @@ function EditorBlock({
             </div>
           ) : (
             <div className="relative">
-              <textarea
-                ref={textareaRef}
-                value={block.content}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                className={`${STYLES[block.kind]} w-full text-[#1e1e1e]`}
+              <div
+                ref={textareaRef as any}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={e => {
+                  const html = (e.currentTarget as HTMLDivElement).innerHTML;
+                  contentRef.current = html;
+                  onChange(html);
+                  updateActiveActions();
+                }}
+                onKeyDown={handleKeyDown as any}
+                onMouseUp={updateActiveActions}
+                onKeyUp={updateActiveActions}
+                onFocus={updateActiveActions}
+                className={`${STYLES[block.kind]} w-full text-[#1e1e1e] outline-none`}
                 style={{ fontFamily: ["h1", "h2", "h3"].includes(block.kind) ? SERIF : WP_FONT }}
-                placeholder={PLACEHOLDERS[block.kind] ?? "Type / to choose a block"}
-                rows={1}
-                onInput={e => autoResize(e.currentTarget)}
+                data-placeholder={PLACEHOLDERS[block.kind] ?? "Type / to choose a block"}
               />
 
               {/* Slash command menu — WP Gutenberg style */}
@@ -1298,8 +1359,8 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
           {/* Save draft */}
           <button onClick={handleSave}
             className={`h-8 px-3 rounded text-[13px] font-medium transition-colors ${saved
-                ? "bg-[#007cba]/20 text-[#4db8ff]"
-                : "text-white hover:bg-[#333]"
+              ? "bg-[#007cba]/20 text-[#4db8ff]"
+              : "text-white hover:bg-[#333]"
               }`}>
             {saved ? "Saved!" : "Save draft"}
           </button>
@@ -1434,6 +1495,13 @@ export default function WriterArticleBuilder({ onClose }: { onClose: () => void 
                   ))}
 
                   {/* End-of-canvas add block */}
+                  <style jsx global>{`
+                    [contenteditable]:empty:before {
+                      content: attr(data-placeholder);
+                      color: #9ca3af;
+                      cursor: text;
+                    }
+                  `}</style>
                   <div className="pt-8 flex items-center gap-3">
                     <button
                       onClick={() => addBlock(blocks[blocks.length - 1]?.id)}

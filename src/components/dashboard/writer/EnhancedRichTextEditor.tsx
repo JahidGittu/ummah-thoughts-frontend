@@ -182,9 +182,8 @@ export default function EnhancedRichTextEditor({
           <div key={segment.id} style={{ textAlign: segment.alignment as any }} className="mb-4">
             {segment.type === 'heading' && (
               <div
-                className={`font-bold mb-3 ${
-                  segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
-                }`}
+                className={`font-bold mb-3 ${segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
+                  }`}
               >
                 {segment.content}
               </div>
@@ -275,11 +274,10 @@ export default function EnhancedRichTextEditor({
 
           <button
             onClick={handleSaveDraft}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-              saved
-                ? 'bg-emerald-500 text-white'
-                : 'bg-muted text-foreground hover:bg-muted/80'
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${saved
+              ? 'bg-emerald-500 text-white'
+              : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
           >
             {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? 'Saved' : 'Save Draft'}
@@ -339,13 +337,12 @@ export default function EnhancedRichTextEditor({
                     onDragEnter={() => setDragOverSegment(segment.id)}
                     onDragLeave={() => setDragOverSegment(null)}
                     onDrop={() => setDragOverSegment(null)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      selectedSegmentId === segment.id
-                        ? 'border-primary bg-primary/5'
-                        : dragOverSegment === segment.id
-                          ? 'border-primary/50 bg-primary/10'
-                          : 'border-border hover:border-border/80 bg-card'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${selectedSegmentId === segment.id
+                      ? 'border-primary bg-primary/5'
+                      : dragOverSegment === segment.id
+                        ? 'border-primary/50 bg-primary/10'
+                        : 'border-border hover:border-border/80 bg-card'
+                      }`}
                     onClick={() => setSelectedSegmentId(segment.id)}
                   >
                     <SegmentRenderer
@@ -448,11 +445,10 @@ export default function EnhancedRichTextEditor({
                     <button
                       key={align}
                       onClick={() => updateSegment(selectedSegment.id, { alignment: align })}
-                      className={`flex-1 h-8 rounded text-sm font-medium transition-colors ${
-                        selectedSegment.alignment === align
-                          ? 'bg-primary text-primary-foreground'
-                          : 'border border-border hover:bg-muted/50'
-                      }`}
+                      className={`flex-1 h-8 rounded text-sm font-medium transition-colors ${selectedSegment.alignment === align
+                        ? 'bg-primary text-primary-foreground'
+                        : 'border border-border hover:bg-muted/50'
+                        }`}
                     >
                       {align === 'left' ? <AlignLeft className="h-4 w-4 mx-auto" /> : align === 'center' ? <AlignCenter className="h-4 w-4 mx-auto" /> : <AlignRight className="h-4 w-4 mx-auto" />}
                     </button>
@@ -506,15 +502,13 @@ function SegmentRenderer({
     const elem = contentEditRef.current;
     if (!elem) return;
 
-    elem.focus();
-    
     try {
       if (value !== undefined) {
         document.execCommand(command, false, value);
       } else {
         document.execCommand(command, false);
       }
-      
+
       // Update the content
       onUpdate(segment.id, { content: elem.innerHTML });
     } catch (e) {
@@ -548,21 +542,21 @@ function SegmentRenderer({
         <div className="space-y-2">
           <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
             <button
-              onClick={() => executeCommand('bold')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('bold'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Bold"
             >
               <Bold className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('italic')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('italic'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Italic"
             >
               <Italic className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('underline')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('underline'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Underline"
             >
@@ -577,10 +571,9 @@ function SegmentRenderer({
             }}
             suppressContentEditableWarning
             contentEditable
-            className={`w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 font-bold focus:ring-1 focus:ring-primary/30 rounded p-2 ${
-              segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
-            }`}
-            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+            className={`w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 font-bold focus:ring-1 focus:ring-primary/30 rounded p-2 ${segment.level === 1 ? 'text-2xl' : segment.level === 2 ? 'text-xl' : 'text-lg'
+              }`}
+            dangerouslySetInnerHTML={{ __html: React.useMemo(() => segment.content || '', []) }}
           />
         </div>
       )}
@@ -589,28 +582,28 @@ function SegmentRenderer({
         <div className="space-y-2">
           <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
             <button
-              onClick={() => executeCommand('bold')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('bold'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Bold"
             >
               <Bold className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('italic')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('italic'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Italic"
             >
               <Italic className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('underline')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('underline'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Underline"
             >
               <Underline className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('strikethrough')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('strikethrough'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Strikethrough"
             >
@@ -618,7 +611,7 @@ function SegmentRenderer({
             </button>
             <div className="w-px h-4 bg-border/50" />
             <button
-              onClick={() => executeCommand('createLink', prompt('Enter URL:') || '')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('createLink', prompt('Enter URL:') || ''); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Link"
             >
@@ -634,7 +627,7 @@ function SegmentRenderer({
             suppressContentEditableWarning
             contentEditable
             className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm leading-relaxed focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[100px]"
-            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+            dangerouslySetInnerHTML={{ __html: React.useMemo(() => segment.content || '', []) }}
           />
         </div>
       )}
@@ -643,14 +636,14 @@ function SegmentRenderer({
         <div className="space-y-2">
           <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
             <button
-              onClick={() => executeCommand('bold')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('bold'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Bold"
             >
               <Bold className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('italic')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('italic'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Italic"
             >
@@ -666,7 +659,7 @@ function SegmentRenderer({
             suppressContentEditableWarning
             contentEditable
             className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none italic text-sm focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[60px]"
-            dangerouslySetInnerHTML={{ __html: segment.content || '' }}
+            dangerouslySetInnerHTML={{ __html: React.useMemo(() => segment.content || '', []) }}
           />
         </div>
       )}
@@ -675,14 +668,14 @@ function SegmentRenderer({
         <div className="space-y-2">
           <div className="flex gap-1 mb-2 pb-2 border-b border-border/50 flex-wrap">
             <button
-              onClick={() => executeCommand('insertUnorderedList')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('insertUnorderedList'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Bullet List"
             >
               <List className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('insertOrderedList')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('insertOrderedList'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Numbered List"
             >
@@ -690,14 +683,14 @@ function SegmentRenderer({
             </button>
             <div className="w-px h-4 bg-border/50" />
             <button
-              onClick={() => executeCommand('bold')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('bold'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Bold"
             >
               <Bold className="h-3 w-3" />
             </button>
             <button
-              onClick={() => executeCommand('italic')}
+              onMouseDown={(e) => { e.preventDefault(); executeCommand('italic'); }}
               className="w-6 h-6 rounded text-xs hover:bg-muted flex items-center justify-center hover:text-foreground transition-colors"
               title="Italic"
             >
@@ -713,7 +706,7 @@ function SegmentRenderer({
             suppressContentEditableWarning
             contentEditable
             className="w-full bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground/40 resize-none text-sm focus:ring-1 focus:ring-primary/30 rounded p-2 min-h-[80px]"
-            dangerouslySetInnerHTML={{ __html: segment.content || 'One item per line...' }}
+            dangerouslySetInnerHTML={{ __html: React.useMemo(() => segment.content || 'One item per line...', []) }}
           />
         </div>
       )}
