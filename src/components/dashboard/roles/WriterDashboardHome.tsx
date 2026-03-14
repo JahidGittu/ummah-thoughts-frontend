@@ -1,14 +1,12 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { FileText, Eye, Heart, PenSquare, Clock } from "lucide-react";
-import WriterArticleBuilder from "@/components/dashboard/writer/WriterArticleBuilder";
 
 export default function WriterDashboardHome() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [showBuilder, setShowBuilder] = useState(false);
 
   const stats = [
     { label: t("dashboard.published", { defaultValue: "Published" }), value: "31", icon: FileText, trend: "+2 " + t("dashboard.thisMonth", { defaultValue: "this month" }), color: "text-primary bg-primary/10" },
@@ -25,24 +23,17 @@ export default function WriterDashboardHome() {
   ];
 
   return (
-    <>
-      <AnimatePresence>
-        {showBuilder && (
-          <WriterArticleBuilder onClose={() => setShowBuilder(false)} />
-        )}
-      </AnimatePresence>
-
-      <div className="space-y-8">
+    <div className="space-y-8">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-br from-secondary/10 via-secondary/5 to-transparent border border-secondary/20 rounded-3xl p-6">
           <p className="text-sm text-muted-foreground mb-1">{t("dashboard.welcomeBack")}</p>
           <h2 className="font-display text-2xl font-bold text-foreground">{user?.name}</h2>
           <p className="text-muted-foreground text-sm mt-1">{user?.specialization || t("dashboard.writer", { defaultValue: "Writer" })} · {t("dashboard.contentCreator", { defaultValue: "Content Creator" })}</p>
-          <button
-            onClick={() => setShowBuilder(true)}
+          <Link
+            href="/dashboard/newarticle"
             className="mt-4 inline-flex items-center gap-2 bg-secondary text-secondary-foreground text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
             <PenSquare className="h-4 w-4" /> {t("dashboard.newArticle")}
-          </button>
+          </Link>
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -101,7 +92,6 @@ export default function WriterDashboardHome() {
             ))}
           </div>
         </motion.div>
-      </div>
-    </>
+    </div>
   );
 }
