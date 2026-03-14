@@ -280,12 +280,13 @@ export function useDebate(debateId?: string) {
     }
   }, [debateId]);
 
-  const endDebate = useCallback(async () => {
-    if (!debateId) return;
+  const endDebate = useCallback(async (id?: string) => {
+    const targetId = id ?? debateId;
+    if (!targetId) return;
     setLoading(true);
     setError(null);
     try {
-      return await debateService.endDebate(debateId);
+      return await debateService.endDebate(targetId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end debate';
       setError(message);
@@ -295,12 +296,13 @@ export function useDebate(debateId?: string) {
     }
   }, [debateId]);
 
-  const joinDebate = useCallback(async () => {
-    if (!debateId) return;
+  const joinDebate = useCallback(async (id?: string) => {
+    const targetId = id ?? debateId;
+    if (!targetId) return;
     setLoading(true);
     setError(null);
     try {
-      await debateService.joinDebate(debateId);
+      await debateService.joinDebate(targetId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to join';
       setError(message);
