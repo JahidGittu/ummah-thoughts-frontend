@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
-  Plus, Eye, Trash2, Search, Filter, Clock, ThumbsUp, MessageSquare,
-  FileText, ArrowUpRight, Zap, BarChart3, CheckCircle2, AlertCircle,
-  Pencil, Archive, Share2, Download, Settings, ChevronLeft, PenSquare,
+  Plus, Eye, Trash2, Search, Clock, ThumbsUp, MessageSquare,
+  FileText, Zap, CheckCircle2, Pencil, Archive,
 } from 'lucide-react';
-import EnhancedRichTextEditor, { EnhancedRichTextEditorProps } from './EnhancedRichTextEditor';
+import { getArticles, saveArticle, deleteArticle } from '@/lib/draftStorage';
 
 interface Article {
   id: string;
@@ -20,64 +20,63 @@ interface Article {
   views: number;
   likes: number;
   comments: number;
-  createdAt: Date;
-  publishedAt?: Date;
-  lastEdited: Date;
-  coverImage?: string;
+  lastEdited: string;
+  content?: string;
+}
+
+const DEFAULT_ARTICLES: Article[] = [
+  { id: '1', title: 'The Role of Ijtihad in Contemporary Law', description: 'A comprehensive exploration of how Islamic jurisprudence adapts to modern challenges.', category: 'Fiqh', tags: ['fiqh', 'contemporary', 'jurisprudence'], status: 'published', wordCount: 4250, views: 4200, likes: 312, comments: 28, lastEdited: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString() },
+  { id: '2', title: 'Women Scholars in Classical Islam', description: 'Highlighting the contributions of female scholars throughout Islamic history.', category: 'History', tags: ['women', 'history', 'scholars'], status: 'published', wordCount: 3840, views: 8700, likes: 640, comments: 54, lastEdited: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString() },
+  { id: '3', title: 'Fiqh of Artificial Intelligence', description: 'Exploring Islamic jurisprudential approaches to AI ethics and governance.', category: 'Technology', tags: ['technology', 'fiqh', 'ai'], status: 'draft', wordCount: 1200, views: 0, likes: 0, comments: 0, lastEdited: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString() },
+];
+
+function seedArticlesIfEmpty() {
+  const existing = getArticles();
+  if (existing.length === 0) {
+    DEFAULT_ARTICLES.forEach((a) => {
+      saveArticle({ id: a.id, title: a.title, description: a.description, category: a.category, tags: a.tags, status: a.status, wordCount: a.wordCount, lastEdited: a.lastEdited, views: a.views, likes: a.likes, comments: a.comments });
+    });
+  }
+}
+
+function loadArticles(): Article[] {
+  const stored = getArticles();
+  if (stored.length === 0) return [];
+  return stored.map((a) => ({
+    id: a.id,
+    title: a.title,
+    description: a.description,
+    category: a.category,
+    tags: a.tags,
+    status: a.status as Article['status'],
+    wordCount: a.wordCount,
+    views: a.views ?? 0,
+    likes: a.likes ?? 0,
+    comments: a.comments ?? 0,
+    lastEdited: a.lastEdited,
+    content: a.content,
+  }));
 }
 
 export default function ArticlePublisher() {
-  const [articles, setArticles] = useState<Article[]>([
-    {
-      id: '1',
-      title: 'The Role of Ijtihad in Contemporary Law',
-      description: 'A comprehensive exploration of how Islamic jurisprudence adapts to modern challenges.',
-      category: 'Fiqh',
-      tags: ['fiqh', 'contemporary', 'jurisprudence'],
-      status: 'published',
-      wordCount: 4250,
-      views: 4200,
-      likes: 312,
-      comments: 28,
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      publishedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      lastEdited: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    },
-    {
-      id: '2',
-      title: 'Women Scholars in Classical Islam',
-      description: 'Highlighting the contributions of female scholars throughout Islamic history.',
-      category: 'History',
-      tags: ['women', 'history', 'scholars'],
-      status: 'published',
-      wordCount: 3840,
-      views: 8700,
-      likes: 640,
-      comments: 54,
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      lastEdited: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    },
-    {
-      id: '3',
-      title: 'Fiqh of Artificial Intelligence',
-      description: 'Exploring Islamic jurisprudential approaches to AI ethics and governance.',
-      category: 'Technology',
-      tags: ['technology', 'fiqh', 'ai'],
-      status: 'draft',
-      wordCount: 1200,
-      views: 0,
-      likes: 0,
-      comments: 0,
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      lastEdited: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    },
-  ]);
-
-  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published' | 'archived'>('all');
+
+  const refreshArticles = () => {
+    seedArticlesIfEmpty();
+    setArticles(loadArticles());
+  };
+
+  useEffect(() => {
+    refreshArticles();
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => refreshArticles();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   const filteredArticles = articles.filter(article => {
     const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,84 +85,32 @@ export default function ArticlePublisher() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateNew = () => {
-    setEditingArticle(null);
-    setShowEditor(true);
-  };
-
-  const handleEditArticle = (article: Article) => {
-    setEditingArticle(article);
-    setShowEditor(true);
-  };
-
-  const handleSaveDraft = (content: any) => {
-    const newArticle: Article = {
-      id: editingArticle?.id || `art_${Date.now()}`,
-      title: content.title || 'Untitled',
-      description: content.description || '',
-      category: content.category || 'General',
-      tags: content.tags || [],
-      status: 'draft',
-      wordCount: content.segments.reduce((acc: number, seg: any) => 
-        acc + (seg.content?.split(/\s+/).length || 0), 0),
-      views: editingArticle?.views || 0,
-      likes: editingArticle?.likes || 0,
-      comments: editingArticle?.comments || 0,
-      createdAt: editingArticle?.createdAt || new Date(),
-      lastEdited: new Date(),
-      coverImage: content.coverImage,
-    };
-
-    setArticles(prev => {
-      const exists = prev.find(a => a.id === newArticle.id);
-      if (exists) {
-        return prev.map(a => a.id === newArticle.id ? newArticle : a);
-      }
-      return [newArticle, ...prev];
-    });
-  };
-
-  const handlePublish = (content: any) => {
-    const publishedArticle: Article = {
-      id: editingArticle?.id || `art_${Date.now()}`,
-      title: content.title || 'Untitled',
-      description: content.description || '',
-      category: content.category || 'General',
-      tags: content.tags || [],
-      status: 'published',
-      wordCount: content.segments.reduce((acc: number, seg: any) => 
-        acc + (seg.content?.split(/\s+/).length || 0), 0),
-      views: editingArticle?.views || 0,
-      likes: editingArticle?.likes || 0,
-      comments: editingArticle?.comments || 0,
-      createdAt: editingArticle?.createdAt || new Date(),
-      publishedAt: new Date(),
-      lastEdited: new Date(),
-      coverImage: content.coverImage,
-    };
-
-    setArticles(prev => {
-      const exists = prev.find(a => a.id === publishedArticle.id);
-      if (exists) {
-        return prev.map(a => a.id === publishedArticle.id ? publishedArticle : a);
-      }
-      return [publishedArticle, ...prev];
-    });
-
-    setShowEditor(false);
-    setEditingArticle(null);
-  };
-
   const handleDeleteArticle = (id: string) => {
     if (confirm('Are you sure you want to delete this article?')) {
-      setArticles(prev => prev.filter(a => a.id !== id));
+      deleteArticle(id);
+      refreshArticles();
     }
   };
 
   const handleArchiveArticle = (id: string) => {
-    setArticles(prev => prev.map(a =>
-      a.id === id ? { ...a, status: a.status === 'archived' ? 'published' : 'archived' as any } : a
-    ));
+    const a = articles.find((x) => x.id === id);
+    if (!a) return;
+    const nextStatus = a.status === 'archived' ? 'published' : 'archived';
+    saveArticle({
+      id: a.id,
+      title: a.title,
+      description: a.description,
+      category: a.category,
+      tags: a.tags,
+      status: nextStatus,
+      wordCount: a.wordCount,
+      lastEdited: a.lastEdited,
+      views: a.views,
+      likes: a.likes,
+      comments: a.comments,
+      content: a.content,
+    });
+    refreshArticles();
   };
 
   const stats = {
@@ -175,38 +122,7 @@ export default function ArticlePublisher() {
   };
 
   return (
-    <>
-      <AnimatePresence>
-        {showEditor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
-          >
-            <EnhancedRichTextEditor
-              initialContent={editingArticle ? {
-                title: editingArticle.title,
-                description: editingArticle.description,
-                category: editingArticle.category,
-                tags: editingArticle.tags,
-                segments: [],
-                coverImage: editingArticle.coverImage,
-              } : undefined}
-              onSave={handleSaveDraft}
-              onPublish={handlePublish}
-            />
-            <button
-              onClick={() => setShowEditor(false)}
-              className="absolute top-4 left-4 z-50 w-10 h-10 rounded-lg bg-background/90 flex items-center justify-center hover:bg-background text-foreground transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <motion.div
@@ -330,12 +246,12 @@ export default function ArticlePublisher() {
             Drafts
           </button>
 
-          <button
-            onClick={handleCreateNew}
+          <Link
+            href="/dashboard/newarticle?from=articles"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             <Plus className="h-4 w-4" /> New Article
-          </button>
+          </Link>
         </div>
 
         {/* Articles List */}
@@ -352,12 +268,12 @@ export default function ArticlePublisher() {
                 {searchTerm ? 'Try adjusting your search' : 'Create your first article to get started'}
               </p>
               {!searchTerm && (
-                <button
-                  onClick={handleCreateNew}
+                <Link
+                  href="/dashboard/newarticle?from=articles"
                   className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
                 >
                   <Plus className="h-4 w-4" /> Create Article
-                </button>
+                </Link>
               )}
             </motion.div>
           ) : (
@@ -398,7 +314,7 @@ export default function ArticlePublisher() {
 
                     <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {article.lastEdited.toLocaleDateString()}
+                        <Clock className="h-3 w-3" /> {article.lastEdited}
                       </span>
                       <span>{article.wordCount.toLocaleString()} words</span>
 
@@ -420,13 +336,13 @@ export default function ArticlePublisher() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleEditArticle(article)}
+                    <Link
+                      href={`/dashboard/editarticle/${article.id}?from=articles`}
                       className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                       title="Edit"
                     >
                       <Pencil className="h-4 w-4" />
-                    </button>
+                    </Link>
 
                     {article.status === 'published' && (
                       <button
@@ -452,6 +368,5 @@ export default function ArticlePublisher() {
           )}
         </div>
       </div>
-    </>
   );
 }
