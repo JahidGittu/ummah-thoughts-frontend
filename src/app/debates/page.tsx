@@ -17,64 +17,18 @@ import {
   Bookmark,
   ChevronRight
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DebateCard } from "@/components/debates/DebateCard";
 import { ScholarLoginModal } from "@/components/debates/ScholarLoginModal";
 import { DebateRSVPModal } from "@/components/debates/DebateRSVPModal";
 import { cn } from "@/lib/utils";
+import { getDebates, addDebate } from "@/lib/debateStorage";
+import { toast } from "sonner";
 import ScholarDashboardHome from "@/components/dashboard/roles/ScholarDashboardHome";
 import { SkeletonDebateGrid, SkeletonStatCard } from "@/components/shared/SkeletonCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 
-// Mock data
-const mockDebates = [
-  {
-    id: "1",
-    title: "Is Shura Binding or Advisory?",
-    titleAr: "هل الشورى ملزمة أم استشارية؟",
-    status: "active" as const,
-    format: "async" as const,
-    topic: "Islamic Governance",
-    participants: {
-      positionA: { name: "Dr. Ahmad Al-Rashid", role: "Scholar" },
-      positionB: { name: "Sh. Muhammad Hasan", role: "Scholar" },
-    },
-    scheduledDate: "Feb 1 – Feb 15",
-    duration: "2 weeks",
-    votesClarity: 127,
-    bookmarks: 89,
-  },
-  {
-    id: "2",
-    title: "Modern Applications of Khilafah",
-    titleAr: "التطبيقات المعاصرة للخلافة",
-    status: "upcoming" as const,
-    format: "live" as const,
-    topic: "Political Theory",
-    participants: {
-      positionA: { name: "Dr. Fatima Zahra", role: "Researcher" },
-      positionB: { name: "Prof. Ibrahim Khalil", role: "Academic" },
-    },
-    scheduledDate: "Feb 10, 7:00 PM",
-    duration: "2 hours",
-    votesClarity: 0,
-    bookmarks: 45,
-  },
-  {
-    id: "3",
-    title: "Conditions for Valid Bay'ah",
-    titleAr: "شروط البيعة الصحيحة",
-    status: "concluded" as const,
-    format: "async" as const,
-    topic: "Fiqh al-Siyasah",
-    participants: {
-      positionA: { name: "Sh. Abdullah Farooq", role: "Scholar" },
-      positionB: { name: "Dr. Maryam Hassan", role: "Scholar" },
-    },
-    duration: "3 weeks",
-    votesClarity: 234,
-    bookmarks: 156,
-  },
-];
+// Seed and load from storage (sync with dashboard)
 
 const TABS = [
   { key: "all", label: "All Debates", icon: Scale },
@@ -97,20 +51,54 @@ export default function DebatesPage() {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showScholarDashboard, setShowScholarDashboard] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [debates, setDebates] = useState<ReturnType<typeof getDebates>>([]);
+  const [scheduleForm, setScheduleForm] = useState({ title: "", topic: "", positionA: "", positionB: "", date: "", time: "", format: "async" as "async" | "live" });
+
+  const refreshDebates = () => setDebates(getDebates());
 
   useEffect(() => {
-    // Simulate async data load
     const timer = setTimeout(() => setMounted(true), 600);
     return () => clearTimeout(timer);
   }, []);
 
-  const filteredDebates = mockDebates.filter(d => {
+  useEffect(() => {
+    refreshDebates();
+    window.addEventListener("focus", refreshDebates);
+    return () => window.removeEventListener("focus", refreshDebates);
+  }, []);
+
+  const handleScheduleDebate = () => {
+    if (!scheduleForm.title.trim()) {
+      toast.error("Please enter a debate title");
+      return;
+    }
+    addDebate({
+      title: scheduleForm.title,
+      topic: scheduleForm.topic || "General",
+      status: "upcoming",
+      format: scheduleForm.format,
+      participants: {
+        positionA: { name: scheduleForm.positionA || "TBD", role: "Scholar" },
+        positionB: { name: scheduleForm.positionB || "TBD", role: "Scholar" },
+      },
+      scheduledDate: scheduleForm.date && scheduleForm.time ? `${scheduleForm.date} ${scheduleForm.time}` : undefined,
+      duration: scheduleForm.format === "live" ? "2 hours" : "2 weeks",
+      votesClarity: 0,
+      bookmarks: 0,
+    });
+    toast.success("Debate scheduled successfully!");
+    setShowScheduleDialog(false);
+    setScheduleForm({ title: "", topic: "", positionA: "", positionB: "", date: "", time: "", format: "async" });
+    refreshDebates();
+  };
+
+  const filteredDebates = debates.filter(d => {
     const matchTab = activeTab === "all" || d.status === activeTab || d.format === activeTab;
     const matchSearch = !searchQuery || d.title.toLowerCase().includes(searchQuery.toLowerCase()) || d.topic.toLowerCase().includes(searchQuery.toLowerCase());
     return matchTab && matchSearch;
   });
 
-  const liveDebate = mockDebates.find(d => d.status === "upcoming" && d.format === "live");
+  const liveDebate = debates.find(d => d.status === "upcoming" && d.format === "live");
 
   const handleScholarLogin = async (email: string, password: string) => {
     const result = await login(email, password);
@@ -127,7 +115,7 @@ export default function DebatesPage() {
 
   const handleViewDebate = (debateId: string, format: string, status: string) => {
     if (status === "upcoming") {
-      const debate = mockDebates.find(d => d.id === debateId);
+      const debate = debates.find(d => d.id === debateId);
       setRsvpDebate(debate);
     } else if (format === "live") {
       router.push(`/debates/livevideo/${debateId}`);
@@ -175,6 +163,72 @@ export default function DebatesPage() {
           debate={rsvpDebate}
         />
       )}
+
+      {/* Admin Schedule Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule New Debate</DialogTitle>
+            <DialogDescription>Create a new scholarly debate. It will appear on the public debates page.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Input
+              placeholder="Debate title"
+              value={scheduleForm.title}
+              onChange={(e) => setScheduleForm((p) => ({ ...p, title: e.target.value }))}
+            />
+            <Input
+              placeholder="Topic / category"
+              value={scheduleForm.topic}
+              onChange={(e) => setScheduleForm((p) => ({ ...p, topic: e.target.value }))}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Position A (Scholar name)"
+                value={scheduleForm.positionA}
+                onChange={(e) => setScheduleForm((p) => ({ ...p, positionA: e.target.value }))}
+              />
+              <Input
+                placeholder="Position B (Scholar name)"
+                value={scheduleForm.positionB}
+                onChange={(e) => setScheduleForm((p) => ({ ...p, positionB: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={scheduleForm.date}
+                onChange={(e) => setScheduleForm((p) => ({ ...p, date: e.target.value }))}
+              />
+              <Input
+                type="time"
+                value={scheduleForm.time}
+                onChange={(e) => setScheduleForm((p) => ({ ...p, time: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={scheduleForm.format === "async" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScheduleForm((p) => ({ ...p, format: "async" }))}
+              >
+                <MessageSquare className="h-3.5 w-3.5 mr-1" /> Written
+              </Button>
+              <Button
+                variant={scheduleForm.format === "live" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScheduleForm((p) => ({ ...p, format: "live" }))}
+              >
+                <Video className="h-3.5 w-3.5 mr-1" /> Live
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
+            <Button onClick={handleScheduleDebate}>Schedule Debate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <main className="pt-28 pb-24 px-4" id="main-content">
         <div className="max-w-7xl mx-auto space-y-14">
@@ -296,7 +350,7 @@ export default function DebatesPage() {
               <Button
                 className="relative bg-emerald-600 hover:bg-emerald-700 text-white gap-2 rounded-xl flex-shrink-0 shadow-md"
                 onClick={() => {
-                  const debate = mockDebates.find(d => d.id === liveDebate.id);
+                  const debate = debates.find(d => d.id === liveDebate.id);
                   setRsvpDebate(debate);
                 }}
                 aria-label={`RSVP for live debate: ${liveDebate.title}`}
