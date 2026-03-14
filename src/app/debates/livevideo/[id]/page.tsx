@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LiveDebateRoom } from "@/components/debates/LiveDebateRoom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
+import { getDebateById } from "@/lib/debateStorage";
 
 // Mock data for live video debates
 const mockLiveDebates = {
@@ -34,7 +35,24 @@ export default function LiveVideoDebatePage() {
   const [inRoom, setInRoom] = useState(true);
 
   const debateId = params.id as string;
-  const debate = mockLiveDebates[debateId as keyof typeof mockLiveDebates];
+  const mockDebate = mockLiveDebates[debateId as keyof typeof mockLiveDebates];
+  const storedDebate = getDebateById(debateId);
+
+  // Use mock if available, else build from storage
+  const debate = mockDebate ?? (storedDebate && storedDebate.format === "live" ? {
+    id: storedDebate.id,
+    title: storedDebate.title,
+    titleAr: storedDebate.titleAr,
+    topic: storedDebate.topic,
+    moderator: { id: "m1", name: "Moderator", role: "moderator" as const },
+    speakers: [
+      { id: "s1", name: storedDebate.participants.positionA.name, role: "scholar" as const, isSpeaking: true },
+      { id: "s2", name: storedDebate.participants.positionB.name, role: "scholar" as const, isSpeaking: false },
+    ],
+    viewers: 0,
+    duration: storedDebate.duration ?? "0:00",
+    currentPhase: "position_a" as const,
+  } : null);
 
   useEffect(() => {
     setMounted(true);

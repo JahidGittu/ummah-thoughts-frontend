@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DebatePanel } from "@/components/debates/DebatePanel";
 import { motion } from "framer-motion";
+import { getDebateById } from "@/lib/debateStorage";
 
 // Mock data for text-based debates
 const mockTextDebates = {
@@ -82,7 +83,33 @@ export default function LiveChatDebatePage() {
   const [mounted, setMounted] = useState(false);
 
   const debateId = params.id as string;
-  const debate = mockTextDebates[debateId as keyof typeof mockTextDebates];
+  const mockDebate = mockTextDebates[debateId as keyof typeof mockTextDebates];
+  const storedDebate = getDebateById(debateId);
+
+  // Use mock if available, else build minimal debate from storage
+  const debate = mockDebate ?? (storedDebate ? {
+    title: storedDebate.title,
+    titleAr: storedDebate.titleAr,
+    topic: storedDebate.topic,
+    status: storedDebate.status === "concluded" ? "concluded" as const : "active" as const,
+    positionA: {
+      scholar: { name: storedDebate.participants.positionA.name, title: storedDebate.participants.positionA.role },
+      position: "Position statement to be added.",
+      summary: "This debate is scheduled. Full content will be available once the scholars complete their submissions.",
+      evidence: [],
+      methodology: "To be determined",
+    },
+    positionB: {
+      scholar: { name: storedDebate.participants.positionB.name, title: storedDebate.participants.positionB.role },
+      position: "Position statement to be added.",
+      summary: "This debate is scheduled. Full content will be available once the scholars complete their submissions.",
+      evidence: [],
+      methodology: "To be determined",
+    },
+    agreementPoints: ["Debate in progress"],
+    disagreementPoints: ["Positions to be presented"],
+    clarityVotes: { positionA: storedDebate.votesClarity ?? 0, positionB: Math.floor((storedDebate.votesClarity ?? 0) / 2) },
+  } : null);
 
   useEffect(() => {
     setMounted(true);
