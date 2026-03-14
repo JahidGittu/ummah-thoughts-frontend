@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Swords, MapPin, Calendar, Users, BookOpen, ChevronDown, ChevronUp,
-  Filter, X, Clock, Trophy, Shield, Flag, Eye, Skull, Volume2,
+  Swords, MapPin, Calendar, Users, BookOpen,
+  Filter, X, Clock, Trophy, Shield, Flag, Skull,
   AlertTriangle, CheckCircle, Lightbulb
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,10 +26,7 @@ import {
 } from '@/components/ui/select';
 
 import dynamic from 'next/dynamic';
-const BattlesMap = dynamic(
-  () => import('@/components/battles/BattlesMap'),
-  { ssr: false }
-);
+
 const InteractiveBattlesMap = dynamic(
   () => import('@/components/battles/InteractiveBattlesMap'),
   { ssr: false }
@@ -41,7 +36,7 @@ import TimelineView from '@/components/battles/TimelineView';
 import BattleQuiz from '@/components/battles/BattleQuiz';
 import { EthicsWarningBox } from '@/components/shared/EthicsWarningBox';
 
-// Battle data with comprehensive information including casualties
+// ─── Battle Data ──────────────────────────────────────────────────────────────
 const battlesData = [
   {
     id: 'badr',
@@ -63,7 +58,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Ali ibn Abi Talib', 'Hamza ibn Abdul-Muttalib'],
     quranicReference: 'Surah Al-Anfal (8:5-19)',
     significance: 'First major military victory; divine intervention confirmed',
-    casualties: { muslimMartyrs: 14, enemyDeaths: 70 }
+    casualties: { muslimMartyrs: 14, enemyDeaths: 70 },
   },
   {
     id: 'uhud',
@@ -85,7 +80,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Hamza ibn Abdul-Muttalib (martyred)', 'Khalid ibn al-Walid'],
     quranicReference: 'Surah Ali Imran (3:121-179)',
     significance: 'Lesson in discipline and obedience to leadership',
-    casualties: { muslimMartyrs: 70, enemyDeaths: 37 }
+    casualties: { muslimMartyrs: 70, enemyDeaths: 37 },
   },
   {
     id: 'khandaq',
@@ -107,7 +102,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Salman al-Farisi', 'Ali ibn Abi Talib'],
     quranicReference: 'Surah Al-Ahzab (33:9-27)',
     significance: 'Strategic innovation; end of major Quraysh offensive capability',
-    casualties: { muslimMartyrs: 6, enemyDeaths: 10 }
+    casualties: { muslimMartyrs: 6, enemyDeaths: 10 },
   },
   {
     id: 'khaybar',
@@ -129,7 +124,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Ali ibn Abi Talib', 'Abu Bakr'],
     quranicReference: 'Surah Al-Fath (48:15)',
     significance: 'Economic resources secured; Jewish opposition ended',
-    casualties: { muslimMartyrs: 15, enemyDeaths: 93 }
+    casualties: { muslimMartyrs: 15, enemyDeaths: 93 },
   },
   {
     id: 'makkah',
@@ -151,7 +146,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Abu Sufyan', 'Bilal ibn Rabah'],
     quranicReference: 'Surah An-Nasr (110:1-3)',
     significance: 'Peaceful victory; Kaaba cleansed; Islam established in Arabia',
-    casualties: { muslimMartyrs: 2, enemyDeaths: 12 }
+    casualties: { muslimMartyrs: 2, enemyDeaths: 12 },
   },
   {
     id: 'hunayn',
@@ -173,7 +168,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Abu Bakr', 'Ali ibn Abi Talib'],
     quranicReference: 'Surah At-Tawbah (9:25-26)',
     significance: 'Lesson against overconfidence; importance of steadfastness',
-    casualties: { muslimMartyrs: 4, enemyDeaths: 70 }
+    casualties: { muslimMartyrs: 4, enemyDeaths: 70 },
   },
   {
     id: 'tabuk',
@@ -195,7 +190,7 @@ const battlesData = [
     keyFigures: ['Prophet Muhammad ﷺ', 'Abu Bakr', 'Uthman ibn Affan'],
     quranicReference: 'Surah At-Tawbah (9:38-42)',
     significance: 'Last prophetic expedition; northern expansion of Islam',
-    casualties: { muslimMartyrs: 0, enemyDeaths: 0 }
+    casualties: { muslimMartyrs: 0, enemyDeaths: 0 },
   },
   {
     id: 'yarmouk',
@@ -209,7 +204,7 @@ const battlesData = [
     location: { lat: 32.8333, lng: 35.9333, name: 'Yarmouk River, Syria' },
     summaryEn: 'Decisive defeat of Byzantine Empire. Opened Syria and Levant to Islam.',
     summaryBn: 'বাইজেন্টাইন সাম্রাজ্যের নির্ণায়ক পরাজয়। সিরিয়া ও লেভান্ট ইসলামের জন্য উন্মুক্ত করে।',
-    detailsEn: 'The Battle of Yarmouk was one of the most decisive battles in history. Under Khalid ibn al-Walid\'s command, 25,000-40,000 Muslims faced approximately 100,000-200,000 Byzantine soldiers. The six-day battle resulted in a devastating Byzantine defeat, permanently ending their control over the Levant.',
+    detailsEn: "The Battle of Yarmouk was one of the most decisive battles in history. Under Khalid ibn al-Walid's command, 25,000-40,000 Muslims faced approximately 100,000-200,000 Byzantine soldiers. The six-day battle resulted in a devastating Byzantine defeat, permanently ending their control over the Levant.",
     detailsBn: 'ইয়ারমুক যুদ্ধ ইতিহাসের সবচেয়ে নির্ণায়ক যুদ্ধগুলোর একটি। খালিদ ইবনুল ওয়ালিদের নেতৃত্বে ২৫,০০০-৪০,০০০ মুসলিম প্রায় ১,০০,০০০-২,০০,০০০ বাইজেন্টাইন সৈন্যের মুখোমুখি হন।',
     muslimForce: 40000,
     enemyForce: 150000,
@@ -217,7 +212,7 @@ const battlesData = [
     keyFigures: ['Khalid ibn al-Walid', 'Abu Ubayda ibn al-Jarrah', 'Amr ibn al-As'],
     quranicReference: '',
     significance: 'End of Byzantine control over Levant; major territorial expansion',
-    casualties: { muslimMartyrs: 3000, enemyDeaths: 70000 }
+    casualties: { muslimMartyrs: 3000, enemyDeaths: 70000 },
   },
   {
     id: 'qadisiyyah',
@@ -231,15 +226,15 @@ const battlesData = [
     location: { lat: 31.9500, lng: 44.2333, name: 'Qadisiyyah, Iraq' },
     summaryEn: 'Decisive victory over Sassanid Persia. Opened Iraq and Persia to Islam.',
     summaryBn: 'সাসানীয় পারস্যের উপর নির্ণায়ক বিজয়। ইরাক ও পারস্য ইসলামের জন্য উন্মুক্ত করে।',
-    detailsEn: 'Under the command of Sa\'d ibn Abi Waqqas, 30,000 Muslims faced the Persian army of 80,000-120,000, including war elephants. The three-day battle ended with the death of Persian commander Rostam and the complete rout of the Sassanid forces. This victory led to the eventual conquest of the entire Persian Empire.',
+    detailsEn: "Under the command of Sa'd ibn Abi Waqqas, 30,000 Muslims faced the Persian army of 80,000-120,000, including war elephants. The three-day battle ended with the death of Persian commander Rostam and the complete rout of the Sassanid forces. This victory led to the eventual conquest of the entire Persian Empire.",
     detailsBn: 'সাদ ইবনে আবী ওয়াক্কাসের নেতৃত্বে ৩০,০০০ মুসলিম যুদ্ধ হাতি সহ ৮০,০০০-১,২০,০০০ পারসিক সেনার মুখোমুখি হন। তিন দিনের যুদ্ধ পারসিক সেনাপতি রোস্তমের মৃত্যু ও সাসানীয় বাহিনীর সম্পূর্ণ পরাজয়ে শেষ হয়।',
     muslimForce: 30000,
     enemyForce: 100000,
     outcome: 'victory',
-    keyFigures: ['Sa\'d ibn Abi Waqqas', 'Rostam Farrokhzad (Persian)', 'Umar ibn al-Khattab (Caliph)'],
+    keyFigures: ["Sa'd ibn Abi Waqqas", 'Rostam Farrokhzad (Persian)', 'Umar ibn al-Khattab (Caliph)'],
     quranicReference: '',
     significance: 'End of Sassanid Empire; Islamization of Persia began',
-    casualties: { muslimMartyrs: 8500, enemyDeaths: 30000 }
+    casualties: { muslimMartyrs: 8500, enemyDeaths: 30000 },
   },
   {
     id: 'jerusalem',
@@ -261,7 +256,7 @@ const battlesData = [
     keyFigures: ['Umar ibn al-Khattab', 'Patriarch Sophronius', 'Abu Ubayda ibn al-Jarrah'],
     quranicReference: 'Surah Al-Isra (17:1)',
     significance: 'Third holiest site in Islam secured; model of religious tolerance',
-    casualties: { muslimMartyrs: 0, enemyDeaths: 0 }
+    casualties: { muslimMartyrs: 0, enemyDeaths: 0 },
   },
   {
     id: 'nahawand',
@@ -280,10 +275,10 @@ const battlesData = [
     muslimForce: 30000,
     enemyForce: 150000,
     outcome: 'victory',
-    keyFigures: ['Nu\'man ibn Muqarrin (martyred)', 'Hudhayfa ibn al-Yaman'],
+    keyFigures: ["Nu'man ibn Muqarrin (martyred)", 'Hudhayfa ibn al-Yaman'],
     quranicReference: '',
     significance: 'Complete fall of Sassanid Empire; Islam spreads to Central Asia',
-    casualties: { muslimMartyrs: 4000, enemyDeaths: 100000 }
+    casualties: { muslimMartyrs: 4000, enemyDeaths: 100000 },
   },
   {
     id: 'siffin',
@@ -297,7 +292,7 @@ const battlesData = [
     location: { lat: 35.9500, lng: 39.0167, name: 'Siffin, Syria' },
     summaryEn: 'Civil war between Ali and Muawiyah. Arbitration called after heavy losses.',
     summaryBn: 'আলী ও মুয়াবিয়ার মধ্যে গৃহযুদ্ধ। ব্যাপক ক্ষয়ক্ষতির পর সালিশ আহ্বান।',
-    detailsEn: 'This battle was part of the First Fitna (civil war) between Caliph Ali ibn Abi Talib and Muawiyah ibn Abi Sufyan. After inconclusive fighting and heavy casualties on both sides, Muawiyah\'s forces raised Qurans on their spears, calling for arbitration. This led to the controversial arbitration at Adhruh.',
+    detailsEn: "This battle was part of the First Fitna (civil war) between Caliph Ali ibn Abi Talib and Muawiyah ibn Abi Sufyan. After inconclusive fighting and heavy casualties on both sides, Muawiyah's forces raised Qurans on their spears, calling for arbitration. This led to the controversial arbitration at Adhruh.",
     detailsBn: 'এই যুদ্ধ ছিল খলিফা আলী ইবনে আবী তালিব ও মুয়াবিয়া ইবনে আবী সুফিয়ানের মধ্যে প্রথম ফিতনার (গৃহযুদ্ধ) অংশ। অমীমাংসিত যুদ্ধ ও উভয় পক্ষে ব্যাপক হতাহতের পর, মুয়াবিয়ার বাহিনী বর্শার উপর কুরআন তুলে সালিশ আহ্বান করে।',
     muslimForce: 80000,
     enemyForce: 120000,
@@ -305,7 +300,7 @@ const battlesData = [
     keyFigures: ['Ali ibn Abi Talib', 'Muawiyah ibn Abi Sufyan', 'Ammar ibn Yasir (martyred)'],
     quranicReference: '',
     significance: 'First major Muslim civil war; emergence of Khawarij',
-    casualties: { muslimMartyrs: 25000, enemyDeaths: 45000 }
+    casualties: { muslimMartyrs: 25000, enemyDeaths: 45000 },
   },
   {
     id: 'constantinople717',
@@ -319,7 +314,7 @@ const battlesData = [
     location: { lat: 41.0082, lng: 28.9784, name: 'Constantinople' },
     summaryEn: 'Major Umayyad attempt to conquer Byzantine capital. Unsuccessful due to Greek fire.',
     summaryBn: 'বাইজেন্টাইন রাজধানী জয়ের বড় উমাইয়া প্রচেষ্টা। গ্রিক ফায়ারের কারণে ব্যর্থ।',
-    detailsEn: 'Caliph Sulayman ibn Abd al-Malik launched a massive land and naval siege of Constantinople with 120,000 troops and 1,800 ships. The siege lasted a year but failed due to the Byzantine\'s use of Greek fire, harsh winter, Bulgarian attacks on Muslim forces, and internal Byzantine resistance.',
+    detailsEn: "Caliph Sulayman ibn Abd al-Malik launched a massive land and naval siege of Constantinople with 120,000 troops and 1,800 ships. The siege lasted a year but failed due to the Byzantine's use of Greek fire, harsh winter, Bulgarian attacks on Muslim forces, and internal Byzantine resistance.",
     detailsBn: 'খলিফা সুলায়মান ইবনে আব্দুল মালিক ১,২০,০০০ সৈন্য ও ১,৮০০ জাহাজ নিয়ে কনস্টান্টিনোপলের বিশাল স্থল ও নৌ অবরোধ শুরু করেন। এক বছর অবরোধ চলে কিন্তু গ্রিক ফায়ার, কঠোর শীত ও বুলগেরিয়ান আক্রমণের কারণে ব্যর্থ হয়।',
     muslimForce: 120000,
     enemyForce: 30000,
@@ -327,7 +322,7 @@ const battlesData = [
     keyFigures: ['Maslama ibn Abd al-Malik', 'Emperor Leo III'],
     quranicReference: '',
     significance: 'Last major Arab attempt on Constantinople until 1453',
-    casualties: { muslimMartyrs: 30000, enemyDeaths: 5000 }
+    casualties: { muslimMartyrs: 30000, enemyDeaths: 5000 },
   },
   {
     id: 'tours',
@@ -349,7 +344,7 @@ const battlesData = [
     keyFigures: ['Abd al-Rahman al-Ghafiqi (killed)', 'Charles Martel'],
     quranicReference: '',
     significance: 'End of Muslim expansion into Western Europe',
-    casualties: { muslimMartyrs: 10000, enemyDeaths: 1500 }
+    casualties: { muslimMartyrs: 10000, enemyDeaths: 1500 },
   },
   {
     id: 'talas',
@@ -371,7 +366,7 @@ const battlesData = [
     keyFigures: ['Ziyad ibn Salih', 'Gao Xianzhi (Tang)'],
     quranicReference: '',
     significance: 'Central Asia Islamized; paper-making technology acquired',
-    casualties: { muslimMartyrs: 2000, enemyDeaths: 10000 }
+    casualties: { muslimMartyrs: 2000, enemyDeaths: 10000 },
   },
   {
     id: 'hattin',
@@ -383,7 +378,7 @@ const battlesData = [
     period: 'abbasid',
     type: 'conquest',
     location: { lat: 32.8167, lng: 35.4500, name: 'Horns of Hattin, Palestine' },
-    summaryEn: 'Saladin\'s decisive victory over Crusaders. Led to liberation of Jerusalem.',
+    summaryEn: "Saladin's decisive victory over Crusaders. Led to liberation of Jerusalem.",
     summaryBn: 'ক্রুসেডারদের বিরুদ্ধে সালাদিনের নির্ণায়ক বিজয়। জেরুজালেম মুক্তির দিকে নিয়ে যায়।',
     detailsEn: 'Sultan Saladin (Salah ad-Din al-Ayyubi) defeated the Crusader Kingdom of Jerusalem near the Sea of Galilee. The Crusader army was destroyed, the True Cross captured, and Jerusalem was liberated three months later. Saladin showed mercy to the defeated, in contrast to the Crusader conquest of 1099.',
     detailsBn: 'সুলতান সালাদিন (সালাহ আদ-দীন আল-আইয়ুবী) গালীল সাগরের কাছে জেরুজালেম ক্রুসেডার রাজ্যকে পরাজিত করেন। ক্রুসেডার বাহিনী ধ্বংস হয়, ট্রু ক্রস দখল করা হয় এবং তিন মাস পর জেরুজালেম মুক্ত হয়।',
@@ -392,8 +387,8 @@ const battlesData = [
     outcome: 'victory',
     keyFigures: ['Salah ad-Din al-Ayyubi', 'Guy of Lusignan', 'Reynald of Châtillon'],
     quranicReference: '',
-    significance: 'Jerusalem liberated from Crusaders; Saladin\'s chivalry became legendary',
-    casualties: { muslimMartyrs: 1000, enemyDeaths: 17000 }
+    significance: "Jerusalem liberated from Crusaders; Saladin's chivalry became legendary",
+    casualties: { muslimMartyrs: 1000, enemyDeaths: 17000 },
   },
   {
     id: 'aynjalut',
@@ -415,7 +410,7 @@ const battlesData = [
     keyFigures: ['Sultan Qutuz', 'General Baybars', 'Kitbuqa (Mongol)'],
     quranicReference: '',
     significance: 'First major Mongol defeat; Islamic civilization preserved',
-    casualties: { muslimMartyrs: 1500, enemyDeaths: 15000 }
+    casualties: { muslimMartyrs: 1500, enemyDeaths: 15000 },
   },
   {
     id: 'constantinople1453',
@@ -437,7 +432,7 @@ const battlesData = [
     keyFigures: ['Sultan Mehmed II (Fatih)', 'Emperor Constantine XI'],
     quranicReference: 'Prophetic Hadith fulfilled',
     significance: 'Byzantine Empire ended; Ottoman golden age began; Prophetic praise fulfilled',
-    casualties: { muslimMartyrs: 4000, enemyDeaths: 5000 }
+    casualties: { muslimMartyrs: 4000, enemyDeaths: 5000 },
   },
   {
     id: 'mohacs',
@@ -459,7 +454,7 @@ const battlesData = [
     keyFigures: ['Sultan Suleiman I', 'King Louis II (killed)'],
     quranicReference: '',
     significance: 'Peak of Ottoman expansion in Europe; Hungary under Ottoman rule',
-    casualties: { muslimMartyrs: 1500, enemyDeaths: 14000 }
+    casualties: { muslimMartyrs: 1500, enemyDeaths: 14000 },
   },
   {
     id: 'vienna1683',
@@ -481,68 +476,87 @@ const battlesData = [
     keyFigures: ['Kara Mustafa Pasha', 'Jan III Sobieski', 'Charles V of Lorraine'],
     quranicReference: '',
     significance: 'End of Ottoman expansion; beginning of territorial decline',
-    casualties: { muslimMartyrs: 15000, enemyDeaths: 4500 }
-  }
+    casualties: { muslimMartyrs: 15000, enemyDeaths: 4500 },
+  },
 ];
 
+// ─── Metadata ─────────────────────────────────────────────────────────────────
 const periods = [
-  { id: 'all', nameEn: 'All Periods', nameBn: 'সব যুগ' },
-  { id: 'rashidun', nameEn: 'Rashidun (632-661)', nameBn: 'রাশিদুন (৬৩২-৬৬১)' },
-  { id: 'umayyad', nameEn: 'Umayyad (661-750)', nameBn: 'উমাইয়া (৬৬১-৭৫০)' },
-  { id: 'abbasid', nameEn: 'Abbasid (750-1258)', nameBn: 'আব্বাসীয় (৭৫০-১২৫৮)' },
-  { id: 'ottoman', nameEn: 'Ottoman (1299-1922)', nameBn: 'উসমানীয় (১২৯৯-১৯২২)' }
+  { id: 'all',      nameEn: 'All Periods',          nameBn: 'সব যুগ'               },
+  { id: 'rashidun', nameEn: 'Rashidun (632-661)',    nameBn: 'রাশিদুন (৬৩২-৬৬১)'   },
+  { id: 'umayyad',  nameEn: 'Umayyad (661-750)',     nameBn: 'উমাইয়া (৬৬১-৭৫০)'   },
+  { id: 'abbasid',  nameEn: 'Abbasid (750-1258)',    nameBn: 'আব্বাসীয় (৭৫০-১২৫৮)' },
+  { id: 'ottoman',  nameEn: 'Ottoman (1299-1922)',   nameBn: 'উসমানীয় (১২৯৯-১৯২২)' },
 ];
 
 const battleTypes = [
-  { id: 'all', nameEn: 'All Types', nameBn: 'সব ধরন' },
-  { id: 'conquest', nameEn: 'Conquest', nameBn: 'বিজয়' },
-  { id: 'defense', nameEn: 'Defense', nameBn: 'প্রতিরক্ষা' },
-  { id: 'internal', nameEn: 'Internal Conflict', nameBn: 'অভ্যন্তরীণ সংঘর্ষ' }
+  { id: 'all',      nameEn: 'All Types',         nameBn: 'সব ধরন'               },
+  { id: 'conquest', nameEn: 'Conquest',          nameBn: 'বিজয়'                 },
+  { id: 'defense',  nameEn: 'Defense',           nameBn: 'প্রতিরক্ষা'           },
+  { id: 'internal', nameEn: 'Internal Conflict', nameBn: 'অভ্যন্তরীণ সংঘর্ষ'   },
 ];
 
+// ─── Page Component ───────────────────────────────────────────────────────────
 const Battles = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isBn = i18n.language === 'bn';
 
   const [selectedPeriod, setSelectedPeriod] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
-  const [expandedBattle, setExpandedBattle] = useState<string | null>(null);
+  const [selectedType,   setSelectedType]   = useState('all');
   const [selectedBattle, setSelectedBattle] = useState<typeof battlesData[0] | null>(null);
-  const [viewMode, setViewMode] = useState<'timeline' | 'map'>('timeline');
-  const [quizBattle, setQuizBattle] = useState<typeof battlesData[0] | null>(null);
+  const [viewMode,       setViewMode]       = useState<'timeline' | 'map'>('timeline');
+  const [quizBattle,     setQuizBattle]     = useState<typeof battlesData[0] | null>(null);
 
   const filteredBattles = battlesData.filter(battle => {
     const periodMatch = selectedPeriod === 'all' || battle.period === selectedPeriod;
-    const typeMatch = selectedType === 'all' || battle.type === selectedType;
+    const typeMatch   = selectedType   === 'all' || battle.type   === selectedType;
     return periodMatch && typeMatch;
   });
 
   const getOutcomeColor = (outcome: string) => {
     switch (outcome) {
-      case 'victory': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'defeat': return 'bg-red-500/10 text-red-600 border-red-500/20';
-      case 'setback': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-      case 'stalemate': return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
-      case 'strategic': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      default: return 'bg-muted text-muted-foreground';
+      case 'victory':  return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'defeat':   return 'bg-red-500/10   text-red-600   border-red-500/20';
+      case 'setback':  return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+      case 'stalemate':return 'bg-gray-500/10  text-gray-600  border-gray-500/20';
+      case 'strategic':return 'bg-blue-500/10  text-blue-600  border-blue-500/20';
+      default:         return 'bg-muted text-muted-foreground';
     }
   };
 
   const getPeriodColor = (period: string) => {
     switch (period) {
       case 'rashidun': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
-      case 'umayyad': return 'bg-amber-500/10 text-amber-600 border-amber-500/30';
-      case 'abbasid': return 'bg-purple-500/10 text-purple-600 border-purple-500/30';
-      case 'ottoman': return 'bg-rose-500/10 text-rose-600 border-rose-500/30';
-      default: return 'bg-muted text-muted-foreground';
+      case 'umayyad':  return 'bg-amber-500/10   text-amber-600   border-amber-500/30';
+      case 'abbasid':  return 'bg-purple-500/10  text-purple-600  border-purple-500/30';
+      case 'ottoman':  return 'bg-rose-500/10    text-rose-600    border-rose-500/30';
+      default:         return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const outcomeLabel = (outcome: string) => {
+    if (isBn) {
+      switch (outcome) {
+        case 'victory':  return 'বিজয়';
+        case 'defeat':   return 'পরাজয়';
+        case 'setback':  return 'বিপর্যয়';
+        case 'stalemate':return 'অচলাবস্থা';
+        default:         return 'কৌশলগত';
+      }
+    }
+    switch (outcome) {
+      case 'victory':  return 'Victory';
+      case 'defeat':   return 'Defeat';
+      case 'setback':  return 'Setback';
+      case 'stalemate':return 'Stalemate';
+      default:         return 'Strategic';
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
 
-
-      {/* Hero Section */}
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-background to-secondary/5" />
         <div className="absolute inset-0 opacity-30">
@@ -560,22 +574,24 @@ const Battles = () => {
               <Swords className="w-4 h-4 mr-2" />
               {isBn ? 'ইসলামী ইতিহাস' : 'Islamic History'}
             </Badge>
+
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-4">
               {isBn ? 'ইসলামী যুদ্ধসমূহ' : 'Islamic Battles'}
             </h1>
+
             <p className="text-xl text-muted-foreground mb-6">
               {isBn
                 ? 'রাশিদুন থেকে উসমানীয় - ইসলামী সভ্যতার সামরিক ইতিহাস অন্বেষণ করুন'
                 : 'Explore the military history of Islamic civilization from Rashidun to Ottoman'}
             </p>
 
-            {/* NEW: Ethics & Modern Misuse Warning Boxes */}
+            {/* Ethics warning boxes */}
             <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-8">
               <EthicsWarningBox variant="war-ethics" />
               <EthicsWarningBox variant="misuse-warning" />
             </div>
 
-            {/* View Toggle */}
+            {/* Timeline / Map toggle */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <Button
                 variant={viewMode === 'timeline' ? 'default' : 'outline'}
@@ -598,7 +614,7 @@ const Battles = () => {
         </div>
       </section>
 
-      {/* Filters */}
+      {/* ── Filters ───────────────────────────────────────────────────────── */}
       <section className="sticky top-20 z-40 bg-background/95 backdrop-blur-sm border-y py-4">
         <div className="max-w-11/12 mx-auto px-4">
           <div className="flex flex-wrap items-center gap-4 justify-center">
@@ -612,9 +628,9 @@ const Battles = () => {
                 <SelectValue placeholder={isBn ? 'যুগ নির্বাচন' : 'Select Period'} />
               </SelectTrigger>
               <SelectContent>
-                {periods.map(period => (
-                  <SelectItem key={period.id} value={period.id}>
-                    {isBn ? period.nameBn : period.nameEn}
+                {periods.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {isBn ? p.nameBn : p.nameEn}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -625,9 +641,9 @@ const Battles = () => {
                 <SelectValue placeholder={isBn ? 'ধরন নির্বাচন' : 'Select Type'} />
               </SelectTrigger>
               <SelectContent>
-                {battleTypes.map(type => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {isBn ? type.nameBn : type.nameEn}
+                {battleTypes.map(t => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {isBn ? t.nameBn : t.nameEn}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -637,10 +653,7 @@ const Battles = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setSelectedPeriod('all');
-                  setSelectedType('all');
-                }}
+                onClick={() => { setSelectedPeriod('all'); setSelectedType('all'); }}
                 className="gap-1"
               >
                 <X className="w-4 h-4" />
@@ -655,7 +668,7 @@ const Battles = () => {
         </div>
       </section>
 
-      {/* Main Content */}
+      {/* ── Main Content ──────────────────────────────────────────────────── */}
       <section className="py-12">
         <div className="max-w-11/12 mx-auto px-4">
           <AnimatePresence mode="wait">
@@ -670,8 +683,8 @@ const Battles = () => {
                   battles={filteredBattles}
                   isBn={isBn}
                   periods={periods}
-                  onViewDetails={(battle) => setSelectedBattle(battle as typeof selectedBattle)}
-                  onStartQuiz={(battle) => setQuizBattle(battle as typeof quizBattle)}
+                  onViewDetails={battle => setSelectedBattle(battle as typeof selectedBattle)}
+                  onStartQuiz={battle => setQuizBattle(battle as typeof quizBattle)}
                 />
               </motion.div>
             ) : (
@@ -682,12 +695,15 @@ const Battles = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="w-full -mx-4 -my-4 px-4 py-4"
               >
-                {/* Interactive Map Full View */}
+                {/*
+                  InteractiveBattlesMap contains the 2D / 3D toggle inside the map
+                  box itself — no extra wrappers needed here.
+                */}
                 <MapErrorBoundary>
                   <InteractiveBattlesMap
                     battles={filteredBattles}
                     isBn={isBn}
-                    onBattleSelect={(battle) => setSelectedBattle(battle as typeof selectedBattle)}
+                    onBattleSelect={battle => setSelectedBattle(battle as typeof selectedBattle)}
                   />
                 </MapErrorBoundary>
               </motion.div>
@@ -696,7 +712,7 @@ const Battles = () => {
         </div>
       </section>
 
-      {/* Battle Detail Modal */}
+      {/* ── Battle Detail Modal ───────────────────────────────────────────── */}
       <Dialog open={!!selectedBattle} onOpenChange={() => setSelectedBattle(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedBattle && (
@@ -707,11 +723,7 @@ const Battles = () => {
                     {periods.find(p => p.id === selectedBattle.period)?.[isBn ? 'nameBn' : 'nameEn']}
                   </Badge>
                   <Badge className={getOutcomeColor(selectedBattle.outcome)}>
-                    {selectedBattle.outcome === 'victory' ? (isBn ? 'বিজয়' : 'Victory') :
-                     selectedBattle.outcome === 'defeat' ? (isBn ? 'পরাজয়' : 'Defeat') :
-                     selectedBattle.outcome === 'setback' ? (isBn ? 'বিপর্যয়' : 'Setback') :
-                     selectedBattle.outcome === 'stalemate' ? (isBn ? 'অচলাবস্থা' : 'Stalemate') :
-                     (isBn ? 'কৌশলগত' : 'Strategic')}
+                    {outcomeLabel(selectedBattle.outcome)}
                   </Badge>
                   <Badge variant="outline">
                     <Calendar className="w-3 h-3 mr-1" />
@@ -725,6 +737,7 @@ const Battles = () => {
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
+
                 {/* Forces */}
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="bg-green-500/5 border-green-500/20">
@@ -751,7 +764,7 @@ const Battles = () => {
                   </Card>
                 </div>
 
-                {/* Casualties Section */}
+                {/* Casualties */}
                 {selectedBattle.casualties && (
                   <div className="grid grid-cols-2 gap-4">
                     <Card className="bg-green-500/5 border-green-500/20">
@@ -831,33 +844,28 @@ const Battles = () => {
                   <p className="text-muted-foreground">{selectedBattle.significance}</p>
                 </div>
 
-                {/* NEW: Lessons Section */}
+                {/* Lessons */}
                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Lightbulb className="w-5 h-5 text-primary" />
                     {isBn ? 'এই যুদ্ধ থেকে শিক্ষা' : 'Lessons from this Battle'}
                   </h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{isBn ? 'কৌশলগত পরিকল্পনা ও ধৈর্যের গুরুত্ব' : 'Importance of strategic planning and patience'}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{isBn ? 'নেতৃত্বের প্রতি ঐক্য ও আনুগত্য' : 'Unity and obedience to leadership'}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{isBn ? 'আল্লাহর উপর তাওয়াক্কুল সহ বাস্তব পদক্ষেপ' : 'Trust in Allah while taking practical measures'}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{isBn ? 'সংঘাতের সময়েও দয়া ও ন্যায়বিচার' : 'Mercy and justice even in times of conflict'}</span>
-                    </li>
+                    {[
+                      isBn ? 'কৌশলগত পরিকল্পনা ও ধৈর্যের গুরুত্ব' : 'Importance of strategic planning and patience',
+                      isBn ? 'নেতৃত্বের প্রতি ঐক্য ও আনুগত্য'       : 'Unity and obedience to leadership',
+                      isBn ? 'আল্লাহর উপর তাওয়াক্কুল সহ বাস্তব পদক্ষেপ' : 'Trust in Allah while taking practical measures',
+                      isBn ? 'সংঘাতের সময়েও দয়া ও ন্যায়বিচার'   : 'Mercy and justice even in times of conflict',
+                    ].map((lesson, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span>{lesson}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
-                {/* NEW: Modern Context Warning */}
+                {/* Modern Context Warning */}
                 <div className="p-4 bg-destructive/5 rounded-lg border border-destructive/20">
                   <h3 className="font-semibold mb-2 flex items-center gap-2 text-destructive">
                     <AlertTriangle className="w-5 h-5" />
@@ -866,12 +874,11 @@ const Battles = () => {
                   <p className="text-sm text-muted-foreground">
                     {isBn
                       ? 'এই ঐতিহাসিক ঘটনাগুলো আধুনিক সহিংসতা বা চরমপন্থার ন্যায্যতা নয়। প্রেক্ষাপট ও পরিস্থিতি তাদের সময়ের জন্য অনন্য ছিল। জিহাদের কঠোর শর্ত ও আলেমদের তত্ত্বাবধান রয়েছে।'
-                      : 'These historical events are not justification for modern violence or extremism. Context and circumstances were unique to their time. Jihad has strict conditions and requires scholarly oversight.'
-                    }
+                      : 'These historical events are not justification for modern violence or extremism. Context and circumstances were unique to their time. Jihad has strict conditions and requires scholarly oversight.'}
                   </p>
                 </div>
 
-                {/* Quiz Button */}
+                {/* Quiz button */}
                 <div className="flex justify-center pt-4 border-t">
                   <Button
                     variant="secondary"
@@ -891,7 +898,7 @@ const Battles = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Quiz Modal */}
+      {/* ── Quiz Modal ────────────────────────────────────────────────────── */}
       <BattleQuiz
         battle={quizBattle}
         isOpen={!!quizBattle}
