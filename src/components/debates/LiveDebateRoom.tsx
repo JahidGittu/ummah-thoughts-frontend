@@ -12,13 +12,16 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Video, Mic, MicOff, VideoOff, Users, MessageSquare,
   Hand, Clock, Shield, Send, BookOpen, Scale,
   ThumbsUp, CheckCircle, AlertTriangle, BarChart3, BookMarked,
   Star, ArrowRight, Gavel, MessagesSquare, Play, Square, UserX,
-  Settings, CheckCircle2, XCircle, Lock, CameraOff, Volume2,
+  Settings, CheckCircle2, XCircle, Lock, CameraOff, Volume2, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -87,6 +90,17 @@ const phaseConfig: Record<Phase, { label: string; icon: React.ElementType; durat
   qa:         { label: "Q&A",        icon: MessageSquare,  duration: 600  },
   closing:    { label: "Closing",    icon: CheckCircle,    duration: 300  },
 };
+
+const cameraEffects = [
+  { id: "none", label: "None", filter: "" },
+  { id: "blur", label: "Blur", filter: "blur(4px)" },
+  { id: "grayscale", label: "Grayscale", filter: "grayscale(100%)" },
+  { id: "sepia", label: "Sepia", filter: "sepia(100%)" },
+  { id: "vintage", label: "Vintage", filter: "sepia(100%) contrast(1.1) brightness(0.9)" },
+  { id: "warm", label: "Warm", filter: "sepia(30%) saturate(1.2)" },
+  { id: "cool", label: "Cool", filter: "hue-rotate(180deg) saturate(0.8)" },
+  { id: "invert", label: "Invert", filter: "invert(100%)" },
+] as const;
 
 const roleLabels: Record<string, { label: string; color: string }> = {
   scholar:            { label: "Scholar",   color: "bg-primary/20 text-primary" },
@@ -171,6 +185,7 @@ export const LiveDebateRoom = ({
   const [mediaError,      setMediaError]       = useState<string | null>(null);
   const [mediaLoading,    setMediaLoading]     = useState(false);
   const [showModPanel,    setShowModPanel]     = useState(false);
+  const [cameraEffect,    setCameraEffect]     = useState("none");
 
   // Derived roles
   const isAuthenticated = !!currentUser;
@@ -200,6 +215,15 @@ export const LiveDebateRoom = ({
 
   // Keep phase idx ref in sync
   useEffect(() => { activePhaseIdxRef.current = activePhaseIdx; }, [activePhaseIdx]);
+
+  // Sync video stream to element when it mounts (video element may not exist yet when startCamera runs)
+  useEffect(() => {
+    if (!myVideoOff && videoStreamRef.current && localVideoRef.current) {
+      localVideoRef.current.srcObject = videoStreamRef.current;
+      localVideoRef.current.play().catch(() => {});
+    }
+  }, [myVideoOff]);
+
 
   // Phase countdown timer
   useEffect(() => {
@@ -263,20 +287,31 @@ export const LiveDebateRoom = ({
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
+      if (ctx.state === "suspended") await ctx.resume();
 
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.smoothingTimeConstant = 0;
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
       analyserRef.current = analyser;
 
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 2;
       const source = ctx.createMediaStreamSource(stream);
-      source.connect(analyser);
+      source.connect(gainNode);
+      gainNode.connect(analyser);
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const pcmData = new Float32Array(analyser.fftSize);
       const loop = () => {
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-        setAudioLevel(avg);
+        analyser.getFloatTimeDomainData(pcmData);
+        let sumSquares = 0;
+        for (let i = 0; i < pcmData.length; i++) {
+          sumSquares += pcmData[i] * pcmData[i];
+        }
+        const rms = Math.sqrt(sumSquares / pcmData.length);
+        const level = Math.min(255, Math.round(rms * 450));
+        setAudioLevel(level);
         animFrameRef.current = requestAnimationFrame(loop);
       };
       loop();
@@ -825,50 +860,101 @@ export const LiveDebateRoom = ({
                   )}
                 </div>
 
-                {/* Main content */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-card to-muted/60">
+                {/* Main content - camera fills full card when current user has it on */}
+                <div className={cn(
+                  "flex-1 flex flex-col relative overflow-hidden",
+                  isCurrentUser && !myVideoOff ? "min-h-[260px]" : ""
+                )}>
                   {isCurrentUser && !myVideoOff ? (
-                    // Local video preview
-                    <video
-                      ref={localVideoRef}
-                      autoPlay
-                      muted
-                      playsInline
-                      className="w-32 h-32 rounded-2xl object-cover border-2 border-primary/50 mb-2"
-                      style={{ transform: "scaleX(-1)" }}
-                    />
+                    // Camera fills entire card - effect applied only when user selects
+                    <div className="absolute inset-0 bg-black">
+                      <video
+                        ref={localVideoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                        style={{
+                          transform: "scaleX(-1)",
+                          filter: cameraEffects.find(e => e.id === cameraEffect)?.filter ?? "",
+                        }}
+                        onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
+                      />
+                    </div>
                   ) : (
-                    // Avatar placeholder
-                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-2", i === 0 ? "bg-primary/20" : "bg-secondary/20")}>
-                      <span className={cn("text-2xl font-bold", i === 0 ? "text-primary" : "text-secondary")}>
-                        {speaker.name.charAt(0)}
-                      </span>
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-card to-muted/60">
+                      <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-2", i === 0 ? "bg-primary/20" : "bg-secondary/20")}>
+                        <span className={cn("text-2xl font-bold", i === 0 ? "text-primary" : "text-secondary")}>
+                          {speaker.name.charAt(0)}
+                        </span>
+                      </div>
+                      <p className="font-bold text-foreground text-sm">{speaker.name}</p>
+                      <Badge className={cn(roleLabels[speaker.role]?.color ?? "bg-muted text-muted-foreground", "mt-1 text-[10px]")}>
+                        {roleLabels[speaker.role]?.label ?? "Member"}
+                      </Badge>
+                      {speaker.isSpeaking && !speaker.isMuted && (
+                        <div className="flex items-end gap-1 mt-3">
+                          {[2, 3, 5, 4, 6, 4, 5, 3, 2].map((h, j) => (
+                            <div key={j} className={cn("w-1 rounded-full animate-pulse", i === 0 ? "bg-primary" : "bg-secondary")} style={{ height: `${h * 2.5}px`, animationDelay: `${j * 0.08}s` }} />
+                          ))}
+                          <span className={cn("text-[10px] ml-1.5 font-medium", i === 0 ? "text-primary" : "text-secondary")}>Speaking</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  <p className="font-bold text-foreground text-sm">{speaker.name}</p>
-                  <Badge className={cn(roleLabels[speaker.role]?.color ?? "bg-muted text-muted-foreground", "mt-1 text-[10px]")}>
-                    {roleLabels[speaker.role]?.label ?? "Member"}
-                  </Badge>
-
-                  {/* Speaking animation */}
-                  {speaker.isSpeaking && !speaker.isMuted && (
-                    <div className="flex items-end gap-1 mt-3">
-                      {[2, 3, 5, 4, 6, 4, 5, 3, 2].map((h, j) => (
-                        <div
-                          key={j}
-                          className={cn("w-1 rounded-full animate-pulse", i === 0 ? "bg-primary" : "bg-secondary")}
-                          style={{ height: `${h * 2.5}px`, animationDelay: `${j * 0.08}s` }}
-                        />
-                      ))}
-                      <span className={cn("text-[10px] ml-1.5 font-medium", i === 0 ? "text-primary" : "text-secondary")}>
-                        Speaking
-                      </span>
+                  {/* Controls bar when camera on - no overlay/background color */}
+                  {isCurrentUser && !myVideoOff && (
+                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
+                      <p className="font-bold text-white text-sm">{speaker.name}</p>
+                      <Badge className={cn(roleLabels[speaker.role]?.color ?? "bg-muted text-muted-foreground", "mt-1 text-[10px]")}>
+                        {roleLabels[speaker.role]?.label ?? "Member"}
+                      </Badge>
+                      {speaker.isSpeaking && !speaker.isMuted && (
+                        <div className="flex items-end gap-1 mt-2">
+                          {[2, 3, 5, 4, 6, 4, 5, 3, 2].map((h, j) => (
+                            <div key={j} className={cn("w-1 rounded-full animate-pulse", i === 0 ? "bg-primary" : "bg-secondary")} style={{ height: `${h * 2.5}px`, animationDelay: `${j * 0.08}s` }} />
+                          ))}
+                          <span className={cn("text-[10px] ml-1.5 font-medium", i === 0 ? "text-primary" : "text-secondary")}>Speaking</span>
+                        </div>
+                      )}
+                      <div className="mt-3 flex justify-center items-center gap-2 flex-wrap">
+                        <Button size="icon" variant={myMuted ? "outline" : "default"} className={cn("h-8 w-8", !myMuted && "bg-emerald-600 hover:bg-emerald-700 border-emerald-600")} onClick={handleToggleMic} title={myMuted ? "Enable microphone" : "Mute microphone"}>
+                          {myMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button size="icon" variant={myVideoOff ? "outline" : "default"} className={cn("h-8 w-8", !myVideoOff && "bg-emerald-600 hover:bg-emerald-700 border-emerald-600")} onClick={handleToggleVideo} title={myVideoOff ? "Enable camera" : "Turn off camera"}>
+                          {myVideoOff ? <VideoOff className="h-3.5 w-3.5" /> : <Video className="h-3.5 w-3.5" />}
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="outline" className="h-8 w-8" title="Camera effects">
+                              <Sparkles className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuLabel>Background effect</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {cameraEffects.map((eff) => (
+                              <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
+                                {eff.label}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        {!myMuted && (
+                          <div className="relative h-8 min-w-[48px] flex items-center gap-1">
+                            <Volume2 className="h-4 w-4 text-foreground shrink-0" />
+                            <div className="h-2 w-8 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min((audioLevel / 255) * 100, 100)}%` }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {/* Local controls – only for current user */}
-                  {isCurrentUser && (
+                  {/* Local controls – only for current user (when camera off; when camera on, controls are in overlay) */}
+                  {isCurrentUser && myVideoOff && (
                     <div className="mt-4 w-full border-t pt-3 flex justify-center gap-3">
                       {/* Mic control */}
                       <div className="flex flex-col items-center gap-1">
@@ -904,12 +990,11 @@ export const LiveDebateRoom = ({
                       {/* Audio level indicator (only when mic on) */}
                       {!myMuted && (
                         <div className="flex flex-col items-center gap-1">
-                          <div className="relative h-8 w-8">
-                            <Volume2 className="h-4 w-4 text-muted-foreground absolute inset-0 m-auto" />
-                            <div
-                              className="absolute bottom-0 left-0 h-1 bg-emerald-500 rounded-full transition-all"
-                              style={{ width: `${Math.min((audioLevel / 255) * 100, 100)}%` }}
-                            />
+                          <div className="relative h-8 min-w-[48px] flex items-center gap-1">
+                            <Volume2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="h-2 w-8 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min((audioLevel / 255) * 100, 100)}%` }} />
+                            </div>
                           </div>
                           <span className="text-[8px] text-muted-foreground">Level</span>
                         </div>
@@ -1035,6 +1120,23 @@ export const LiveDebateRoom = ({
                         <p className="text-[10px] text-amber-600">✋ Hand Raised</p>
                       </div>
                     </motion.div>
+                  )}
+                  {/* Viewer mic/camera controls */}
+                  {isLearner && (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border mt-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium">{currentUser?.name ?? "You"}</p>
+                        <p className="text-[10px] text-muted-foreground">Your media</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant={myMuted ? "outline" : "default"} className="h-8 w-8" onClick={handleToggleMic} title={myMuted ? "Enable mic" : "Mute"}>
+                          {myMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button size="icon" variant={myVideoOff ? "outline" : "default"} className="h-8 w-8" onClick={handleToggleVideo} title={myVideoOff ? "Enable camera" : "Turn off camera"}>
+                          {myVideoOff ? <VideoOff className="h-3.5 w-3.5" /> : <Video className="h-3.5 w-3.5" />}
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -1196,6 +1298,46 @@ export const LiveDebateRoom = ({
           </div>
         </div>
       </div>
+
+      {/* Floating "Your camera" preview - when user is viewer (not speaker) and camera is on */}
+      {isAuthenticated && !myVideoOff && !isSpeaker && (
+        <div className="fixed bottom-24 right-6 z-50 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-xl bg-black">
+          <div className="flex items-center justify-between px-2 py-1">
+            <p className="text-[10px] font-semibold text-primary">Your camera</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-6 w-6 text-primary hover:bg-primary/20">
+                  <Sparkles className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuLabel>Background effect</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {cameraEffects.map((eff) => (
+                  <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
+                    {eff.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="w-40 h-32 bg-black">
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              style={{
+                transform: "scaleX(-1)",
+                filter: cameraEffects.find(e => e.id === cameraEffect)?.filter ?? "",
+              }}
+              onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
