@@ -1,3 +1,6 @@
+'use client';
+
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, XCircle, AlertCircle, Send, Calendar } from "lucide-react";
 
@@ -59,9 +62,12 @@ export default function WriterSubmissions() {
         })}
       </div>
 
-      <button className="w-full py-3 rounded-2xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2">
+      <Link
+        href="/dashboard/newarticle"
+        className="w-full py-3 rounded-2xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+      >
         <Send className="h-4 w-4" /> Submit New Article
-      </button>
+      </Link>
     </div>
   );
 }
