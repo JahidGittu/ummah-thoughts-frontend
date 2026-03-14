@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Users, Clock, Video, Plus, ChevronRight, BookOpen, Mic, Award, Calendar, Flame, CheckCircle2, AlarmClock, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -11,14 +11,32 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { getDebates, addDebate } from "@/lib/debateStorage";
 
-const debates = [
-  { id: 1, title: "Ijtihad in the Modern Age", status: "live", participants: 12, myRole: "Moderator", time: "Today 3:00 PM", topic: "Fiqh Methodology", duration: "45 min in" },
-  { id: 2, title: "Maqasid al-Shariah & Human Rights", status: "upcoming", participants: 8, myRole: "Panelist", time: "Tomorrow 10:00 AM", topic: "Political Theory", duration: "~2 hrs" },
-  { id: 3, title: "Digital Caliphate Concept", status: "upcoming", participants: 6, myRole: "Respondent", time: "Feb 22, 2:00 PM", topic: "Political Thought", duration: "~1.5 hrs" },
-  { id: 4, title: "Islamic Finance: Tawarruq Debate", status: "completed", participants: 14, myRole: "Moderator", time: "Feb 15, 2026", topic: "Finance", duration: "2h 15m" },
-  { id: 5, title: "Women's Role in Early Islamic Governance", status: "completed", participants: 10, myRole: "Panelist", time: "Feb 8, 2026", topic: "History", duration: "1h 50m" },
-];
+type ScholarDebateItem = {
+  id: string;
+  title: string;
+  status: "live" | "upcoming" | "completed";
+  participants: number;
+  myRole: string;
+  time: string;
+  topic: string;
+  duration: string;
+};
+
+function toScholarFormat(d: ReturnType<typeof getDebates>[0]): ScholarDebateItem {
+  const scholarStatus = d.scholarStatus ?? (d.status === "active" ? "live" : d.status === "concluded" ? "completed" : "upcoming");
+  return {
+    id: d.id,
+    title: d.title,
+    status: scholarStatus,
+    participants: d.participantsCount ?? 8,
+    myRole: d.myRole ?? "Panelist",
+    time: d.scheduledDate ?? "TBD",
+    topic: d.topic,
+    duration: d.duration ?? "~2 hrs",
+  };
+}
 
 const ROLE_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
   Moderator:  { color: "text-primary", bg: "bg-primary/10", icon: Mic },
@@ -44,9 +62,18 @@ export default function ScholarDebates() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"all" | "live" | "upcoming" | "completed">("all");
   const [inLiveRoom, setInLiveRoom] = useState(false);
-  const [activeDebate, setActiveDebate] = useState<typeof debates[0] | null>(null);
+  const [activeDebate, setActiveDebate] = useState<ScholarDebateItem | null>(null);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ title: "", topic: "", date: "", time: "" });
+  const [scheduleForm, setScheduleForm] = useState({ title: "", topic: "", date: "", time: "", positionA: "", positionB: "" });
+  const [debates, setDebates] = useState<ScholarDebateItem[]>([]);
+
+  const refreshDebates = () => setDebates(getDebates().map(toScholarFormat));
+
+  useEffect(() => {
+    refreshDebates();
+    window.addEventListener("focus", refreshDebates);
+    return () => window.removeEventListener("focus", refreshDebates);
+  }, []);
 
   const filtered = debates.filter(d => tab === "all" || d.status === tab);
   const liveDebate = debates.find(d => d.status === "live");
@@ -58,12 +85,12 @@ export default function ScholarDebates() {
     { label: "Upcoming", value: debates.filter(d => d.status === "upcoming").length, icon: Calendar, color: "text-amber-600", bg: "bg-amber-500/10" },
   ];
 
-  const handleJoinLive = (debate: typeof debates[0]) => {
+  const handleJoinLive = (debate: ScholarDebateItem) => {
     setActiveDebate(debate);
     setInLiveRoom(true);
   };
 
-  const handleDebateClick = (debate: typeof debates[0]) => {
+  const handleDebateClick = (debate: ScholarDebateItem) => {
     if (debate.status === "live") {
       handleJoinLive(debate);
     } else if (debate.status === "completed") {
@@ -75,9 +102,28 @@ export default function ScholarDebates() {
 
   const handleSchedule = () => {
     if (!scheduleForm.title.trim()) { toast.error("Please enter a debate title"); return; }
+    const dateTime = scheduleForm.date && scheduleForm.time ? `${scheduleForm.date} ${scheduleForm.time}` : undefined;
+    addDebate(
+      {
+        title: scheduleForm.title,
+        topic: scheduleForm.topic || "General",
+        status: "upcoming",
+        format: "live",
+        participants: {
+          positionA: { name: scheduleForm.positionA || "TBD", role: "Scholar" },
+          positionB: { name: scheduleForm.positionB || "TBD", role: "Scholar" },
+        },
+        scheduledDate: dateTime,
+        duration: "~2 hrs",
+        votesClarity: 0,
+        bookmarks: 0,
+      },
+      { scheduledByScholar: true }
+    );
     toast.success(`"${scheduleForm.title}" scheduled successfully!`);
     setShowScheduleDialog(false);
-    setScheduleForm({ title: "", topic: "", date: "", time: "" });
+    setScheduleForm({ title: "", topic: "", date: "", time: "", positionA: "", positionB: "" });
+    refreshDebates();
   };
 
   // Live Room View
@@ -117,6 +163,10 @@ export default function ScholarDebates() {
           <div className="space-y-3 py-2">
             <Input placeholder="Debate title" value={scheduleForm.title} onChange={e => setScheduleForm(p => ({ ...p, title: e.target.value }))} />
             <Input placeholder="Topic / category" value={scheduleForm.topic} onChange={e => setScheduleForm(p => ({ ...p, topic: e.target.value }))} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="Position A" value={scheduleForm.positionA} onChange={e => setScheduleForm(p => ({ ...p, positionA: e.target.value }))} />
+              <Input placeholder="Position B" value={scheduleForm.positionB} onChange={e => setScheduleForm(p => ({ ...p, positionB: e.target.value }))} />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <Input type="date" value={scheduleForm.date} onChange={e => setScheduleForm(p => ({ ...p, date: e.target.value }))} />
               <Input type="time" value={scheduleForm.time} onChange={e => setScheduleForm(p => ({ ...p, time: e.target.value }))} />

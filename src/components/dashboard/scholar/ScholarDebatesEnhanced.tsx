@@ -175,7 +175,7 @@ export function ScholarDebatesEnhanced() {
   const handleJoinDebate = async (debateId: string) => {
     setProcessingId(debateId);
     try {
-      await joinDebate();
+      await joinDebate(debateId);
       toast.success('Joined debate successfully');
     } catch (error) {
       toast.error('Failed to join debate');
@@ -204,7 +204,7 @@ export function ScholarDebatesEnhanced() {
   const handleEndDebate = async (debateId: string) => {
     setProcessingId(debateId);
     try {
-      await endDebate();
+      await endDebate(debateId);
 
       // Update local state
       setLocalDebates((prev) =>
