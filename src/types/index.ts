@@ -186,6 +186,7 @@ export interface UserProfile {
   
   joinedAt: Date;
   lastActive: Date;
+  updatedAt?: Date;
 }
 
 export interface RoleUpgradeRequest {
