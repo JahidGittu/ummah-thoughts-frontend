@@ -17,12 +17,14 @@ import {
   Bookmark,
   ChevronRight
 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DebateCard } from "@/components/debates/DebateCard";
+import { ScheduleDebateDialog } from "@/components/debates/ScheduleDebateDialog";
 import { ScholarLoginModal } from "@/components/debates/ScholarLoginModal";
 import { DebateRSVPModal } from "@/components/debates/DebateRSVPModal";
 import { cn } from "@/lib/utils";
-import { getDebates, addDebate } from "@/lib/debateStorage";
+import { debateApi } from "@/lib/api";
+import { apiDebateToStored } from "@/lib/debateApiAdapter";
+import type { StoredDebate } from "@/lib/debateStorage";
 import { toast } from "sonner";
 import ScholarDashboardHome from "@/components/dashboard/roles/ScholarDashboardHome";
 import { SkeletonDebateGrid, SkeletonStatCard } from "@/components/shared/SkeletonCard";
@@ -51,10 +53,22 @@ export default function DebatesPage() {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showScholarDashboard, setShowScholarDashboard] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [debates, setDebates] = useState<ReturnType<typeof getDebates>>([]);
-  const [scheduleForm, setScheduleForm] = useState({ title: "", topic: "", positionA: "", positionB: "", date: "", time: "", format: "async" as "async" | "live" });
+  const [debates, setDebates] = useState<StoredDebate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const refreshDebates = () => setDebates(getDebates());
+  const refreshDebates = async () => {
+    setLoading(true);
+    const { data, error } = await debateApi.list();
+    if (error) {
+      toast.error(error);
+      setDebates([]);
+    } else if (data?.debates) {
+      setDebates(data.debates.map(apiDebateToStored));
+    } else {
+      setDebates([]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 600);
@@ -66,31 +80,6 @@ export default function DebatesPage() {
     window.addEventListener("focus", refreshDebates);
     return () => window.removeEventListener("focus", refreshDebates);
   }, []);
-
-  const handleScheduleDebate = () => {
-    if (!scheduleForm.title.trim()) {
-      toast.error("Please enter a debate title");
-      return;
-    }
-    addDebate({
-      title: scheduleForm.title,
-      topic: scheduleForm.topic || "General",
-      status: "upcoming",
-      format: scheduleForm.format,
-      participants: {
-        positionA: { name: scheduleForm.positionA || "TBD", role: "Scholar" },
-        positionB: { name: scheduleForm.positionB || "TBD", role: "Scholar" },
-      },
-      scheduledDate: scheduleForm.date && scheduleForm.time ? `${scheduleForm.date} ${scheduleForm.time}` : undefined,
-      duration: scheduleForm.format === "live" ? "2 hours" : "2 weeks",
-      votesClarity: 0,
-      bookmarks: 0,
-    });
-    toast.success("Debate scheduled successfully!");
-    setShowScheduleDialog(false);
-    setScheduleForm({ title: "", topic: "", positionA: "", positionB: "", date: "", time: "", format: "async" });
-    refreshDebates();
-  };
 
   const filteredDebates = debates.filter(d => {
     const matchTab = activeTab === "all" || d.status === activeTab || d.format === activeTab;
@@ -114,14 +103,8 @@ export default function DebatesPage() {
   };
 
   const handleViewDebate = (debateId: string, format: string, status: string) => {
-    if (status === "upcoming") {
-      const debate = debates.find(d => d.id === debateId);
-      setRsvpDebate(debate);
-    } else if (format === "live") {
-      router.push(`/debates/livevideo/${debateId}`);
-    } else {
-      router.push(`/debates/livechat/${debateId}`);
-    }
+    // Always navigate to detail - public and registered users can view
+    router.push(`/debates/${debateId}`);
   };
 
   // Scholar Dashboard View
@@ -164,71 +147,11 @@ export default function DebatesPage() {
         />
       )}
 
-      {/* Admin Schedule Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Schedule New Debate</DialogTitle>
-            <DialogDescription>Create a new scholarly debate. It will appear on the public debates page.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Input
-              placeholder="Debate title"
-              value={scheduleForm.title}
-              onChange={(e) => setScheduleForm((p) => ({ ...p, title: e.target.value }))}
-            />
-            <Input
-              placeholder="Topic / category"
-              value={scheduleForm.topic}
-              onChange={(e) => setScheduleForm((p) => ({ ...p, topic: e.target.value }))}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="Position A (Scholar name)"
-                value={scheduleForm.positionA}
-                onChange={(e) => setScheduleForm((p) => ({ ...p, positionA: e.target.value }))}
-              />
-              <Input
-                placeholder="Position B (Scholar name)"
-                value={scheduleForm.positionB}
-                onChange={(e) => setScheduleForm((p) => ({ ...p, positionB: e.target.value }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                value={scheduleForm.date}
-                onChange={(e) => setScheduleForm((p) => ({ ...p, date: e.target.value }))}
-              />
-              <Input
-                type="time"
-                value={scheduleForm.time}
-                onChange={(e) => setScheduleForm((p) => ({ ...p, time: e.target.value }))}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={scheduleForm.format === "async" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setScheduleForm((p) => ({ ...p, format: "async" }))}
-              >
-                <MessageSquare className="h-3.5 w-3.5 mr-1" /> Written
-              </Button>
-              <Button
-                variant={scheduleForm.format === "live" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setScheduleForm((p) => ({ ...p, format: "live" }))}
-              >
-                <Video className="h-3.5 w-3.5 mr-1" /> Live
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-            <Button onClick={handleScheduleDebate}>Schedule Debate</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ScheduleDebateDialog
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        onSuccess={refreshDebates}
+      />
 
       <main className="pt-28 pb-24 px-4" id="main-content">
         <div className="max-w-7xl mx-auto space-y-14">
@@ -294,10 +217,10 @@ export default function DebatesPage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { icon: Scale, label: "Active Debates", value: "3", color: "text-primary", bg: "bg-primary/10" },
-                  { icon: Users, label: "Participating Scholars", value: "12", color: "text-secondary", bg: "bg-secondary/10" },
-                  { icon: BookOpen, label: "Topics Covered", value: "24", color: "text-amber-600", bg: "bg-amber-500/10" },
-                  { icon: ThumbsUp, label: "Clarity Votes Cast", value: "1.8k", color: "text-emerald-600", bg: "bg-emerald-500/10" },
+                  { icon: Scale, label: "Active Debates", value: String(debates.filter(d => d.status === "active").length), color: "text-primary", bg: "bg-primary/10" },
+                  { icon: Users, label: "Participating Scholars", value: String([...new Set(debates.flatMap(d => [d.participants.positionA.name, d.participants.positionB.name]))].length), color: "text-secondary", bg: "bg-secondary/10" },
+                  { icon: BookOpen, label: "Topics Covered", value: String([...new Set(debates.map(d => d.topic))].length), color: "text-amber-600", bg: "bg-amber-500/10" },
+                  { icon: ThumbsUp, label: "Clarity Votes Cast", value: String(debates.reduce((s, d) => s + (d.votesClarity ?? 0), 0)), color: "text-emerald-600", bg: "bg-emerald-500/10" },
                 ].map((s, i) => (
                   <motion.div
                     key={s.label}
@@ -534,7 +457,11 @@ export default function DebatesPage() {
               <Button
                 variant="outline"
                 className="w-full rounded-xl gap-2"
-                onClick={() => handleViewDebate("1", "async", "active")}
+                onClick={() => {
+                  const firstActive = debates.find(d => d.status === "active");
+                  if (firstActive) handleViewDebate(firstActive.id, firstActive.format, firstActive.status);
+                  else { setActiveTab("all"); document.getElementById("debates-panel-all")?.scrollIntoView({ behavior: "smooth" }); }
+                }}
                 aria-label="Browse active debates as a reader"
               >
                 Browse Debates <ChevronRight className="h-4 w-4" aria-hidden="true" />
