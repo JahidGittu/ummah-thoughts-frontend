@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { authApi } from "@/lib/api";
 
 export type UserRole = "scholar" | "user" | "writer" | "admin";
 
@@ -13,6 +14,7 @@ export interface AuthUser {
   joinedAt: string;
   bio?: string;
   specialization?: string;
+  avatarUrl?: string;
 }
 
 interface AuthContextType {
@@ -20,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  loginWithGoogle: () => void;
   isLoading: boolean;
 }
 
@@ -32,51 +35,19 @@ export interface RegisterData {
   bio?: string;
 }
 
-// Mock users database
-const MOCK_USERS: Record<string, AuthUser & { password: string }> = {
-  "user@ummahthoughts.com": {
-    id: "u1",
-    name: "Omar Abdullah",
-    email: "user@ummahthoughts.com",
-    password: "demo1234",
-    role: "user",
-    avatar: "O",
-    joinedAt: "2024-03-10",
-    bio: "Enthusiastic learner of Islamic sciences.",
-  },
-  "scholar@ummahthoughts.com": {
-    id: "s1",
-    name: "Dr. Ahmad Al-Rashid",
-    email: "scholar@ummahthoughts.com",
-    password: "demo1234",
-    role: "scholar",
-    avatar: "A",
-    joinedAt: "2023-01-15",
-    specialization: "Fiqh al-Siyasah",
-    bio: "Professor of Islamic Political Thought with 20 years of experience.",
-  },
-  "writer@ummahthoughts.com": {
-    id: "w1",
-    name: "Fatima Zahra",
-    email: "writer@ummahthoughts.com",
-    password: "demo1234",
-    role: "writer",
-    avatar: "F",
-    joinedAt: "2023-08-22",
-    specialization: "Islamic Governance & History",
-    bio: "Author and researcher specializing in Islamic civilization.",
-  },
-  "admin@ummahthoughts.com": {
-    id: "a1",
-    name: "Admin Controller",
-    email: "admin@ummahthoughts.com",
-    password: "admin1234",
-    role: "admin",
-    avatar: "A",
-    joinedAt: "2022-06-01",
-    bio: "Platform administrator with full access to all controls.",
-  },
-};
+function toAuthUser(raw: any): AuthUser {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    role: raw.role,
+    avatar: raw.avatar || raw.name?.charAt(0)?.toUpperCase() || "U",
+    joinedAt: raw.joinedAt || raw.joined_at?.split?.("T")?.[0] || "",
+    bio: raw.bio,
+    specialization: raw.specialization,
+    avatarUrl: raw.avatarUrl,
+  };
+}
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -85,51 +56,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem("ummahthoughts_token");
     const stored = localStorage.getItem("ummahthoughts_user");
-    if (stored) {
-      try { setUser(JSON.parse(stored)); } catch { /* ignore */ }
+    if (token && stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        /* ignore */
+      }
+      authApi.getMe().then(({ data, error }) => {
+        if (data?.user) setUser(toAuthUser(data.user));
+        else if (error) {
+          localStorage.removeItem("ummahthoughts_token");
+          localStorage.removeItem("ummahthoughts_user");
+          setUser(null);
+        }
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    await new Promise((r) => setTimeout(r, 800));
-    const found = MOCK_USERS[email.toLowerCase()];
-    if (!found) return { success: false, error: "No account found with this email." };
-    if (found.password !== password) return { success: false, error: "Incorrect password." };
-    const { password: _, ...userData } = found;
-    setUser(userData);
-    localStorage.setItem("ummahthoughts_user", JSON.stringify(userData));
+    const { data, error } = await authApi.login(email, password);
+    if (error) return { success: false, error };
+    if (!data?.user || !data?.token) return { success: false, error: "Invalid response" };
+    const u = toAuthUser(data.user);
+    setUser(u);
+    localStorage.setItem("ummahthoughts_token", data.token);
+    localStorage.setItem("ummahthoughts_user", JSON.stringify(u));
     return { success: true };
   };
 
   const register = async (data: RegisterData) => {
-    await new Promise((r) => setTimeout(r, 900));
-    if (MOCK_USERS[data.email.toLowerCase()]) {
-      return { success: false, error: "An account with this email already exists." };
-    }
-    const newUser: AuthUser = {
-      id: `new_${Date.now()}`,
+    const { data: res, error } = await authApi.register({
       name: data.name,
       email: data.email,
+      password: data.password,
       role: data.role,
-      avatar: data.name[0].toUpperCase(),
-      joinedAt: new Date().toISOString().split("T")[0],
       specialization: data.specialization,
       bio: data.bio,
-    };
-    setUser(newUser);
-    localStorage.setItem("ummahthoughts_user", JSON.stringify(newUser));
+    });
+    if (error) return { success: false, error };
+    if (!res?.user || !res?.token) return { success: false, error: "Invalid response" };
+    const u = toAuthUser(res.user);
+    setUser(u);
+    localStorage.setItem("ummahthoughts_token", res.token);
+    localStorage.setItem("ummahthoughts_user", JSON.stringify(u));
     return { success: true };
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem("ummahthoughts_token");
     localStorage.removeItem("ummahthoughts_user");
   };
 
+  const loginWithGoogle = () => {
+    window.location.href = authApi.googleUrl();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loginWithGoogle, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
