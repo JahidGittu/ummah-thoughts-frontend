@@ -83,7 +83,7 @@ export default function ArticleRichTextEditor({
   // Sync external content
   useEffect(() => {
     if (editor && content !== undefined && content !== editor.getHTML()) {
-      editor.commands.setContent(content || '', false);
+      editor.commands.setContent(content || '', { emitUpdate: false });
     }
   }, [content, editor]);
 
@@ -292,7 +292,7 @@ export default function ArticleRichTextEditor({
                   icon={btn.icon}
                   label={btn.label}
                   onClick={btn.onClick}
-                  active={btn.active}
+                  active={'active' in btn ? btn.active : undefined}
                   disabled={'disabled' in btn ? btn.disabled : undefined}
                 />
               ))}

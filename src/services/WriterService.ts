@@ -26,8 +26,8 @@ export class WriterService extends BaseService {
         slug: 'islamic-governance',
         description: 'A comprehensive look at governance principles in Islam',
         content: [
-          { id: '1', type: 'heading' as BlockType, content: 'Understanding Islamic Governance', metadata: { level: 1 } },
-          { id: '2', type: 'paragraph', content: 'Islamic governance is rooted in Quranic principles...' },
+          { id: '1', type: 'heading' as BlockType, content: 'Understanding Islamic Governance', metadata: { level: 1 as const } },
+          { id: '2', type: 'paragraph' as BlockType, content: 'Islamic governance is rooted in Quranic principles...' },
         ],
         author: { id: 'u1', name: 'Test Writer' },
         category: 'governance' as ArticleCategory,

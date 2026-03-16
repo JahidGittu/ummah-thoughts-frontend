@@ -8,6 +8,17 @@ import TableCellFormatButton from './TableCellFormatButton';
 
 const HIDE_DELAY_MS = 350;
 
+/** Custom table extension commands - not in TipTap ChainedCommands type */
+type TableChain = {
+  moveRowUp: (idx: number, pos?: number) => { run: () => boolean };
+  moveRowDown: (idx: number, pos?: number) => { run: () => boolean };
+  moveColumnLeft: (idx: number, pos?: number) => { run: () => boolean };
+  moveColumnRight: (idx: number, pos?: number) => { run: () => boolean };
+  moveRowTo: (from: number, to: number, pos?: number) => { run: () => boolean };
+  moveColumnTo: (from: number, to: number, pos?: number) => { run: () => boolean };
+};
+const tableChain = (e: Editor) => e.chain().focus() as unknown as TableChain;
+
 type CellBorderValue = 'none' | 'all' | 'top' | 'bottom' | 'left' | 'right' | 'inside' | 'outside';
 
 const BorderIcons: Record<CellBorderValue, React.ReactNode> = {
@@ -338,7 +349,7 @@ export default function TableHoverBars({ editor, editorContainerRef, readOnly }:
         if (toIndex >= 0) {
           const cell = dragRow.table.querySelector('tr td, tr th') as HTMLElement | null;
           const pos = cell ? (() => { try { return editor.view.posAtDOM(cell, 0); } catch { return undefined; } })() : undefined;
-          editor.chain().focus().moveRowTo(dragRow.index, toIndex, pos).run();
+          tableChain(editor).moveRowTo(dragRow.index, toIndex, pos).run();
         }
       }
       if (dragCol && dropTargetCol !== null && dropTargetCol !== dragCol.index && editor) {
@@ -349,7 +360,7 @@ export default function TableHoverBars({ editor, editorContainerRef, readOnly }:
         if (toIndex >= 0) {
           const firstCell = dragCol.table.querySelector('tr td, tr th') as HTMLElement | null;
           const pos = firstCell ? (() => { try { return editor.view.posAtDOM(firstCell, 0); } catch { return undefined; } })() : undefined;
-          editor.chain().focus().moveColumnTo(dragCol.index, toIndex, pos).run();
+          tableChain(editor).moveColumnTo(dragCol.index, toIndex, pos).run();
         }
       }
       setDragRow(null);
@@ -394,20 +405,20 @@ export default function TableHoverBars({ editor, editorContainerRef, readOnly }:
   const moveRowUp = () => {
     const cell = hoveredRow?.tr.querySelector('td, th') as HTMLElement | undefined;
     const pos = cell ? getCellPos(cell) : undefined;
-    editor.chain().focus().moveRowUp(hoveredRow!.index, pos).run();
+    tableChain(editor).moveRowUp(hoveredRow!.index, pos).run();
   };
   const moveRowDown = () => {
     const cell = hoveredRow?.tr.querySelector('td, th') as HTMLElement | undefined;
     const pos = cell ? getCellPos(cell) : undefined;
-    editor.chain().focus().moveRowDown(hoveredRow!.index, pos).run();
+    tableChain(editor).moveRowDown(hoveredRow!.index, pos).run();
   };
   const moveColumnLeft = () => {
     const pos = hoveredCol?.cell ? getCellPos(hoveredCol.cell) : undefined;
-    editor.chain().focus().moveColumnLeft(hoveredCol!.index, pos).run();
+    tableChain(editor).moveColumnLeft(hoveredCol!.index, pos).run();
   };
   const moveColumnRight = () => {
     const pos = hoveredCol?.cell ? getCellPos(hoveredCol.cell) : undefined;
-    editor.chain().focus().moveColumnRight(hoveredCol!.index, pos).run();
+    tableChain(editor).moveColumnRight(hoveredCol!.index, pos).run();
   };
 
   return (
