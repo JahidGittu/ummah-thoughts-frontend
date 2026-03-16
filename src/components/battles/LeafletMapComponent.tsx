@@ -51,7 +51,7 @@ const LeafletMapComponent = ({
   const mapRef          = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef      = useRef<{ [key: string]: L.Marker }>({});
-  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ── Init map ──────────────────────────────────────────────────────────────
   useEffect(() => {

@@ -342,10 +342,10 @@ const InteractiveBattlesMap = ({ battles, isBn, onBattleSelect }: InteractiveBat
               <LeafletMap
                 battles={filteredBattles}
                 selectedBattle={selectedBattle}
-                onBattleSelect={b => { setSelectedBattle(b); onBattleSelect(b); }}
+                onBattleSelect={b => { setSelectedBattle(b as Battle); onBattleSelect(b as Battle); }}
                 onBattleHover={(b, pos) => {
                   tooltipHoveredRef.current = false;
-                  setHoveredBattle(b);
+                  setHoveredBattle(b as Battle);
                   setHoverPosition(pos);
                 }}
                 onBattleHoverEnd={handleBattleHoverEnd}
@@ -360,10 +360,10 @@ const InteractiveBattlesMap = ({ battles, isBn, onBattleSelect }: InteractiveBat
               <MapLibre3DMap
                 battles={filteredBattles}
                 selectedBattle={selectedBattle}
-                onBattleSelect={b => { setSelectedBattle(b); onBattleSelect(b); }}
+                onBattleSelect={b => { setSelectedBattle(b as Battle); onBattleSelect(b as Battle); }}
                 onBattleHover={(b, pos) => {
                   tooltipHoveredRef.current = false;
-                  setHoveredBattle(b);
+                  setHoveredBattle(b as Battle);
                   setHoverPosition(pos);
                 }}
                 onBattleHoverEnd={handleBattleHoverEnd}

@@ -32,7 +32,7 @@ const MapLibre3DMap = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<any>(null);
   const markersRef      = useRef<any[]>([]);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError,  setHasError]  = useState(false);
 
@@ -239,7 +239,7 @@ const MapLibre3DMap = ({
        * (~50 inside the map canvas) and are NOT overridden here.
        */}
       {!isLoading && (
-        <div className="absolute bottom-4 left-4 z-[200]
+        <div className="absolute bottom-4 left-4 z-200
                         bg-slate-900/90 backdrop-blur-sm rounded-lg p-3
                         shadow-xl border border-white/10">
           <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider mb-2">
@@ -253,7 +253,7 @@ const MapLibre3DMap = ({
             { color: '#3b82f6', label: isBn ? 'কৌশলগত'     : 'Strategic' },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-2 mb-1 last:mb-0">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: item.color }} />
               <span className="text-white/70 text-[11px]">{item.label}</span>
             </div>
           ))}
@@ -261,7 +261,7 @@ const MapLibre3DMap = ({
       )}
 
       {!isLoading && (
-        <div className="absolute bottom-4 right-4 z-[200]
+        <div className="absolute bottom-4 right-4 z-200
                         bg-slate-900/80 backdrop-blur-sm rounded-md px-2.5 py-1.5
                         border border-white/10">
           <p className="text-white/50 text-[10px]">
