@@ -28,6 +28,8 @@ export interface StoredDebate {
   time?: string;
   /** When scholar schedules from dashboard */
   scheduledByScholar?: boolean;
+  /** YouTube Live URL for video format debates */
+  youtubeLiveUrl?: string;
 }
 
 const DEBATES_KEY = 'ummah-debates-list';
