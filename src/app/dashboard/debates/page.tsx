@@ -23,7 +23,7 @@ export default function DebatesPage() {
     );
   }
 
-  if (!user || user.role !== 'scholar') {
+  if (!user || (user.role !== 'scholar' && user.role !== 'admin')) {
     router.push('/dashboard');
     return null;
   }
