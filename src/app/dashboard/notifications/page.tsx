@@ -3,10 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import ScholarNotifications from '@/components/dashboard/scholar/ScholarNotifications';
-import WriterNotifications from '@/components/dashboard/writer/WriterNotifications';
-import UserNotifications from '@/components/dashboard/user/UserNotifications';
-import AdminNotifications from '@/components/dashboard/admin/AdminNotifications';
+import NotificationsFromApi from '@/components/dashboard/shared/NotificationsFromApi';
 
 export default function NotificationsPage() {
   const { user, isLoading } = useAuth();
@@ -30,15 +27,5 @@ export default function NotificationsPage() {
     return null;
   }
 
-  switch (user.role) {
-    case 'scholar':
-      return <ScholarNotifications />;
-    case 'writer':
-      return <WriterNotifications />;
-    case 'admin':
-      return <AdminNotifications />;
-    case 'user':
-    default:
-      return <UserNotifications />;
-  }
+  return <NotificationsFromApi />;
 }

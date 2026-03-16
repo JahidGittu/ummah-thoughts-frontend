@@ -3,12 +3,13 @@
 import { useState, useContext, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Menu, Bell, Globe, Sun, Moon, Trash2, CheckCheck, Zap } from "lucide-react";
+import { Menu, Bell, Globe, Sun, Moon, CheckCheck, Zap, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminActivityContext, NotifEntry } from "@/contexts/AdminActivityContext";
 import DashboardSidebar from "./DashboardSidebar";
 import { cn } from "@/lib/utils";
 import { changeLanguage } from "@/i18n";
+import { notificationApi } from "@/lib/api";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -74,6 +75,62 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
   const notifData = useContext(AdminActivityContext);
   const sessionLogs = notifData?.sessionLogs ?? [];
 
+  // API notifications (real data from backend)
+  const [apiNotifications, setApiNotifications] = useState<{ id: string; type: string; title: string; message: string; link: string | null; read: boolean; createdAt: string }[]>([]);
+  const [apiNotifLoading, setApiNotifLoading] = useState(false);
+  const apiUnreadCount = apiNotifications.filter((n) => !n.read).length;
+
+  const fetchApiNotifications = async () => {
+    setApiNotifLoading(true);
+    const { data } = await notificationApi.list();
+    setApiNotifLoading(false);
+    if (data?.notifications) setApiNotifications(data.notifications);
+  };
+
+  // Fetch on mount so badge shows from the start
+  useEffect(() => {
+    if (user) fetchApiNotifications();
+  }, [user?.id]);
+
+  // Refresh when bell opens
+  useEffect(() => {
+    if (bellOpen) fetchApiNotifications();
+  }, [bellOpen]);
+
+  const handleApiMarkRead = async (id: string) => {
+    setApiNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    await notificationApi.markAsRead(id);
+  };
+
+  const handleApiMarkAllRead = async () => {
+    setApiNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await notificationApi.markAllAsRead();
+  };
+
+  const handleNotificationClick = async (n: { id: string; link: string | null; read: boolean }) => {
+    if (!n.read) handleApiMarkRead(n.id);
+    setBellOpen(false);
+    if (n.link && n.link !== "#") {
+      router.push(n.link);
+    } else {
+      router.push("/dashboard/notifications");
+    }
+  };
+
+  function formatNotifTime(iso: string) {
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = now.getTime() - d.getTime();
+      if (diff < 60000) return "just now";
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    } catch {
+      return "";
+    }
+  }
+
   // Pulse bell whenever a NEW live session log is added
   useEffect(() => {
     if (sessionLogs.length > prevSessionLen.current) {
@@ -98,8 +155,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
     changeLanguage(next);
   };
 
-  const unreadCount = notifData?.unreadCount ?? 0;
-  const notifications = notifData?.notifications ?? [];
+  const unreadCount = apiUnreadCount;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -208,9 +264,9 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                         <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
                       )}
                     </div>
-                    {unreadCount > 0 && notifData && (
+                    {unreadCount > 0 && (
                       <button
-                        onClick={() => { notifData.markAllRead(); }}
+                        onClick={handleApiMarkAllRead}
                         className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
                       >
                         <CheckCheck className="h-3 w-3" /> {t("admin.markAllRead")}
@@ -241,16 +297,23 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                     </div>
                   )}
 
-                  {/* Notification list */}
+                  {/* Notification list (from API) */}
                   <div className="max-h-72 overflow-y-auto divide-y divide-border">
-                    {notifications.length === 0 ? (
+                    {apiNotifLoading ? (
+                      <div className="py-8 flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+                      </div>
+                    ) : apiNotifications.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">{t("admin.noNotifications")}</div>
-                    ) : notifications.slice(0, 8).map(n => {
-                      const meta = NOTIF_TYPE_COLORS[n.type] ?? NOTIF_TYPE_COLORS.info;
+                    ) : apiNotifications.slice(0, 8).map((n) => {
+                      const meta = NOTIF_TYPE_COLORS[n.type as NotifEntry["type"]] ?? NOTIF_TYPE_COLORS.info;
                       return (
                         <div
                           key={n.id}
-                          onClick={() => notifData?.markRead(n.id)}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleNotificationClick(n)}
+                          onKeyDown={(e) => e.key === "Enter" && handleNotificationClick(n)}
                           className={cn(
                             "flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/50",
                             !n.read && "bg-primary/5"
@@ -259,33 +322,23 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                           <div className={cn("w-2 h-2 rounded-full flex-shrink-0 mt-1.5", meta.dot, n.read && "opacity-0")} />
                           <div className="flex-1 min-w-0">
                             <p className={cn("text-xs font-semibold truncate", !n.read ? "text-foreground" : "text-muted-foreground")}>{n.title}</p>
-                            <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{n.msg}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-1">{n.time}</p>
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1">{formatNotifTime(n.createdAt)}</p>
                           </div>
-                          {notifData && (
-                            <button
-                              onClick={e => { e.stopPropagation(); notifData.dismissNotif(n.id); }}
-                              className="text-muted-foreground hover:text-destructive flex-shrink-0 mt-0.5 transition-colors"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          )}
                         </div>
                       );
                     })}
                   </div>
 
                   {/* Footer */}
-                  {notifData && (
-                    <div className="border-t border-border px-4 py-2.5">
-                      <button
-                        onClick={() => { setBellOpen(false); router.push("/dashboard/notifications"); }}
-                        className="w-full text-xs font-semibold text-primary hover:underline text-center"
-                      >
-                        {t("admin.viewAllNotifications")}
-                      </button>
-                    </div>
-                  )}
+                  <div className="border-t border-border px-4 py-2.5">
+                    <button
+                      onClick={() => { setBellOpen(false); router.push("/dashboard/notifications"); }}
+                      className="w-full text-xs font-semibold text-primary hover:underline text-center"
+                    >
+                      {t("admin.viewAllNotifications")}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

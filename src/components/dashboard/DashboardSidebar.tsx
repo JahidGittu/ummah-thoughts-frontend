@@ -145,6 +145,7 @@ const NAV_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       titleKey: "dashboard_nav.contentControl",
       items: [
+        { labelKey: "dashboard_nav.debates", icon: MessageSquare, path: "/dashboard/debates" },
         { labelKey: "dashboard_nav.contentModeration", icon: Flag, path: "/dashboard/moderation", badge: "5" },
         { labelKey: "dashboard_nav.auditLog", icon: ScrollText, path: "/dashboard/audit-log" },
       ],
