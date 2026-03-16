@@ -16,6 +16,7 @@ import {
   LogIn,
   User
 } from 'lucide-react';
+import { NotificationsDropdown } from '@/components/shared/NotificationsDropdown';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { cn } from '@/lib/utils';
@@ -199,6 +200,11 @@ export const Navbar = () => {
               {/* Language switcher */}
               <LanguageSwitcher variant="minimal" className="hidden sm:flex" />
 
+              {/* Notifications (logged in only) */}
+              {user && (
+                <NotificationsDropdown />
+              )}
+
               {/* Theme toggle */}
               <Button
                 variant="ghost"
@@ -324,6 +330,18 @@ export const Navbar = () => {
                     </Link>
                   </motion.div>
                 ))}
+
+                {/* Mobile notifications */}
+                {!isLoading && user && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: navLinks.length * 0.04 }}
+                    className="flex justify-center py-2"
+                  >
+                    <NotificationsDropdown />
+                  </motion.div>
+                )}
 
                 {/* Mobile auth section */}
                 {!isLoading && user && (
