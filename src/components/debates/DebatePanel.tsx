@@ -20,6 +20,9 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { debateApi } from "@/lib/api";
+import { parseDalils, getEvidenceConfig } from "@/lib/dalil";
+import { FormattedText } from "@/lib/format-text";
 
 interface DebatePosition {
   scholar: { name: string; title: string; avatar?: string };
@@ -34,6 +37,19 @@ interface DebatePosition {
   methodology: string;
 }
 
+export type LiveChatMessage = {
+  id: string;
+  userId?: string;
+  userName: string;
+  text: string;
+  audioUrl?: string;
+  createdAt: string;
+  /** Reactions from backend – e.g. { "👍": 2, "❤️": 1 } */
+  reactions?: Record<string, number>;
+  /** Current user's reaction (when authenticated) – so they can change/remove on reload */
+  myReaction?: string;
+};
+
 interface DebatePanelProps {
   title: string;
   titleAr?: string;
@@ -45,6 +61,25 @@ interface DebatePanelProps {
   conclusion?: string;
   status: "active" | "concluded";
   clarityVotes: { positionA: number; positionB: number };
+  /** Current user's clarity vote (from API) – when provided, vote buttons use this */
+  myVote?: "A" | "B" | null;
+  /** Callback when user votes for clarity – when provided, persists to backend */
+  onVoteClarity?: (side: "A" | "B") => void | Promise<void>;
+  /** Callback when message reaction changes – parent can refetch clarity votes */
+  onReactionChange?: () => void;
+  /** Real chat messages – when provided, chat tab shows these instead of mock */
+  liveMessages?: LiveChatMessage[];
+  /** Debate ID – required for reaction API when showing live messages */
+  debateId?: string;
+  /** Share callback – when provided, Share button is functional */
+  onShare?: () => void;
+  /** Users typing – shown to everyone (Messenger-style) */
+  typingUsers?: { userId: string; userName: string }[];
+  /** Users recording – shown to everyone */
+  recordingUsers?: { userId: string; userName: string }[];
+  /** Bookmark state + toggle – when provided, Bookmark uses backend */
+  bookmarked?: boolean;
+  onBookmarkToggle?: () => void | Promise<void>;
 }
 
 const evidenceIcons = {
@@ -68,11 +103,30 @@ const buildChatTurns = (posA: DebatePosition, posB: DebatePosition) => [
 
 const REACTIONS = ["👍", "🤔", "💡", "❤️", "🔥", "📖"];
 
+function formatMessageTime(iso: string) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
 export const DebatePanel = ({
   title, titleAr, topic,
   positionA, positionB,
   agreementPoints, disagreementPoints,
   conclusion, status, clarityVotes,
+  myVote: myVoteProp,
+  onVoteClarity,
+  onReactionChange,
+  liveMessages = [],
+  debateId,
+  onShare,
+  bookmarked: bookmarkedProp,
+  onBookmarkToggle,
+  typingUsers = [],
+  recordingUsers = [],
 }: DebatePanelProps) => {
   const { user } = useAuth();
   const router = useRouter();
@@ -80,17 +134,37 @@ export const DebatePanel = ({
   const tablistId = useId();
 
   const [activeTab, setActiveTab] = useState<Tab>("chat");
-  const [bookmarked, setBookmarked] = useState(false);
-  const [myVote, setMyVote] = useState<"A" | "B" | null>(null);
+  const [bookmarkedLocal, setBookmarkedLocal] = useState(false);
+  const bookmarked = bookmarkedProp ?? bookmarkedLocal;
+  const [myVoteLocal, setMyVoteLocal] = useState<"A" | "B" | null>(null);
+  const myVote = myVoteProp ?? myVoteLocal;
   const [expandedEvidence, setExpandedEvidence] = useState<Record<number, boolean>>({});
   const [hoveredTurn, setHoveredTurn] = useState<number | null>(null);
   const [reactions, setReactions] = useState<Record<number, Record<string, number>>>({});
   const [myReactions, setMyReactions] = useState<Record<number, string>>({});
+  const [liveReactions, setLiveReactions] = useState<Record<string, Record<string, number>>>({});
+  const [myLiveReactions, setMyLiveReactions] = useState<Record<string, string>>({});
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [expandedLiveDalil, setExpandedLiveDalil] = useState<Record<string, boolean>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const initialMountRef = useRef(true);
+
+  useEffect(() => {
+    const initial: Record<string, Record<string, number>> = {};
+    const initialMine: Record<string, string> = {};
+    liveMessages.forEach((m) => {
+      if (m.reactions && Object.keys(m.reactions).length > 0) {
+        initial[m.id] = m.reactions;
+      }
+      if (m.myReaction !== undefined) {
+        initialMine[m.id] = m.myReaction ?? "";
+      }
+    });
+    setLiveReactions((prev) => (Object.keys(initial).length > 0 ? { ...prev, ...initial } : prev));
+    setMyLiveReactions((prev) => (Object.keys(initialMine).length > 0 ? { ...prev, ...initialMine } : prev));
+  }, [liveMessages]);
 
   const totalVotes = clarityVotes.positionA + clarityVotes.positionB;
-  const pctA = totalVotes ? Math.round((clarityVotes.positionA / totalVotes) * 100) : 0;
+  const pctA = totalVotes ? Math.round((clarityVotes.positionA / totalVotes) * 100) : 50;
   const pctB = 100 - pctA;
   const chatTurns = buildChatTurns(positionA, positionB);
 
@@ -113,7 +187,7 @@ export const DebatePanel = ({
 
   const handleReact = (turnIdx: number, emoji: string) => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
     const prev = myReactions[turnIdx];
@@ -129,17 +203,46 @@ export const DebatePanel = ({
 
   const handleVote = (side: "A" | "B") => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
     if (myVote) return;
-    setMyVote(side);
+    if (onVoteClarity) {
+      onVoteClarity(side);
+    } else {
+      setMyVoteLocal(side);
+    }
+  };
+
+  const handleReactForMessage = async (messageId: string, emoji: string) => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+      return;
+    }
+    if (!debateId) return;
+    const prev = myLiveReactions[messageId];
+    setLiveReactions((r) => {
+      const msgR = { ...(r[messageId] || {}) };
+      if (prev) msgR[prev] = Math.max(0, (msgR[prev] || 1) - 1);
+      if (prev !== emoji) msgR[emoji] = (msgR[emoji] || 0) + 1;
+      return { ...r, [messageId]: msgR };
+    });
+    setMyLiveReactions((m) => ({ ...m, [messageId]: prev === emoji ? "" : emoji }));
+    setHoveredMessageId(null);
+    const { data } = await debateApi.react(debateId, messageId, emoji);
+    if (data?.reactions) {
+      setLiveReactions((r) => ({ ...r, [messageId]: data.reactions! }));
+    }
+    if (data?.myReaction !== undefined) {
+      setMyLiveReactions((m) => ({ ...m, [messageId]: data.myReaction ?? "" }));
+    }
+    onReactionChange?.();
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Hero Header */}
-      <div className="relative rounded-3xl overflow-hidden border border-border bg-gradient-to-br from-card to-muted/40 p-8 md:p-10">
+      <div className="relative rounded-3xl overflow-hidden border border-border bg-linear-to-br from-card to-muted/40 p-8 md:p-10">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23064E3B' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
         />
@@ -175,15 +278,15 @@ export const DebatePanel = ({
             </div>
           </div>
 
-          <div className="max-w-md mx-auto pt-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+          <div className="max-w-lg mx-auto pt-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2" title={`${totalVotes} total votes from public and message reactions`}>
               <span className="font-semibold text-primary">{positionA.scholar.name.split(" ")[0]} · {pctA}%</span>
-              <span className="text-[10px]">{totalVotes} clarity votes</span>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/80">{totalVotes} clarity votes</span>
               <span className="font-semibold text-secondary">{pctB}% · {positionB.scholar.name.split(" ")[0]}</span>
             </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
-              <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${pctA}%` }} transition={{ duration: 0.8 }} />
-              <motion.div className="h-full bg-secondary" initial={{ width: 0 }} animate={{ width: `${pctB}%` }} transition={{ duration: 0.8 }} />
+            <div className="h-2 rounded-full bg-muted overflow-hidden flex shadow-inner">
+              <motion.div className="h-full bg-primary rounded-l-full" initial={{ width: 0 }} animate={{ width: `${pctA}%` }} transition={{ duration: 0.8 }} />
+              <motion.div className="h-full bg-secondary rounded-r-full" initial={{ width: 0 }} animate={{ width: `${pctB}%` }} transition={{ duration: 0.8 }} />
             </div>
           </div>
         </div>
@@ -195,7 +298,7 @@ export const DebatePanel = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setBookmarked(!bookmarked)}
+            onClick={() => (onBookmarkToggle ? onBookmarkToggle() : setBookmarkedLocal((b) => !b))}
             className={bookmarked ? "text-primary border-primary/40" : ""}
             aria-label={bookmarked ? "Remove bookmark" : "Bookmark this debate"}
             aria-pressed={bookmarked}
@@ -206,6 +309,8 @@ export const DebatePanel = ({
           <Button
             variant="outline"
             size="sm"
+            onClick={onShare}
+            disabled={!onShare}
             aria-label="Share this debate"
           >
             <Share2 className="h-4 w-4 mr-1.5" aria-hidden="true" /> Share
@@ -245,10 +350,13 @@ export const DebatePanel = ({
             aria-labelledby="debate-tab-chat"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
           >
+            {liveMessages.length > 0 ? (
+              /* Real chat messages – same UI style as mock */
+              <>
             {/* Scholar header strip */}
             <div className="grid grid-cols-2 gap-4 mb-5 sticky top-20 z-10">
               <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0">A</div>
+                <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0">A</div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Position A</p>
                   <p className="text-sm font-semibold text-foreground truncate">{positionA.scholar.name}</p>
@@ -259,11 +367,237 @@ export const DebatePanel = ({
                   <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Position B</p>
                   <p className="text-sm font-semibold text-foreground truncate">{positionB.scholar.name}</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm flex-shrink-0">B</div>
+                <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm shrink-0">B</div>
               </div>
             </div>
 
-            {/* Chat bubbles */}
+            {/* Live chat bubbles – same style as mock with reaction bar on hover */}
+            <div className="space-y-4">
+              {liveMessages.map((msg, idx) => {
+                const nameA = positionA.scholar.name;
+                const nameB = positionB.scholar.name;
+                const isA = msg.userName === nameA || (msg.userName !== nameB && idx % 2 === 0);
+                const msgReactions = liveReactions[msg.id] || {};
+                const myEmoji = myLiveReactions[msg.id];
+                const hasAnyReaction = Object.values(msgReactions).some((c) => c > 0);
+                return (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.06, duration: 0.3 }}
+                    className={`relative flex items-end gap-3 ${isA ? "justify-start" : "justify-end"}`}
+                    onMouseEnter={() => setHoveredMessageId(msg.id)}
+                    onMouseLeave={() => setHoveredMessageId(null)}
+                  >
+                    {isA && (
+                      <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0 mb-1">A</div>
+                    )}
+                    <div className={`max-w-[72%] space-y-2 ${isA ? "" : "items-end flex flex-col"}`}>
+                      <div className={`flex items-center gap-2 ${isA ? "" : "justify-end"}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${isA ? "text-primary" : "text-secondary"}`}>{msg.userName}</span>
+                        <span className="text-[10px] text-muted-foreground/60">{formatMessageTime(msg.createdAt)}</span>
+                      </div>
+                      <div className={`relative group ${isA ? "" : "self-end"}`}>
+                        <div className={`rounded-3xl px-5 py-4 ${isA ? "bg-primary/10 border border-primary/20 rounded-tl-sm" : "bg-secondary/10 border border-secondary/20 rounded-tr-sm"}`}>
+                          {(() => {
+                            const { mainText, dalils } = parseDalils(msg.text);
+                            const hasDalils = dalils.length > 0;
+                            const dalilOpen = expandedLiveDalil[msg.id];
+                            const API_URL = typeof window !== "undefined" ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000") : "";
+                            return (
+                              <>
+                                {msg.audioUrl && (
+                                  <div className="mb-2">
+                                    <audio
+                                      controls
+                                      src={`${API_URL}${msg.audioUrl}`}
+                                      className="max-w-full h-9 min-w-[200px]"
+                                      preload="metadata"
+                                    />
+                                  </div>
+                                )}
+                                {(mainText.trim() || !hasDalils) && !(msg.audioUrl && (mainText.trim() === "[Voice message]" || msg.text === "[Voice message]")) && (
+                                  <FormattedText text={mainText.trim() || msg.text} className="text-foreground leading-relaxed text-sm wrap-break-word" as="p" />
+                                )}
+                                {hasDalils && (
+                                  <div className="mt-2 space-y-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedLiveDalil((p) => ({ ...p, [msg.id]: !p[msg.id] }))}
+                                      className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${isA ? "text-primary hover:text-primary/80" : "text-secondary hover:text-secondary/80"}`}
+                                    >
+                                      <BookOpen className="h-3 w-3 shrink-0" />
+                                      {dalils.length} dalil{dalils.length > 1 ? "s" : ""} cited
+                                      {dalilOpen ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
+                                    </button>
+                                    <AnimatePresence>
+                                      {dalilOpen && (
+                                        <motion.div
+                                          initial={{ opacity: 0, height: 0 }}
+                                          animate={{ opacity: 1, height: "auto" }}
+                                          exit={{ opacity: 0, height: 0 }}
+                                          transition={{ duration: 0.2 }}
+                                          className="overflow-hidden space-y-2"
+                                        >
+                                          {dalils.map((ev, eIdx) => {
+                                            const cfg = getEvidenceConfig(ev.type);
+                                            return (
+                                              <div
+                                                key={eIdx}
+                                                className={`rounded-2xl border p-4 space-y-2 ${isA ? "bg-primary/5 border-primary/15" : "bg-secondary/5 border-secondary/15"}`}
+                                              >
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-sm">{cfg.icon}</span>
+                                                  <Badge variant="outline" className={`text-[10px] py-0 px-2 border ${cfg.color}`}>{cfg.label}</Badge>
+                                                  <span className="text-xs text-muted-foreground">— {ev.reference}</span>
+                                                </div>
+                                                {ev.arabic && <p className="text-lg leading-relaxed font-amiri text-foreground text-right" dir="rtl">{ev.arabic}</p>}
+                                                {ev.translation && <p className="text-sm text-muted-foreground italic">&quot;{ev.translation}&quot;</p>}
+                                              </div>
+                                            );
+                                          })}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                        <AnimatePresence>
+                          {isAuthenticated && hoveredMessageId === msg.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.85, y: 6 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.85, y: 6 }}
+                              transition={{ duration: 0.15 }}
+                              className={`absolute -top-11 z-20 flex items-center gap-1 bg-card border border-border rounded-2xl px-2.5 py-1.5 shadow-lg ${isA ? "left-0" : "right-0"}`}
+                            >
+                              {REACTIONS.map((emoji) => {
+                                const emojiNames: Record<string, string> = {
+                                  "👍": "Thumbs up", "🤔": "Thinking", "💡": "Insightful",
+                                  "❤️": "Heart", "🔥": "Fire", "📖": "Reading",
+                                };
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handleReactForMessage(msg.id, emoji)}
+                                    aria-label={`React with ${emojiNames[emoji] ?? emoji}${myEmoji === emoji ? " (active)" : ""}`}
+                                    aria-pressed={myEmoji === emoji}
+                                    title={emojiNames[emoji] ?? emoji}
+                                    className={`text-lg w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-125 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${myEmoji === emoji ? "bg-primary/15 ring-1 ring-primary/30" : "hover:bg-muted"}`}
+                                  >
+                                    <span aria-hidden="true">{emoji}</span>
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      {hasAnyReaction && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex flex-wrap gap-1 ${isA ? "" : "justify-end"}`}
+                        >
+                          {Object.entries(msgReactions)
+                            .filter(([, count]) => count > 0)
+                            .map(([emoji, count]) => (
+                              <button
+                                key={emoji}
+                                onClick={() => isAuthenticated && handleReactForMessage(msg.id, emoji)}
+                                className={`flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5 border transition-all ${myEmoji === emoji ? "bg-primary/15 border-primary/30 text-primary" : "bg-card border-border text-muted-foreground hover:border-primary/30"}`}
+                                disabled={!isAuthenticated}
+                              >
+                                <span>{emoji}</span>
+                                <span className="font-medium">{count}</span>
+                              </button>
+                            ))}
+                        </motion.div>
+                      )}
+                    </div>
+                    {!isA && (
+                      <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm shrink-0 mb-1">B</div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Typing / Recording – small, below last message, Messenger-style */}
+            {(typingUsers.length > 0 || recordingUsers.length > 0) && (
+              <div className="mt-2 space-y-2">
+                {typingUsers.map((u) => {
+                  const isA = u.userName === positionA.scholar.name;
+                  return (
+                    <div key={`typing-${u.userId}`} className={`flex items-center gap-2 ${isA ? "justify-start" : "justify-end"}`}>
+                      {isA && <div className="w-9 shrink-0" />}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[10px] text-muted-foreground ${isA ? "bg-primary/5 border border-primary/10" : "bg-secondary/5 border border-secondary/10 ml-auto"}`}>
+                        <span className="font-medium text-foreground">{u.userName.split(" ")[0]}</span>
+                        <span>typing</span>
+                        <span className="flex gap-0.5">
+                          {[1, 2, 3].map((i) => (
+                            <span key={i} className="w-1 h-1 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+                          ))}
+                        </span>
+                      </div>
+                      {!isA && <div className="w-9 shrink-0" />}
+                    </div>
+                  );
+                })}
+                {recordingUsers.map((u) => {
+                  const isA = u.userName === positionA.scholar.name;
+                  return (
+                    <div key={`rec-${u.userId}`} className={`flex items-center gap-2 ${isA ? "justify-start" : "justify-end"}`}>
+                      {isA && <div className="w-9 shrink-0" />}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[10px] text-muted-foreground ${isA ? "bg-primary/5 border border-primary/10" : "bg-secondary/5 border border-secondary/10 ml-auto"}`}>
+                        <span className="font-medium text-foreground">{u.userName.split(" ")[0]}</span>
+                        <span>recording</span>
+                        <span className="flex gap-0.5">
+                          {[1, 2, 3, 4].map((i) => (
+                            <span key={i} className="w-1 h-1 rounded-full bg-red-500/70 animate-pulse" style={{ animationDelay: `${i * 0.08}s` }} />
+                          ))}
+                        </span>
+                      </div>
+                      {!isA && <div className="w-9 shrink-0" />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+                <div ref={chatEndRef} />
+                <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-6 py-4 flex items-start gap-3">
+                  <Scale className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Adab al-Ikhtilaf:</span> Live chat follows the ethics of scholarly disagreement.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+            {/* Scholar header strip */}
+            <div className="grid grid-cols-2 gap-4 mb-5 sticky top-20 z-10">
+              <div className="flex items-center gap-3 bg-primary/5 border border-primary/15 rounded-2xl px-4 py-3 backdrop-blur-sm">
+                <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0">A</div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Position A</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{positionA.scholar.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 bg-secondary/5 border border-secondary/15 rounded-2xl px-4 py-3 backdrop-blur-sm">
+                <div className="min-w-0 text-right">
+                  <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Position B</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{positionB.scholar.name}</p>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm shrink-0">B</div>
+              </div>
+            </div>
+
+            {/* Mock chat bubbles */}
             <div className="space-y-4">
               {chatTurns.map((turn, idx) => {
                 const isA = turn.side === "A";
@@ -282,7 +616,7 @@ export const DebatePanel = ({
                     onMouseLeave={() => setHoveredTurn(null)}
                   >
                     {isA && (
-                      <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0 mb-1">A</div>
+                      <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0 mb-1">A</div>
                     )}
                     <div className={`max-w-[72%] space-y-2 ${isA ? "" : "items-end flex flex-col"}`}>
                       <div className={`flex items-center gap-2 ${isA ? "" : "justify-end"}`}>
@@ -293,7 +627,7 @@ export const DebatePanel = ({
                       <div className={`relative group ${isA ? "" : "self-end"}`}>
                         <div className={`rounded-3xl px-5 py-4 ${isA ? "bg-primary/10 border border-primary/20 rounded-tl-sm" : "bg-secondary/10 border border-secondary/20 rounded-tr-sm"
                           }`}>
-                          <p className="text-foreground leading-relaxed text-sm">{turn.text}</p>
+                          <FormattedText text={turn.text} className="text-foreground leading-relaxed text-sm" as="p" />
                           {turn.detail && (
                             <p className="text-muted-foreground text-sm mt-2 leading-relaxed border-t border-border/50 pt-2">{turn.detail}</p>
                           )}
@@ -394,12 +728,54 @@ export const DebatePanel = ({
                       )}
                     </div>
                     {!isA && (
-                      <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm flex-shrink-0 mb-1">B</div>
+                      <div className="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center font-bold text-secondary text-sm shrink-0 mb-1">B</div>
                     )}
                   </motion.div>
                 );
               })}
             </div>
+
+            {/* Typing / Recording – small, below last message, Messenger-style (mock chat) */}
+            {(typingUsers.length > 0 || recordingUsers.length > 0) && (
+              <div className="mt-2 space-y-2">
+                {typingUsers.map((u) => {
+                  const isA = u.userName === positionA.scholar.name;
+                  return (
+                    <div key={`typing-${u.userId}`} className={`flex items-center gap-2 ${isA ? "justify-start" : "justify-end"}`}>
+                      {isA && <div className="w-9 shrink-0" />}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[10px] text-muted-foreground ${isA ? "bg-primary/5 border border-primary/10" : "bg-secondary/5 border border-secondary/10 ml-auto"}`}>
+                        <span className="font-medium text-foreground">{u.userName.split(" ")[0]}</span>
+                        <span>typing</span>
+                        <span className="flex gap-0.5">
+                          {[1, 2, 3].map((i) => (
+                            <span key={i} className="w-1 h-1 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />
+                          ))}
+                        </span>
+                      </div>
+                      {!isA && <div className="w-9 shrink-0" />}
+                    </div>
+                  );
+                })}
+                {recordingUsers.map((u) => {
+                  const isA = u.userName === positionA.scholar.name;
+                  return (
+                    <div key={`rec-${u.userId}`} className={`flex items-center gap-2 ${isA ? "justify-start" : "justify-end"}`}>
+                      {isA && <div className="w-9 shrink-0" />}
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-[10px] text-muted-foreground ${isA ? "bg-primary/5 border border-primary/10" : "bg-secondary/5 border border-secondary/10 ml-auto"}`}>
+                        <span className="font-medium text-foreground">{u.userName.split(" ")[0]}</span>
+                        <span>recording</span>
+                        <span className="flex gap-0.5">
+                          {[1, 2, 3, 4].map((i) => (
+                            <span key={i} className="w-1 h-1 rounded-full bg-red-500/70 animate-pulse" style={{ animationDelay: `${i * 0.08}s` }} />
+                          ))}
+                        </span>
+                      </div>
+                      {!isA && <div className="w-9 shrink-0" />}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div ref={chatEndRef} />
 
@@ -433,7 +809,7 @@ export const DebatePanel = ({
                   <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center">
                     <Lock className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      <button onClick={() => router.push("/login")} className="text-primary underline font-medium">
+                      <button onClick={() => router.push("/auth/login")} className="text-primary underline font-medium">
                         Sign in
                       </button> to vote on clarity and react to arguments.
                     </p>
@@ -443,13 +819,15 @@ export const DebatePanel = ({
             )}
 
             <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-6 py-4 flex items-start gap-3">
-              <Scale className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <Scale className="h-5 w-5 text-primary mt-0.5 shrink-0" />
               <p className="text-sm text-muted-foreground leading-relaxed">
                 <span className="font-semibold text-foreground">Adab al-Ikhtilaf:</span> This thread follows
                 the ethics of scholarly disagreement. Votes measure <em>clarity of argument</em>,
                 not which position is correct. Both positions are equally respected.
               </p>
             </div>
+              </>
+            )}
           </motion.div>
         )}
 
