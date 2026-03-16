@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Users, Clock, Video, Plus, ChevronRight, BookOpen, Mic, Award, Calendar, Flame, CheckCircle2, AlarmClock, ArrowLeft } from "lucide-react";
+import { MessageSquare, Users, Clock, Video, Plus, ChevronRight, BookOpen, Mic, Award, Calendar, Flame, CheckCircle2, AlarmClock, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { LiveDebateRoom } from "@/components/debates/LiveDebateRoom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { getDebates, addDebate } from "@/lib/debateStorage";
+import { debateApi, type DebateApi } from "@/lib/api";
+import { ScheduleDebateDialog } from "@/components/debates/ScheduleDebateDialog";
 
 type ScholarDebateItem = {
   id: string;
@@ -24,17 +23,25 @@ type ScholarDebateItem = {
   duration: string;
 };
 
-function toScholarFormat(d: ReturnType<typeof getDebates>[0]): ScholarDebateItem {
-  const scholarStatus = d.scholarStatus ?? (d.status === "active" ? "live" : d.status === "concluded" ? "completed" : "upcoming");
+function toScholarFormat(d: DebateApi): ScholarDebateItem {
+  const scholarStatus =
+    d.status === "live" ? ("live" as const)
+    : d.status === "concluded" ? ("completed" as const)
+    : ("upcoming" as const); // draft, scheduled
+  const posA = d.participants.positionA?.name;
+  const posB = d.participants.positionB?.name;
+  const mod = d.participants.moderator?.name;
+  const names = [posA, posB, mod].filter(Boolean).length;
+  const scheduled = d.scheduledAt ? new Date(d.scheduledAt).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" }) : "TBD";
   return {
     id: d.id,
     title: d.title,
     status: scholarStatus,
-    participants: d.participantsCount ?? 8,
-    myRole: d.myRole ?? "Panelist",
-    time: d.scheduledDate ?? "TBD",
+    participants: names || 2,
+    myRole: "Panelist",
+    time: scheduled,
     topic: d.topic,
-    duration: d.duration ?? "~2 hrs",
+    duration: `${d.duration} mins`,
   };
 }
 
@@ -58,22 +65,28 @@ const TABS = [
 ] as const;
 
 export default function ScholarDebates() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuth();
   const [tab, setTab] = useState<"all" | "live" | "upcoming" | "completed">("all");
-  const [inLiveRoom, setInLiveRoom] = useState(false);
-  const [activeDebate, setActiveDebate] = useState<ScholarDebateItem | null>(null);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ title: "", topic: "", date: "", time: "", positionA: "", positionB: "" });
   const [debates, setDebates] = useState<ScholarDebateItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const refreshDebates = () => setDebates(getDebates().map(toScholarFormat));
+  const refreshDebates = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await debateApi.list();
+    setLoading(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (data?.debates) setDebates(data.debates.map(toScholarFormat));
+  }, []);
 
   useEffect(() => {
     refreshDebates();
-    window.addEventListener("focus", refreshDebates);
-    return () => window.removeEventListener("focus", refreshDebates);
-  }, []);
+  }, [refreshDebates]);
 
   const filtered = debates.filter(d => tab === "all" || d.status === tab);
   const liveDebate = debates.find(d => d.status === "live");
@@ -85,99 +98,17 @@ export default function ScholarDebates() {
     { label: "Upcoming", value: debates.filter(d => d.status === "upcoming").length, icon: Calendar, color: "text-amber-600", bg: "bg-amber-500/10" },
   ];
 
-  const handleJoinLive = (debate: ScholarDebateItem) => {
-    setActiveDebate(debate);
-    setInLiveRoom(true);
-  };
-
   const handleDebateClick = (debate: ScholarDebateItem) => {
-    if (debate.status === "live") {
-      handleJoinLive(debate);
-    } else if (debate.status === "completed") {
-      toast.info("This debate has concluded. Summary view coming soon.");
-    } else {
-      toast.info(`${debate.title} starts at ${debate.time}`);
-    }
+    router.push(`/debates/${debate.id}`);
   };
-
-  const handleSchedule = () => {
-    if (!scheduleForm.title.trim()) { toast.error("Please enter a debate title"); return; }
-    const dateTime = scheduleForm.date && scheduleForm.time ? `${scheduleForm.date} ${scheduleForm.time}` : undefined;
-    addDebate(
-      {
-        title: scheduleForm.title,
-        topic: scheduleForm.topic || "General",
-        status: "upcoming",
-        format: "live",
-        participants: {
-          positionA: { name: scheduleForm.positionA || "TBD", role: "Scholar" },
-          positionB: { name: scheduleForm.positionB || "TBD", role: "Scholar" },
-        },
-        scheduledDate: dateTime,
-        duration: "~2 hrs",
-        votesClarity: 0,
-        bookmarks: 0,
-      },
-      { scheduledByScholar: true }
-    );
-    toast.success(`"${scheduleForm.title}" scheduled successfully!`);
-    setShowScheduleDialog(false);
-    setScheduleForm({ title: "", topic: "", date: "", time: "", positionA: "", positionB: "" });
-    refreshDebates();
-  };
-
-  // Live Room View
-  if (inLiveRoom && activeDebate) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setInLiveRoom(false)} className="gap-1.5">
-          <ArrowLeft className="h-4 w-4" /> Back to Debates
-        </Button>
-        <LiveDebateRoom
-          title={activeDebate.title}
-          topic={activeDebate.topic}
-          moderator={{ id: "m1", name: "Admin Controller", role: "moderator" }}
-          speakers={[
-            { id: "s1", name: "Dr. Ahmad Al-Rashid", role: "scholar", isSpeaking: true },
-            { id: "s2", name: "Sh. Muhammad Hasan", role: "scholar", isSpeaking: false },
-          ]}
-          viewers={activeDebate.participants * 20}
-          duration="45:12"
-          currentPhase="position_a"
-          onLeave={() => setInLiveRoom(false)}
-          currentUser={user ?? null}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-7">
-      {/* Schedule Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Schedule New Debate</DialogTitle>
-            <DialogDescription>Set up a new scholarly debate session.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Input placeholder="Debate title" value={scheduleForm.title} onChange={e => setScheduleForm(p => ({ ...p, title: e.target.value }))} />
-            <Input placeholder="Topic / category" value={scheduleForm.topic} onChange={e => setScheduleForm(p => ({ ...p, topic: e.target.value }))} />
-            <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Position A" value={scheduleForm.positionA} onChange={e => setScheduleForm(p => ({ ...p, positionA: e.target.value }))} />
-              <Input placeholder="Position B" value={scheduleForm.positionB} onChange={e => setScheduleForm(p => ({ ...p, positionB: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input type="date" value={scheduleForm.date} onChange={e => setScheduleForm(p => ({ ...p, date: e.target.value }))} />
-              <Input type="time" value={scheduleForm.time} onChange={e => setScheduleForm(p => ({ ...p, time: e.target.value }))} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-            <Button onClick={handleSchedule}>Schedule</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ScheduleDebateDialog
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        onSuccess={refreshDebates}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -187,9 +118,11 @@ export default function ScholarDebates() {
             {debates.filter(d => d.status === "live").length} live · {debates.filter(d => d.status === "upcoming").length} upcoming · {debates.filter(d => d.status === "completed").length} completed
           </p>
         </div>
-        <button onClick={() => setShowScheduleDialog(true)} className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
-          <Plus className="h-4 w-4" /> {t("subpages.scheduleDebate")}
-        </button>
+        {user?.role === "admin" && (
+          <button onClick={() => setShowScheduleDialog(true)} className="inline-flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
+            <Plus className="h-4 w-4" /> {t("subpages.scheduleDebate")}
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -228,7 +161,7 @@ export default function ScholarDebates() {
                 </p>
               </div>
             </div>
-            <button onClick={() => handleJoinLive(liveDebate)}
+            <button onClick={() => router.push(`/debates/${liveDebate.id}`)}
               className="inline-flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-md">
               <Video className="h-4 w-4" /> {t("subpages.joinRoom")}
             </button>
@@ -253,7 +186,12 @@ export default function ScholarDebates() {
       {/* Debate list */}
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }} className="space-y-3">
-          {filtered.map((d, i) => {
+          {loading ? (
+            <div className="flex items-center justify-center py-14 gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Loading debates...</span>
+            </div>
+          ) : filtered.map((d, i) => {
             const statusCfg = STATUS_CONFIG[d.status];
             const roleCfg = ROLE_CONFIG[d.myRole] ?? { color: "text-muted-foreground", bg: "bg-muted", icon: MessageSquare };
             const RoleIcon = roleCfg.icon;
@@ -295,7 +233,7 @@ export default function ScholarDebates() {
             );
           })}
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-14 text-muted-foreground">
               <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No debates in this category.</p>

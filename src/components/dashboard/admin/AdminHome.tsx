@@ -3,7 +3,7 @@ import { Users, FileText, AlertTriangle, CheckCircle, Clock, Globe, ShieldCheck,
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useTranslation } from "react-i18next";
 import { AdminActivityContext, ActivityAction } from "@/contexts/AdminActivityContext";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const statsData = [
@@ -35,7 +35,7 @@ const STATIC_ACTIVITY = [
 
 export default function AdminHome() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const router = useRouter();
   const activityCtx = useContext(AdminActivityContext);
   const sessionLogs = activityCtx?.sessionLogs ?? [];
 
@@ -119,7 +119,7 @@ export default function AdminHome() {
               <h3 className="font-semibold text-foreground">Recent Actions</h3>
             </div>
             <button
-              onClick={() => navigate("/dashboard/audit-log")}
+              onClick={() => router.push("/dashboard/audit-log")}
               className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
             >
               View all <ArrowRight className="h-3 w-3" />
