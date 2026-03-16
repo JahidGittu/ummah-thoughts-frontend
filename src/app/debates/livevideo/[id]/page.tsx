@@ -2,121 +2,28 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { LiveDebateRoom } from "@/components/debates/LiveDebateRoom";
-import { useAuth } from "@/contexts/AuthContext";
-import { motion } from "framer-motion";
-import { getDebateById } from "@/lib/debateStorage";
+import { useEffect } from "react";
 
-// Mock data for live video debates
-const mockLiveDebates = {
-  "2": {
-    id: "2",
-    title: "Modern Applications of Khilafah",
-    titleAr: "التطبيقات المعاصرة للخلافة",
-    topic: "Political Theory",
-    moderator: { id: "m1", name: "Sh. Imran Hussain", role: "moderator" as const },
-    speakers: [
-      { id: "s1", name: "Dr. Fatima Zahra", role: "scholar" as const, isSpeaking: true },
-      { id: "s2", name: "Prof. Ibrahim Khalil", role: "scholar" as const, isSpeaking: false },
-    ],
-    viewers: 243,
-    duration: "45:12",
-    currentPhase: "position_a" as const,
-  },
-};
-
+/**
+ * Redirect to unified debate detail page.
+ * All debate viewing (live/written) uses /debates/[id] with YouTube + chat.
+ */
 export default function LiveVideoDebatePage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-  const [inRoom, setInRoom] = useState(true);
-
-  const debateId = params.id as string;
-  const mockDebate = mockLiveDebates[debateId as keyof typeof mockLiveDebates];
-  const storedDebate = getDebateById(debateId);
-
-  // Use mock if available, else build from storage
-  const debate = mockDebate ?? (storedDebate && storedDebate.format === "live" ? {
-    id: storedDebate.id,
-    title: storedDebate.title,
-    titleAr: storedDebate.titleAr,
-    topic: storedDebate.topic,
-    moderator: { id: "m1", name: "Moderator", role: "moderator" as const },
-    speakers: [
-      { id: "s1", name: storedDebate.participants.positionA.name, role: "scholar" as const, isSpeaking: true },
-      { id: "s2", name: storedDebate.participants.positionB.name, role: "scholar" as const, isSpeaking: false },
-    ],
-    viewers: 0,
-    duration: storedDebate.duration ?? "0:00",
-    currentPhase: "position_a" as const,
-  } : null);
+  const debateId = params?.id as string;
 
   useEffect(() => {
-    setMounted(true);
-
-    // Disable browser scroll restoration to prevent auto-scroll
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
+    if (debateId) {
+      router.replace(`/debates/${debateId}`);
+    } else {
+      router.replace("/debates");
     }
-
-    const scrollToTop = () => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    };
-
-    // Scroll to top immediately and multiple times to ensure it sticks
-    scrollToTop();
-    const timer1 = setTimeout(scrollToTop, 0);
-    const timer2 = setTimeout(scrollToTop, 50);
-    const timer3 = setTimeout(scrollToTop, 100);
-
-    return () => {
-      // Clear timers
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, []);
-
-  if (!mounted) return null;
-
-  if (!debate) {
-    return (
-      <div className="min-h-screen bg-background pt-24 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Live debate not found</h1>
-          <Button onClick={() => router.push("/debates")}>← Back to Debates</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!inRoom) {
-    router.push("/debates");
-    return null;
-  }
+  }, [debateId, router]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <LiveDebateRoom
-        title={debate.title}
-        topic={debate.topic}
-        moderator={debate.moderator}
-        speakers={debate.speakers}
-        viewers={debate.viewers}
-        duration={debate.duration}
-        currentPhase={debate.currentPhase}
-        onLeave={() => setInRoom(false)}
-        currentUser={user}
-      />
-    </motion.div>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+    </div>
   );
 }
