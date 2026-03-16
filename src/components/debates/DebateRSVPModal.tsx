@@ -84,7 +84,7 @@ export function DebateRSVPModal({ isOpen, onClose, debate }: DebateRSVPModalProp
 
   const handleRSVP = () => {
     if (!user) {
-      router.push("/login");
+      router.push("/auth/login");
       onClose();
       return;
     }
@@ -96,7 +96,7 @@ export function DebateRSVPModal({ isOpen, onClose, debate }: DebateRSVPModalProp
 
   const handleNotify = () => {
     if (!user) {
-      router.push("/login");
+      router.push("/auth/login");
       onClose();
       return;
     }

@@ -23,7 +23,6 @@ import {
   Eye,
   X,
 } from "lucide-react";
-import { ScholarProfile } from "./ScholarLoginModal";
 import { motion as m } from "framer-motion";
 
 interface DebateInvite {
@@ -121,6 +120,13 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 type DashTab = "overview" | "invites" | "active" | "history" | "compose";
+
+export interface ScholarProfile {
+  name: string;
+  title?: string;
+  specialization?: string;
+  avatar?: string;
+}
 
 interface ScholarDashboardProps {
   scholar: ScholarProfile;
