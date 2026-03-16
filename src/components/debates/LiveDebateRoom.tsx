@@ -76,6 +76,8 @@ export interface LiveDebateRoomProps {
   evidences?: Evidence[];
   onLeave?: () => void;
   currentUser: AuthUser | null;
+  /** YouTube Live URL for viewer stream (when admin streams to YouTube) */
+  youtubeLiveUrl?: string;
 }
 
 // Constants
@@ -138,10 +140,15 @@ function formatTime(s: number) {
   return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
+function extractYoutubeVideoId(url: string): string | null {
+  const m = url?.match(/(?:live\/|v=|embed\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 export const LiveDebateRoom = ({
   title, topic, moderator, speakers: initialSpeakers, viewers: initialViewers,
   currentPhase: initialPhase = "position_a", evidences = defaultEvidences,
-  onLeave, currentUser,
+  onLeave, currentUser, youtubeLiveUrl,
 }: LiveDebateRoomProps) => {
   const router = useRouter();
 
@@ -824,6 +831,19 @@ export const LiveDebateRoom = ({
             <Progress value={isRunning || debatePaused ? phaseProgress : 0} className="h-1" />
           </CardContent>
         </Card>
+
+        {/* YouTube Live embed (when admin provides stream URL) */}
+        {youtubeLiveUrl && extractYoutubeVideoId(youtubeLiveUrl) && (
+          <div className="rounded-2xl overflow-hidden border-2 border-border bg-black">
+            <iframe
+              src={`https://www.youtube.com/embed/${extractYoutubeVideoId(youtubeLiveUrl)}?autoplay=0`}
+              title="Live debate stream"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full aspect-video"
+            />
+          </div>
+        )}
 
         {/* Speaker Stage with integrated controls */}
         <div className="grid md:grid-cols-2 gap-4">
