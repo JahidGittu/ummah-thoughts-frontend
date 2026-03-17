@@ -23,6 +23,7 @@ interface DebateCardProps {
   duration?: string;
   votesClarity?: number;
   bookmarks?: number;
+  youtubeLiveUrl?: string;
   onView?: () => void;
 }
 
@@ -44,6 +45,7 @@ export const DebateCard = ({
   duration,
   votesClarity = 0,
   bookmarks = 0,
+  youtubeLiveUrl,
   onView,
 }: DebateCardProps) => {
   const [saved, setSaved] = useState(false);
@@ -91,6 +93,11 @@ export const DebateCard = ({
           <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
             <BookOpen className="h-3 w-3" /> {topic}
           </span>
+          {status === "concluded" && youtubeLiveUrl && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
+              <Video className="h-3 w-3" /> Recording
+            </span>
+          )}
         </div>
 
         <div className="space-y-1.5">

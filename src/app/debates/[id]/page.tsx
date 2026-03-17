@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, LayoutGrid, Rows3 } from "lucide-react";
 import { DebatePanel } from "@/components/debates/DebatePanel";
 import { DebateChatPanel } from "@/components/debates/DebateChatPanel";
+import { LiveDebateRoom } from "@/components/debates/LiveDebateRoom";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 function extractYouTubeVideoId(url: string): string | null {
   if (!url) return null;
@@ -358,6 +360,7 @@ export default function DebateDetailPage() {
   const videoId = debate.format === "video" && debate.youtubeLiveUrl ? extractYouTubeVideoId(debate.youtubeLiveUrl) : null;
   const panelProps = buildDebatePanelProps(debate);
   const effectiveClarityVotes = clarityVotes ?? panelProps.clarityVotes;
+  const isLiveVideoDebate = debate.format === "video";
 
   const handleVoteClarity = async (side: "A" | "B") => {
     if (!id) return;
@@ -377,6 +380,55 @@ export default function DebateDetailPage() {
     if (data) setClarityVotes({ positionA: data.positionA, positionB: data.positionB, myVote: data.myVote ?? null });
   };
 
+  // Live video debate: show LiveDebateRoom (full live panel with controls, Q&A, evidence)
+  if (isLiveVideoDebate) {
+    const mod = debate.participants.moderator;
+    const moderator = {
+      id: mod?.userId ?? "mod",
+      name: mod?.name ?? "Moderator",
+      role: "moderator" as const,
+    };
+    const speakers = [
+      { id: debate.participants.positionA?.userId ?? "a", name: debate.participants.positionA?.name ?? "Position A", role: "scholar" as const },
+      { id: debate.participants.positionB?.userId ?? "b", name: debate.participants.positionB?.name ?? "Position B", role: "scholar" as const },
+    ];
+    const isParticipant =
+      !!user &&
+      (user.id === debate.participants.positionA?.userId ||
+        user.id === debate.participants.positionB?.userId ||
+        user.id === debate.participants.moderator?.userId ||
+        user.role === "admin");
+    const userRole: "participant" | "registered_viewer" | "public" = !user
+      ? "public"
+      : isParticipant
+        ? "participant"
+        : "registered_viewer";
+    const useLiveKit = process.env.NEXT_PUBLIC_LIVEKIT_ENABLED === "true";
+    // Evidences from API when available - add GET /api/debates/:id/evidences
+    const evidences: { type: "quran" | "hadith" | "scholarly"; reference: string; arabic?: string; translation: string; scholar: "A" | "B" }[] = [];
+    return (
+      <LiveDebateRoom
+        title={debate.title}
+        topic={debate.topic}
+        moderator={moderator}
+        speakers={speakers}
+        viewers={0}
+        duration={`${Math.floor(debate.duration / 60)} min`}
+        currentPhase="position_a"
+        onLeave={() => router.push("/debates")}
+        currentUser={user}
+        youtubeLiveUrl={debate.youtubeLiveUrl ?? undefined}
+        debateId={id}
+        userRole={userRole}
+        useLiveKit={useLiveKit}
+        clarityVotes={clarityVotes ? { positionA: clarityVotes.positionA, positionB: clarityVotes.positionB, myVote: clarityVotes.myVote ?? null } : undefined}
+        onVoteClarity={handleVoteClarity}
+        evidences={evidences}
+      />
+    );
+  }
+
+  // Chat/text debate: show DebatePanel + DebateChatPanel
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
@@ -406,12 +458,12 @@ export default function DebateDetailPage() {
             />
           </div>
         )}
-        <div className={hasChatAccess && chatLayout === "side" ? "flex gap-6 items-stretch" : "space-y-6"}>
+        <div className={hasChatAccess && chatLayout === "side" ? "flex gap-6 items-stretch" : "flex flex-col gap-6"}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className={hasChatAccess && chatLayout === "side" ? "flex-1 min-w-0" : ""}
+            className={hasChatAccess && chatLayout === "side" ? "flex-1 min-w-0" : "shrink-0"}
           >
             <DebatePanel
               {...panelProps}
@@ -441,8 +493,16 @@ export default function DebateDetailPage() {
           </motion.div>
 
           {hasChatAccess && (
-            <div className={chatLayout === "side" ? "w-[380px] shrink-0 flex flex-col" : "space-y-2"}>
-              <div className="flex items-center justify-between gap-2">
+            <div
+              className={cn(
+                "shrink-0",
+                chatLayout === "side"
+                  ? "w-[380px] lg:w-[420px]"           // side-এ fixed width (মোবাইলে ছোট হতে পারে)
+                  : "w-full"
+              )}
+            >
+              {/* Header: "Debate Chat" + layout buttons */}
+              <div className="flex items-center justify-between gap-2 mb-2 shrink-0 ">
                 <span className="text-sm font-medium text-muted-foreground">Debate Chat</span>
                 <div className="flex items-center gap-1">
                   <Button
@@ -467,7 +527,16 @@ export default function DebateDetailPage() {
                   </Button>
                 </div>
               </div>
-              <div className="rounded-xl border border-border bg-card overflow-hidden flex-1 min-h-[400px] flex flex-col">
+
+              {/* Chat container — sticky only in side mode */}
+              <div
+                className={cn(
+                  "rounded-xl border border-border bg-card overflow-hidden flex flex-col shadow-sm",
+                  chatLayout === "side"
+                    ? "sticky top-[8rem] h-[500px]"   // ← মূল sticky + height
+                    : "min-h-[240px] max-h-[75vh] md:max-h-[85vh]"           // stacked-এ সীমিত উচ্চতা
+                )}
+              >
                 <DebateChatPanel
                   messages={messages}
                   chatInput={chatInput}
@@ -478,6 +547,11 @@ export default function DebateDetailPage() {
                   currentUserName={user?.name}
                   requireLogin={false}
                   variant="default"
+                  // height 100% নিশ্চিত করা
+                  className={cn(
+                    "h-full flex flex-col",
+                    chatLayout === "stacked" && "min-h-[240px]"
+                  )}
                   scheduledAt={debate.scheduledAt}
                   onEditMessage={handleEditMessage}
                   onDeleteMessage={handleDeleteMessage}
