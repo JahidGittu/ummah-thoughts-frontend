@@ -37,6 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useVirtualBackground, isVirtualBackground, ISLAMIC_BACKGROUNDS } from "@/hooks/useVirtualBackground";
 
 // Types
 interface Participant {
@@ -121,13 +122,15 @@ const phaseConfig: Record<Phase, { label: string; icon: React.ElementType; durat
 
 const cameraEffects = [
   { id: "none", label: "None", filter: "" },
-  { id: "blur", label: "Blur", filter: "blur(4px)" },
+  { id: "blur", label: "Blur (full)", filter: "blur(4px)" },
   { id: "grayscale", label: "Grayscale", filter: "grayscale(100%)" },
   { id: "sepia", label: "Sepia", filter: "sepia(100%)" },
   { id: "vintage", label: "Vintage", filter: "sepia(100%) contrast(1.1) brightness(0.9)" },
   { id: "warm", label: "Warm", filter: "sepia(30%) saturate(1.2)" },
   { id: "cool", label: "Cool", filter: "hue-rotate(180deg) saturate(0.8)" },
   { id: "invert", label: "Invert", filter: "invert(100%)" },
+  { id: "vb-blur", label: "Virtual Blur", filter: "" },
+  ...ISLAMIC_BACKGROUNDS.map((b) => ({ id: b.id, label: b.label, filter: "" })),
 ] as const;
 
 const roleLabels: Record<string, { label: string; color: string }> = {
@@ -259,10 +262,18 @@ export const LiveDebateRoom = ({
   const [mediaError,      setMediaError]       = useState<string | null>(null);
   const [mediaLoading,    setMediaLoading]     = useState(false);
   const [cameraEffect,    setCameraEffect]     = useState("none");
+  const [rawVideoStream,  setRawVideoStream]  = useState<MediaStream | null>(null);
   const [moderatorUnlocks, setModeratorUnlocks] = useState({ qa: false, chat: false, handRaise: false });
   const [liveKitToken,    setLiveKitToken]     = useState<string | null>(null);
   const [liveKitServerUrl, setLiveKitServerUrl] = useState<string | null>(null);
   const [liveKitError,    setLiveKitError]     = useState<string | null>(null);
+
+  // Virtual background (only when camera on + non-LiveKit + vb effect selected)
+  const vbActive = !useLiveKit && !myVideoOff && isVirtualBackground(cameraEffect);
+  const { outputStream: vbStream } = useVirtualBackground({
+    rawStream: vbActive ? rawVideoStream : null,
+    effectId: vbActive ? cameraEffect : "none",
+  });
 
   // Derived roles
   const isAuthenticated = !!currentUser;
@@ -328,13 +339,15 @@ export const LiveDebateRoom = ({
   // Keep phase idx ref in sync
   useEffect(() => { activePhaseIdxRef.current = activePhaseIdx; }, [activePhaseIdx]);
 
-  // Sync video stream to element when it mounts (video element may not exist yet when startCamera runs)
+  // Sync video stream to element when it mounts or when vb/camera changes
   useEffect(() => {
-    if (!myVideoOff && videoStreamRef.current && localVideoRef.current) {
-      localVideoRef.current.srcObject = videoStreamRef.current;
+    if (myVideoOff || !localVideoRef.current) return;
+    const stream = vbActive && vbStream ? vbStream : videoStreamRef.current;
+    if (stream) {
+      localVideoRef.current.srcObject = stream;
       localVideoRef.current.play().catch(() => {});
     }
-  }, [myVideoOff]);
+  }, [myVideoOff, vbActive, vbStream]);
 
 
   // Phase countdown timer
@@ -457,6 +470,7 @@ export const LiveDebateRoom = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
       videoStreamRef.current = stream;
+      setRawVideoStream(stream);
 
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
@@ -486,6 +500,7 @@ export const LiveDebateRoom = ({
     }
     videoStreamRef.current?.getTracks().forEach(t => t.stop());
     videoStreamRef.current = null;
+    setRawVideoStream(null);
     setMyVideoOff(true);
     toast("📷 Camera turned off");
   }, []);
@@ -1051,7 +1066,7 @@ export const LiveDebateRoom = ({
                         className="w-full h-full object-cover"
                         style={{
                           transform: "scaleX(-1)",
-                          filter: cameraEffects.find(e => e.id === cameraEffect)?.filter ?? "",
+                          filter: vbActive ? "" : (cameraEffects.find(e => e.id === cameraEffect)?.filter ?? ""),
                         }}
                         onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
                       />
@@ -1101,10 +1116,17 @@ export const LiveDebateRoom = ({
                               <Sparkles className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuLabel>Background effect</DropdownMenuLabel>
+                          <DropdownMenuContent align="end" className="w-52 max-h-80 overflow-y-auto">
+                            <DropdownMenuLabel>Effects &amp; backgrounds</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            {cameraEffects.map((eff) => (
+                            {cameraEffects.filter((e) => !e.id.startsWith("vb-")).map((eff) => (
+                              <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
+                                {eff.label}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Virtual backgrounds</DropdownMenuLabel>
+                            {cameraEffects.filter((e) => e.id.startsWith("vb-")).map((eff) => (
                               <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
                                 {eff.label}
                               </DropdownMenuItem>
@@ -1492,10 +1514,17 @@ export const LiveDebateRoom = ({
                   <Sparkles className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuLabel>Background effect</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-52 max-h-80 overflow-y-auto">
+                <DropdownMenuLabel>Effects &amp; backgrounds</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {cameraEffects.map((eff) => (
+                {cameraEffects.filter((e) => !e.id.startsWith("vb-")).map((eff) => (
+                  <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
+                    {eff.label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Virtual backgrounds</DropdownMenuLabel>
+                {cameraEffects.filter((e) => e.id.startsWith("vb-")).map((eff) => (
                   <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
                     {eff.label}
                   </DropdownMenuItem>
@@ -1512,7 +1541,7 @@ export const LiveDebateRoom = ({
               className="w-full h-full object-cover"
               style={{
                 transform: "scaleX(-1)",
-                filter: cameraEffects.find(e => e.id === cameraEffect)?.filter ?? "",
+                filter: vbActive ? "" : (cameraEffects.find(e => e.id === cameraEffect)?.filter ?? ""),
               }}
               onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
             />
