@@ -1158,7 +1158,6 @@ export function DebateChatPanel({
                         resize: "vertical",
                       }}
                       className="flex-1 min-w-0 overflow-hidden rounded-lg"
-                      title="Drag corner to resize (4–7 rows)"
                     >
                       <div
                         ref={editableRef}
@@ -1178,7 +1177,7 @@ export function DebateChatPanel({
                     <div
                       ref={listStylePopoverRef}
                       className={cn(
-                        "fixed z-[9999] rounded-lg border bg-popover text-popover-foreground shadow-md p-2 grid gap-1 -top-20",
+                        `fixed z-[9999] rounded-lg border bg-popover text-popover-foreground shadow-md p-2 grid gap-1 ${listStylePopover.type === "bullet" && "-mt-16" }`,
                         "grid-cols-2"
                       )}
                       style={{
