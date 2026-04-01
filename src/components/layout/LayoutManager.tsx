@@ -15,6 +15,7 @@ const HIDE_LAYOUT_PATHS = [
 ];
 
 const HIDE_PATTERN = /^\/dashboard(\/.*)?$/; // Hide on all dashboard subpaths
+const STREAM_PATTERN = /^\/debates\/[^/]+\/stream$/; // OBS stream view - no navbar/footer
 
 export function LayoutManager({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +23,8 @@ export function LayoutManager({ children }: { children: React.ReactNode }) {
   // Check if current path should hide layout elements
   const shouldHideLayout =
     HIDE_LAYOUT_PATHS.includes(pathname) ||
-    HIDE_PATTERN.test(pathname);
+    HIDE_PATTERN.test(pathname) ||
+    STREAM_PATTERN.test(pathname);
 
   if (shouldHideLayout) {
     return <ErrorBoundary>{children}</ErrorBoundary>;

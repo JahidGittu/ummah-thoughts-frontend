@@ -44,10 +44,24 @@ function StreamVideoGrid({ participantIds }: { participantIds: string[] }) {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex-1 min-h-0">
-        <GridLayout tracks={filteredTracks}>
-          <ParticipantTile />
-        </GridLayout>
+      <div className="flex-1 min-h-0 relative w-full">
+        {filteredTracks.length > 0 ? (
+          <GridLayout tracks={filteredTracks}>
+            <ParticipantTile />
+          </GridLayout>
+        ) : (
+          <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-4 bg-black/90 p-8">
+            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
+              <span className="text-4xl">👥</span>
+            </div>
+            <p className="text-base font-medium text-white/90 text-center">
+              Participants are coming
+            </p>
+            <p className="text-sm text-white/60 text-center">
+              Please wait while the moderator and speakers join
+            </p>
+          </div>
+        )}
       </div>
       <RoomAudioRenderer />
       <ConnectionStateToast />

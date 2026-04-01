@@ -23,11 +23,31 @@ type ScholarDebateItem = {
   duration: string;
 };
 
+/** Derive scholar-facing status (live / upcoming / completed) based on scheduled time + duration. */
+function computeScholarStatus(d: DebateApi): ScholarDebateItem["status"] {
+  if (d.status === "concluded") return "completed";
+
+  if (!d.scheduledAt || !d.duration) {
+    if (d.status === "live") return "live";
+    return "upcoming";
+  }
+
+  const start = new Date(d.scheduledAt).getTime();
+  if (Number.isNaN(start)) {
+    if (d.status === "live") return "live";
+    return "upcoming";
+  }
+
+  const end = start + d.duration * 60_000;
+  const now = Date.now();
+
+  if (now >= end) return "completed";
+  if (now >= start) return "live";
+  return "upcoming";
+}
+
 function toScholarFormat(d: DebateApi): ScholarDebateItem {
-  const scholarStatus =
-    d.status === "live" ? ("live" as const)
-    : d.status === "concluded" ? ("completed" as const)
-    : ("upcoming" as const); // draft, scheduled
+  const scholarStatus = computeScholarStatus(d);
   const posA = d.participants.positionA?.name;
   const posB = d.participants.positionB?.name;
   const mod = d.participants.moderator?.name;

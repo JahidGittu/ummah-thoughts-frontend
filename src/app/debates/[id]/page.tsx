@@ -4,13 +4,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Pusher from "pusher-js";
 import { toast } from "sonner";
-import { debateApi } from "@/lib/api";
+import { debateApi, type DebateApi, type Question, type Evidence } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, LayoutGrid, Rows3 } from "lucide-react";
 import { DebatePanel } from "@/components/debates/DebatePanel";
 import { DebateChatPanel } from "@/components/debates/DebateChatPanel";
-import { LiveDebateRoom } from "@/components/debates/LiveDebateRoom";
+import { LiveDebateRoom, type QueuedQuestion } from "@/components/debates/LiveDebateRoom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -94,13 +94,24 @@ const mockDebateContent: Record<string, {
   },
 };
 
-function buildDebatePanelProps(
-  api: { id: string; title: string; details: string; topic: string; status: string; participants: { positionA: { name: string } | null; positionB: { name: string } | null } }
-) {
+function computeDetailStatus(d: any): "active" | "concluded" {
+  if (d.status === "concluded") return "concluded";
+  if (!d.scheduledAt || !d.duration) {
+    return d.status === "live" ? "active" : "active";
+  }
+  const start = new Date(d.scheduledAt).getTime();
+  if (Number.isNaN(start)) return d.status === "live" ? "active" : "active";
+  const end = start + d.duration * 60_000;
+  const now = Date.now();
+  if (now >= end) return "concluded";
+  return "active";
+}
+
+function buildDebatePanelProps(api: any) {
   const mock = mockDebateContent[api.id];
   const nameA = api.participants.positionA?.name ?? "TBD";
   const nameB = api.participants.positionB?.name ?? "TBD";
-  const status: "active" | "concluded" = api.status === "concluded" ? "concluded" : "active";
+  const status: "active" | "concluded" = computeDetailStatus(api);
 
   if (mock) {
     return {
@@ -157,11 +168,16 @@ export default function DebateDetailPage() {
     scheduledAt: string;
     duration: number;
     youtubeLiveUrl: string | null;
+    currentPhase?: "opening" | "positionA" | "positionB" | "rebuttal" | "qa" | "closing" | null;
+    phaseStartedAt?: string | null;
+    phasePaused?: boolean;
     participants: {
       positionA: { userId?: string; name: string } | null;
       positionB: { userId?: string; name: string } | null;
       moderator: { userId?: string; name: string } | null;
     };
+    tags?: string[];
+    createdAt?: string;
   } | null>(null);
   const [messages, setMessages] = useState<{ id: string; userId?: string; userName: string; text: string; audioUrl?: string; createdAt: string; reactions?: Record<string, number>; myReaction?: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -173,6 +189,8 @@ export default function DebateDetailPage() {
   const [chatLayout, setChatLayout] = useState<"stacked" | "side">("stacked");
   const [typingUsers, setTypingUsers] = useState<{ userId: string; userName: string }[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<{ userId: string; userName: string }[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [evidences, setEvidences] = useState<Evidence[]>([]);
   const typingTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const lastSentRef = useRef<{ text: string; time: number } | null>(null);
 
@@ -197,12 +215,17 @@ export default function DebateDetailPage() {
       }
       setDebate(data.debate);
       const hasMock = !!mockDebateContent[id];
-      const [msgRes, clarityRes] = await Promise.all([
+      const [msgRes, clarityRes, qRes, evRes] = await Promise.all([
         debateApi.getMessages(id),
         hasMock ? Promise.resolve({ data: null }) : debateApi.getClarityVotes(id),
+        debateApi.getQuestions(id),
+        debateApi.getEvidences(id),
       ]);
       if (msgRes.data?.messages) setMessages(msgRes.data.messages);
       if (!hasMock && clarityRes?.data) setClarityVotes({ positionA: clarityRes.data.positionA, positionB: clarityRes.data.positionB, myVote: clarityRes.data.myVote ?? null });
+      if (qRes.data?.questions) setQuestions(qRes.data.questions);
+      if (evRes.data?.evidences) setEvidences(evRes.data.evidences);
+
       if (user?.id) {
         const bookmarkRes = await debateApi.getBookmark(id);
         if (bookmarkRes.data?.bookmarked !== undefined) setBookmarked(bookmarkRes.data.bookmarked);
@@ -268,6 +291,33 @@ export default function DebateDetailPage() {
         return prev.filter((t) => t.userId !== payload.userId);
       });
     });
+
+    ch.bind("phase-changed", (payload: { currentPhase: string; startedAt: string; paused: boolean }) => {
+      setDebate((prev) =>
+        prev
+          ? {
+              ...prev,
+              currentPhase: payload.currentPhase as any,
+              phaseStartedAt: payload.startedAt,
+              phasePaused: payload.paused,
+            }
+          : null
+      );
+      toast(`Phase changed: ${payload.currentPhase}`);
+    });
+
+    ch.bind("evidence-added", (payload: { evidence: Evidence }) => {
+      setEvidences((prev) => [...prev.filter((e) => e.id !== payload.evidence.id), payload.evidence]);
+    });
+
+    ch.bind("question-updated", (payload: { question: Question }) => {
+      setQuestions((prev) => {
+        const idx = prev.findIndex((q) => q.id === payload.question.id);
+        if (idx >= 0) return prev.map((q, i) => (i === idx ? payload.question : q));
+        return [...prev, payload.question];
+      });
+    });
+
     return () => {
       ch.unbind_all();
       pusher.unsubscribe(`debate-${id}`);
@@ -404,8 +454,28 @@ export default function DebateDetailPage() {
         ? "participant"
         : "registered_viewer";
     const useLiveKit = process.env.NEXT_PUBLIC_LIVEKIT_ENABLED === "true";
-    // Evidences from API when available - add GET /api/debates/:id/evidences
-    const evidences: { type: "quran" | "hadith" | "scholarly"; reference: string; arabic?: string; translation: string; scholar: "A" | "B" }[] = [];
+    
+    // Map backend Evidence type to frontend component format
+    const mappedEvidences = (evidences || []).map((e: any) => ({
+      type: e.type,
+      reference: e.reference,
+      arabic: e.arabic || undefined,
+      translation: e.translation,
+      scholar: e.side === "A" ? ("A" as const) : ("B" as const),
+    }));
+
+    // Map backend Question type to frontend component format
+    const mappedQuestions = (questions || []).map((q: any) => ({
+      id: q.id,
+      userId: q.userId,
+      user: q.userName,
+      text: q.text,
+      upvotes: q.upvotes,
+      upvotedByMe: false, // Could be enhanced with backend support if needed
+      approved: q.approved,
+      timestamp: new Date(q.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }));
+
     return (
       <LiveDebateRoom
         title={debate.title}
@@ -414,7 +484,9 @@ export default function DebateDetailPage() {
         speakers={speakers}
         viewers={0}
         duration={`${Math.floor(debate.duration / 60)} min`}
-        currentPhase="position_a"
+        currentPhase={(debate as any).currentPhase || "opening"} // Use cast because we are adding fields
+        phaseStartedAt={(debate as any).phaseStartedAt}
+        phasePaused={(debate as any).phasePaused}
         onLeave={() => router.push("/debates")}
         currentUser={user}
         youtubeLiveUrl={debate.youtubeLiveUrl ?? undefined}
@@ -423,7 +495,8 @@ export default function DebateDetailPage() {
         useLiveKit={useLiveKit}
         clarityVotes={clarityVotes ? { positionA: clarityVotes.positionA, positionB: clarityVotes.positionB, myVote: clarityVotes.myVote ?? null } : undefined}
         onVoteClarity={handleVoteClarity}
-        evidences={evidences}
+        evidences={mappedEvidences}
+        initialQuestions={mappedQuestions}
       />
     );
   }

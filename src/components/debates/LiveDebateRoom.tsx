@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { DebateVideoConference } from "@/components/debates/DebateVideoConference";
+import { LiveKitEffectHandler } from "@/components/debates/LiveKitEffectHandler";
 import { SidePanelMediaControls } from "@/components/debates/SidePanelMediaControls";
 import {
   Tooltip,
@@ -37,7 +38,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useVirtualBackground, isVirtualBackground, ISLAMIC_BACKGROUNDS } from "@/hooks/useVirtualBackground";
+import { useVirtualBackground, isVirtualBackground, ISLAMIC_BACKGROUNDS, VB_CUSTOM_PREFIX } from "@/hooks/useVirtualBackground";
+import { getStoredCustomBackground } from "@/lib/customBackgroundStorage";
+import { BackgroundEffectsModal } from "@/components/debates/BackgroundEffectsModal";
 
 // Types
 interface Participant {
@@ -59,7 +62,7 @@ interface Evidence {
   scholar: "A" | "B";
 }
 
-interface QueuedQuestion {
+export interface QueuedQuestion {
   id: string;
   userId?: string;
   user: string;
@@ -105,16 +108,19 @@ export interface LiveDebateRoomProps {
   initialQuestions?: QueuedQuestion[];
   /** Initial join requests */
   initialJoiners?: Participant[];
+  /** Phase timing */
+  phaseStartedAt?: string;
+  phasePaused?: boolean;
 }
 
 // Constants
-const phases = ["opening", "position_a", "position_b", "rebuttal", "qa", "closing"] as const;
+const phases = ["opening", "positionA", "positionB", "rebuttal", "qa", "closing"] as const;
 type Phase = typeof phases[number];
 
 const phaseConfig: Record<Phase, { label: string; icon: React.ElementType; duration: number }> = {
   opening:    { label: "Opening",    icon: Gavel,          duration: 300  },
-  position_a: { label: "Position A", icon: Scale,          duration: 900  },
-  position_b: { label: "Position B", icon: Scale,          duration: 900  },
+  positionA:  { label: "Position A", icon: Scale,          duration: 900  },
+  positionB:  { label: "Position B", icon: Scale,          duration: 900  },
   rebuttal:   { label: "Rebuttal",   icon: MessagesSquare, duration: 600  },
   qa:         { label: "Q&A",        icon: MessageSquare,  duration: 600  },
   closing:    { label: "Closing",    icon: CheckCircle,    duration: 300  },
@@ -209,13 +215,15 @@ function MediaControls({
   );
 }
 
-export const LiveDebateRoom = ({
-  title, topic, moderator, speakers: initialSpeakers, viewers: initialViewers,
-  currentPhase: initialPhase = "position_a", evidences = [],
-  onLeave, currentUser, youtubeLiveUrl, debateId, userRole = "participant", useLiveKit = false,
-  clarityVotes: externalClarityVotes, onVoteClarity,
-  initialQuestions: propQuestions = [], initialJoiners: propJoiners = [],
-}: LiveDebateRoomProps) => {
+export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
+  const {
+    title, topic, moderator, speakers: initialSpeakers, viewers: initialViewers,
+    currentPhase: initialPhase = "opening", evidences: initialEvidences = [],
+    onLeave, currentUser, youtubeLiveUrl, debateId, userRole = "participant", useLiveKit = false,
+    clarityVotes: externalClarityVotes, onVoteClarity,
+    initialQuestions: propQuestions = [], initialJoiners: propJoiners = [],
+    phaseStartedAt, phasePaused: propsPhasePaused
+  } = props;
   const router = useRouter();
 
   // Refs
@@ -238,8 +246,8 @@ export const LiveDebateRoom = ({
   const [iAmSpeaking,     setIAmSpeaking]      = useState(false);
   const [handRaised,      setHandRaised]       = useState(false);
   const [question,        setQuestion]         = useState("");
-  const [activePhaseIdx,  setActivePhaseIdx]   = useState(phases.indexOf(initialPhase));
-  const [phaseTimeLeft,   setPhaseTimeLeft]    = useState(phaseConfig[initialPhase].duration);
+  const [activePhaseIdx,  setActivePhaseIdx]   = useState(phases.indexOf(initialPhase as Phase));
+  const [phaseTimeLeft,   setPhaseTimeLeft]    = useState(phaseConfig[initialPhase as Phase]?.duration ?? 0);
   const [viewers,         setViewers]          = useState(initialViewers);
   const [activeTab,       setActiveTab]        = useState<"chat" | "evidence">("chat");
   const [evidenceFilter,  setEvidenceFilter]   = useState<"all" | "A" | "B">("all");
@@ -247,9 +255,10 @@ export const LiveDebateRoom = ({
   const [clarityB,        setClarityB]         = useState(externalClarityVotes?.positionB ?? 0);
   const [myVote,          setMyVote]           = useState<"A" | "B" | null>(externalClarityVotes?.myVote ?? null);
   const [questions,       setQuestions]        = useState<QueuedQuestion[]>(propQuestions);
+  const [evidences,       setEvidences]        = useState<Evidence[]>(initialEvidences);
   const [handRaisedUsers, setHandRaisedUsers]  = useState<HandRaisedUser[]>([]);
-  const [debateStarted,   setDebateStarted]    = useState(false);
-  const [debatePaused,    setDebatePaused]     = useState(false);
+  const [debateStarted,   setDebateStarted]    = useState(initialPhase !== "opening" || !!initialJoiners.length);
+  const [debatePaused,    setDebatePaused]     = useState(!!propsPhasePaused);
   const [debateEnded,     setDebateEnded]      = useState(false);
   const [speakers,        setSpeakers]         = useState(
     initialSpeakers.map(s => ({ ...s, isMuted: false, isVideoOff: false, isBanned: false, isSpeaking: s.isSpeaking ?? false }))
@@ -261,8 +270,12 @@ export const LiveDebateRoom = ({
   const [mediaAction,     setMediaAction]      = useState<"mic" | "video">("mic");
   const [mediaError,      setMediaError]       = useState<string | null>(null);
   const [mediaLoading,    setMediaLoading]     = useState(false);
-  const [cameraEffect,    setCameraEffect]     = useState("none");
+  const [cameraEffect,    setCameraEffect]     = useState(() => {
+    const stored = getStoredCustomBackground();
+    return stored ? `${VB_CUSTOM_PREFIX}${stored}` : "none";
+  });
   const [rawVideoStream,  setRawVideoStream]  = useState<MediaStream | null>(null);
+  const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const [moderatorUnlocks, setModeratorUnlocks] = useState({ qa: false, chat: false, handRaise: false });
   const [liveKitToken,    setLiveKitToken]     = useState<string | null>(null);
   const [liveKitServerUrl, setLiveKitServerUrl] = useState<string | null>(null);
@@ -301,6 +314,28 @@ export const LiveDebateRoom = ({
   const modNotifications = handRaisedUsers.length + pendingQs.length + joiners.length;
   const isRunning = debateStarted && !debatePaused && !debateEnded;
   const statusLabel = debateEnded ? "CONCLUDED" : !debateStarted ? "NOT STARTED" : debatePaused ? "PAUSED" : "LIVE";
+
+  // Dynamic tabs: Q&A when phase is qa or user can participate; Evidence when position/rebuttal phases or has content
+  const availableTabs = useMemo((): ("chat" | "evidence")[] => {
+    const tabs: ("chat" | "evidence")[] = [];
+    const showQa = canUseQa || questions.some(q => q.approved) || isModerator;
+    const showEvidence = evidences.length > 0 || currentPhaseName === "positionA" || currentPhaseName === "positionB" || currentPhaseName === "rebuttal";
+    if (showQa) tabs.push("chat");
+    if (showEvidence || tabs.length === 0) tabs.push("evidence");
+    return tabs.length ? tabs : (["chat", "evidence"] as const);
+  }, [canUseQa, questions, evidences.length, currentPhaseName, isModerator]);
+
+  // Auto-switch tab when phase changes: Q&A phase -> chat, position/rebuttal -> evidence
+  useEffect(() => {
+    if (currentPhaseName === "qa" && availableTabs.includes("chat")) setActiveTab("chat");
+    else if (["positionA", "positionB", "rebuttal"].includes(currentPhaseName) && availableTabs.includes("evidence")) setActiveTab("evidence");
+  }, [currentPhaseName, availableTabs]);
+
+  // Ensure activeTab is valid when availableTabs changes
+  useEffect(() => {
+    const first = availableTabs[0];
+    if (first && !availableTabs.includes(activeTab)) setActiveTab(first);
+  }, [availableTabs, activeTab]);
   const statusClass = debateEnded
     ? "bg-muted text-muted-foreground border-border"
     : !debateStarted
@@ -350,30 +385,100 @@ export const LiveDebateRoom = ({
   }, [myVideoOff, vbActive, vbStream]);
 
 
-  // Phase countdown timer
+  // Phase sync from props
   useEffect(() => {
-    if (!debateStarted || debatePaused || debateEnded) return;
+    setActivePhaseIdx(phases.indexOf(initialPhase as Phase));
+    setDebatePaused(!!propsPhasePaused);
+  }, [initialPhase, propsPhasePaused]);
+
+  // Questions sync
+  useEffect(() => {
+    setQuestions(propQuestions);
+  }, [propQuestions]);
+
+  // timer sync
+  useEffect(() => {
+    setEvidences(initialEvidences);
+  }, [initialEvidences]);
+
+  // Timer logic - server authoritative
+  useEffect(() => {
+    if (debateEnded) return;
+
     const timer = setInterval(() => {
-      setPhaseTimeLeft(t => {
-        if (t <= 1) {
-          const curIdx = activePhaseIdxRef.current;
-          if (curIdx < phases.length - 1) {
-            const nextIdx = curIdx + 1;
-            setActivePhaseIdx(nextIdx);
-            const nextDuration = phaseConfig[phases[nextIdx]].duration;
-            toast(`⏭ Phase: ${phaseConfig[phases[nextIdx]].label}`);
-            return nextDuration;
-          }
-          setDebateStarted(false);
-          setDebateEnded(true);
-          toast.success("✅ Debate concluded — all phases complete");
-          return 0;
-        }
-        return t - 1;
-      });
+      if (!phaseStartedAt) {
+        setPhaseTimeLeft(phaseConfig[initialPhase as Phase]?.duration ?? 0);
+        return;
+      }
+
+      const startedAt = new Date(phaseStartedAt).getTime();
+      const now = Date.now();
+      const totalDuration = phaseConfig[initialPhase as Phase]?.duration ?? 0;
+      
+      let elapsedSeconds = Math.floor((now - startedAt) / 1000);
+      const remaining = Math.max(0, totalDuration - elapsedSeconds);
+      setPhaseTimeLeft(remaining);
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [debateStarted, debatePaused, debateEnded]);
+  }, [initialPhase, phaseStartedAt, propsPhasePaused, debateEnded]);
+
+  // ---------------------------------------------------------
+  // Debate Actions (API)
+  // ---------------------------------------------------------
+
+  const handleToggleDebate = async () => {
+    if (!debateId || !isModerator) return;
+    const newPaused = !debatePaused;
+    const { error } = await debateApi.updatePhase(debateId, {
+      phase: initialPhase,
+      paused: newPaused
+    });
+    if (error) toast.error(error);
+  };
+
+  const handleAdvancePhase = async () => {
+    if (!debateId || !isModerator || activePhaseIdx >= phases.length - 1) return;
+    const nextPhase = phases[activePhaseIdx + 1];
+    const { error } = await debateApi.updatePhase(debateId, {
+      phase: nextPhase,
+      paused: false
+    });
+    if (error) toast.error(error);
+  };
+
+  const handleSubmitQuestion = async () => {
+    if (!debateId || !question.trim() || !canUseQa) return;
+    const text = question.trim();
+    setQuestion("");
+    const { data, error } = await debateApi.submitQuestion(debateId, text);
+    if (error) {
+      toast.error(error);
+      setQuestion(text);
+    } else {
+      toast.success("Question submitted for moderation");
+    }
+  };
+
+  const handleUpvote = async (qId: string) => {
+    if (!debateId || !isAuthenticated) return;
+    const { error } = await debateApi.upvoteQuestion(debateId, qId);
+    if (error) toast.error(error);
+  };
+
+  const handleApproveQuestion = async (qId: string) => {
+    if (!debateId || !isModerator) return;
+    const { error } = await debateApi.approveQuestion(debateId, qId);
+    if (error) toast.error(error);
+    else toast.success("Question approved");
+  };
+
+  const handleAnswerQuestion = async (qId: string) => {
+    if (!debateId || !isParticipant) return;
+    const { error } = await debateApi.answerQuestion(debateId, qId);
+    if (error) toast.error(error);
+    else toast.success("Question marked as answering");
+  };
 
   // Viewer simulation
   useEffect(() => {
@@ -986,10 +1091,29 @@ export const LiveDebateRoom = ({
           <main className="flex-1 min-w-0 space-y-4 order-2 lg:order-1">
         {/* LiveKit video (when useLiveKit + debateId) - ControlBar on video for participants */}
         {useLiveKit && debateId ? (
-          <div className="rounded-2xl overflow-hidden border-2 border-border bg-black" style={{ minHeight: 400 }}>
+          <div className="relative rounded-2xl overflow-hidden border-2 border-border bg-black" style={{ minHeight: 400 }}>
             <DebateVideoConference
               participantIds={[moderator.id, ...speakers.map((s) => s.id)]}
               style={{ height: "100%", minHeight: 400, display: "flex", flexDirection: "column" }}
+              showMediaControls={isParticipant}
+              cssFilter={
+                isParticipant && !isVirtualBackground(cameraEffect)
+                  ? (cameraEffects.find((e) => e.id === cameraEffect)?.filter ?? "")
+                  : undefined
+              }
+              extraControls={
+                isParticipant ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-9 gap-1.5 shrink-0"
+                    onClick={() => setShowBackgroundModal(true)}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-xs font-medium hidden sm:inline">Background</span>
+                  </Button>
+                ) : null
+              }
             />
           </div>
         ) : (
@@ -1004,6 +1128,21 @@ export const LiveDebateRoom = ({
                   allowFullScreen
                   className="w-full aspect-video"
                 />
+              </div>
+            )}
+
+            {/* Background effects - button opens modal */}
+            {isParticipant && !myVideoOff && (
+              <div className="flex justify-end mb-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-9 gap-1.5 shadow-md"
+                  onClick={() => setShowBackgroundModal(true)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-medium">Background effects</span>
+                </Button>
               </div>
             )}
 
@@ -1110,29 +1249,9 @@ export const LiveDebateRoom = ({
                       )}
                       <div className="mt-3 flex justify-center items-center gap-2 flex-wrap">
                         <MediaControls myMuted={myMuted} myVideoOff={myVideoOff} onToggleMic={handleToggleMic} onToggleVideo={handleToggleVideo} variant="video" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="outline" className="h-8 w-8" title="Camera effects">
-                              <Sparkles className="h-3.5 w-3.5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52 max-h-80 overflow-y-auto">
-                            <DropdownMenuLabel>Effects &amp; backgrounds</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {cameraEffects.filter((e) => !e.id.startsWith("vb-")).map((eff) => (
-                              <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
-                                {eff.label}
-                              </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">Virtual backgrounds</DropdownMenuLabel>
-                            {cameraEffects.filter((e) => e.id.startsWith("vb-")).map((eff) => (
-                              <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
-                                {eff.label}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button size="icon" variant="outline" className="h-8 w-8" title="Background effects" onClick={() => setShowBackgroundModal(true)}>
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </Button>
                         {!myMuted && (
                           <div className="relative h-8 min-w-[48px] flex items-center gap-1">
                             <Volume2 className="h-4 w-4 text-foreground shrink-0" />
@@ -1320,7 +1439,7 @@ export const LiveDebateRoom = ({
             <Card className="flex flex-col" style={{ minHeight: 380 }}>
               <CardHeader className="py-2.5 pb-0">
                 <div className="flex gap-1 border-b border-border pb-2">
-                  {(["chat", "evidence"] as const).map(tab => (
+                  {availableTabs.map((tab: "chat" | "evidence") => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                       className={cn("text-xs px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1",
                         activeTab === tab ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
@@ -1508,29 +1627,9 @@ export const LiveDebateRoom = ({
         <div className="fixed bottom-24 right-6 z-50 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-xl bg-black">
           <div className="flex items-center justify-between px-2 py-1">
             <p className="text-[10px] font-semibold text-primary">Your camera</p>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-6 w-6 text-primary hover:bg-primary/20">
-                  <Sparkles className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 max-h-80 overflow-y-auto">
-                <DropdownMenuLabel>Effects &amp; backgrounds</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {cameraEffects.filter((e) => !e.id.startsWith("vb-")).map((eff) => (
-                  <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
-                    {eff.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Virtual backgrounds</DropdownMenuLabel>
-                {cameraEffects.filter((e) => e.id.startsWith("vb-")).map((eff) => (
-                  <DropdownMenuItem key={eff.id} onClick={() => setCameraEffect(eff.id)}>
-                    {eff.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button size="icon" variant="ghost" className="h-6 w-6 text-primary hover:bg-primary/20" onClick={() => setShowBackgroundModal(true)}>
+              <Sparkles className="h-3 w-3" />
+            </Button>
           </div>
           <div className="w-40 h-32 bg-black">
             <video
@@ -1578,11 +1677,20 @@ export const LiveDebateRoom = ({
           data-lk-theme="default"
           style={{ minHeight: 0, display: "block", backgroundColor: "transparent" }}
         >
+          {isParticipant && <LiveKitEffectHandler effectId={cameraEffect} />}
           {mainContent}
         </LiveKitRoom>
       ) : (
         mainContent
       )}
+
+      {/* Background effects modal - Zoom/Meet style */}
+      <BackgroundEffectsModal
+        open={showBackgroundModal}
+        onOpenChange={setShowBackgroundModal}
+        selectedEffectId={cameraEffect}
+        onSelectEffect={setCameraEffect}
+      />
     </div>
     </TooltipProvider>
   );

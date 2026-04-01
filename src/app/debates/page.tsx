@@ -56,8 +56,8 @@ export default function DebatesPage() {
   const [debates, setDebates] = useState<StoredDebate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshDebates = async () => {
-    setLoading(true);
+  const refreshDebates = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const { data, error } = await debateApi.list();
     if (error) {
       toast.error(error);
@@ -67,7 +67,7 @@ export default function DebatesPage() {
     } else {
       setDebates([]);
     }
-    setLoading(false);
+    if (showLoading) setLoading(false);
   };
 
   useEffect(() => {
@@ -76,9 +76,14 @@ export default function DebatesPage() {
   }, []);
 
   useEffect(() => {
-    refreshDebates();
-    window.addEventListener("focus", refreshDebates);
-    return () => window.removeEventListener("focus", refreshDebates);
+    refreshDebates(true);
+    const onFocus = () => refreshDebates(true);
+    window.addEventListener("focus", onFocus);
+    const poll = setInterval(() => refreshDebates(false), 30000); // Real-time: refresh every 30s (no loading flash)
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(poll);
+    };
   }, []);
 
   const filteredDebates = debates.filter(d => {
@@ -88,6 +93,15 @@ export default function DebatesPage() {
   });
 
   const liveDebate = debates.find(d => d.status === "upcoming" && d.format === "live");
+
+  const tabCounts = {
+    all: debates.length,
+    active: debates.filter(d => d.status === "active").length,
+    upcoming: debates.filter(d => d.status === "upcoming").length,
+    concluded: debates.filter(d => d.status === "concluded").length,
+    async: debates.filter(d => d.format === "async").length,
+    live: debates.filter(d => d.format === "live").length,
+  };
 
   const handleScholarLogin = async (email: string, password: string) => {
     const result = await login(email, password);
@@ -320,6 +334,8 @@ export default function DebatesPage() {
                   const Icon = tab.icon;
                   const active = activeTab === tab.key;
                   const panelId = `debates-panel-${tab.key}`;
+                  const count = tabCounts[tab.key as keyof typeof tabCounts] ?? 0;
+                  const hasActive = tab.key === "active" && count > 0;
                   return (
                     <button
                       key={tab.key}
@@ -338,8 +354,14 @@ export default function DebatesPage() {
                     >
                       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                       {tab.label}
-                      {tab.key === "active" && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-label="has active debates" />
+                      <span className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded-md min-w-[1.25rem] text-center",
+                        active ? "bg-primary-foreground/20" : "bg-muted/80 text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                      {hasActive && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-label="live" />
                       )}
                     </button>
                   );

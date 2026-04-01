@@ -11,12 +11,17 @@ export const ISLAMIC_BACKGROUNDS = [
   { id: "vb-minimal", label: "Minimal", url: "/backgrounds/minimal.svg" },
 ] as const;
 
+export const VB_CUSTOM_PREFIX = "vb-custom:";
+
 export function isVirtualBackground(effectId: string): boolean {
   return effectId === "vb-blur" || effectId.startsWith("vb-");
 }
 
 export function getVirtualBackgroundUrl(effectId: string): string | null {
   if (effectId === "vb-blur") return null;
+  if (effectId.startsWith(VB_CUSTOM_PREFIX)) {
+    return effectId.slice(VB_CUSTOM_PREFIX.length) || null;
+  }
   const bg = ISLAMIC_BACKGROUNDS.find((b) => b.id === effectId);
   return bg ? bg.url : null;
 }
