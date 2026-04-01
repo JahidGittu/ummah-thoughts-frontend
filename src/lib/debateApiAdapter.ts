@@ -4,10 +4,31 @@
 import type { DebateApi } from './api';
 import type { StoredDebate } from './debateStorage';
 
-function mapStatus(api: DebateApi['status']): StoredDebate['status'] {
-  if (api === 'live') return 'active';
-  if (api === 'concluded') return 'concluded';
-  return 'upcoming'; // draft, scheduled
+/** Derive public status (active / upcoming / concluded) based on time + API status. */
+function computePublicStatus(d: DebateApi): StoredDebate['status'] {
+  // If backend already marks as concluded, always respect that
+  if (d.status === 'concluded') return 'concluded';
+
+  // When scheduledAt or duration is missing, fall back to API flags
+  if (!d.scheduledAt || !d.duration) {
+    if (d.status === 'live') return 'active';
+    return 'upcoming';
+  }
+
+  const start = new Date(d.scheduledAt).getTime();
+  if (Number.isNaN(start)) {
+    if (d.status === 'live') return 'active';
+    return 'upcoming';
+  }
+
+  const end = start + d.duration * 60_000;
+  const now = Date.now();
+
+  if (now >= end) return 'concluded';
+  if (now >= start) return 'active';
+
+  // Before start time
+  return 'upcoming';
 }
 
 function mapFormat(api: DebateApi['format']): StoredDebate['format'] {
@@ -33,7 +54,7 @@ export function apiDebateToStored(d: DebateApi): StoredDebate {
   return {
     id: d.id,
     title: d.title,
-    status: mapStatus(d.status),
+    status: computePublicStatus(d),
     format: mapFormat(d.format),
     topic: d.topic,
     participants: {
@@ -45,5 +66,8 @@ export function apiDebateToStored(d: DebateApi): StoredDebate {
     votesClarity: 0,
     bookmarks: 0,
     youtubeLiveUrl: d.youtubeLiveUrl ?? undefined,
+    currentPhase: d.currentPhase,
+    phaseStartedAt: d.phaseStartedAt,
+    phasePaused: d.phasePaused,
   };
 }

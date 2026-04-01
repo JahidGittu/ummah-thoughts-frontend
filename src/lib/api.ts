@@ -69,6 +69,39 @@ export const notificationApi = {
   markAllAsRead: () => api<{ success: boolean }>('/api/notifications/read-all', { method: 'PATCH' }),
 };
 
+export interface DebatePhaseState {
+  phase: 'opening' | 'positionA' | 'positionB' | 'rebuttal' | 'qa' | 'closing' | null;
+  startedAt: string | null;
+  paused: boolean;
+}
+
+export interface Evidence {
+  id: string;
+  debateId: string;
+  userId: string;
+  side: 'A' | 'B' | 'moderator';
+  type: 'quran' | 'hadith' | 'scholarly' | 'logical';
+  reference: string;
+  arabic?: string | null;
+  translation: string;
+  commentary?: string | null;
+  createdAt: string;
+}
+
+export interface Question {
+  id: string;
+  debateId: string;
+  userId: string;
+  userName: string;
+  text: string;
+  upvotes: number;
+  approved: boolean;
+  answerText?: string | null;
+  answeredBy?: string | null;
+  answeredAt?: string | null;
+  createdAt: string;
+}
+
 export interface DebateParticipant {
   userId: string;
   name: string;
@@ -91,6 +124,9 @@ export interface DebateApi {
     positionB: DebateParticipant | null;
     moderator: DebateParticipant | null;
   };
+  currentPhase: 'opening' | 'positionA' | 'positionB' | 'rebuttal' | 'qa' | 'closing' | null;
+  phaseStartedAt: string | null;
+  phasePaused: boolean;
   createdAt: string;
 }
 
@@ -204,5 +240,53 @@ export const debateApi = {
     api<{ success: boolean; debate: DebateApi }>('/api/debates', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  // Phase Control
+  getPhase: (id: string) =>
+    api<{ success: boolean; phase: DebatePhaseState }>(`/api/debates/${id}/phase`),
+
+  updatePhase: (id: string, phase: string, action: 'start' | 'pause' | 'resume') =>
+    api<{ success: boolean; phase: DebatePhaseState }>(`/api/debates/${id}/phase`, {
+      method: 'PATCH',
+      body: JSON.stringify({ phase, action }),
+    }),
+
+  // Evidence Management
+  getEvidences: (id: string) =>
+    api<{ success: boolean; evidences: Evidence[] }>(`/api/debates/${id}/evidences`),
+
+  addEvidence: (id: string, data: Omit<Evidence, 'id' | 'debateId' | 'userId' | 'createdAt'>) =>
+    api<{ success: boolean; evidence: Evidence }>(`/api/debates/${id}/evidences`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Q&A
+  getQuestions: (id: string, approvedOnly?: boolean) =>
+    api<{ success: boolean; questions: Question[] }>(
+      approvedOnly ? `/api/debates/${id}/questions?approved=true` : `/api/debates/${id}/questions`
+    ),
+
+  submitQuestion: (id: string, text: string) =>
+    api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+
+  upvoteQuestion: (id: string, questionId: string) =>
+    api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions/${questionId}/upvote`, {
+      method: 'POST',
+    }),
+
+  approveQuestion: (id: string, questionId: string) =>
+    api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions/${questionId}/approve`, {
+      method: 'PATCH',
+    }),
+
+  answerQuestion: (id: string, questionId: string, answerText: string) =>
+    api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions/${questionId}/answer`, {
+      method: 'PATCH',
+      body: JSON.stringify({ answerText }),
     }),
 };

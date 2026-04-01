@@ -30,6 +30,10 @@ export interface StoredDebate {
   scheduledByScholar?: boolean;
   /** YouTube Live URL for video format debates */
   youtubeLiveUrl?: string;
+  /** Phase control */
+  currentPhase?: 'opening' | 'positionA' | 'positionB' | 'rebuttal' | 'qa' | 'closing' | null;
+  phaseStartedAt?: string | null;
+  phasePaused?: boolean;
 }
 
 const DEBATES_KEY = 'ummah-debates-list';
