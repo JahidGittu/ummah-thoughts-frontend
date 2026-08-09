@@ -17,20 +17,17 @@ export class MapErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Filter out the "already initialized" error from Leaflet
-    if (error.message?.includes('Map container is already initialized')) {
-      // Don't treat this as an actual error - just ignore it
-      console.warn('Leaflet map re-initialization (expected in dev Strict Mode):', error.message);
-      return { hasError: false, error: null };
-    }
-
+    // If it's a known non-critical error, we might still want to show the fallback
+    // to prevent a broken UI, but we'll categorize it.
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Filter out known non-critical errors
-    if (!error.message?.includes('Map container is already initialized')) {
-      console.error('Map Error:', error, errorInfo);
+    // Silence the "already initialized" error in logs as it's common in React 18 Dev Mode
+    if (error.message?.includes('Map container is already initialized')) {
+      console.warn('Map initialization warning:', error.message);
+    } else {
+      console.error('Fatal Map Error:', error, errorInfo);
     }
   }
 

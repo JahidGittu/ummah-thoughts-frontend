@@ -51,19 +51,26 @@ function toAuthUser(raw: any): AuthUser {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const getInitialUser = (): AuthUser | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('ummahthoughts_user');
+      if (stored) return JSON.parse(stored);
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(getInitialUser);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("ummahthoughts_token");
-    const stored = localStorage.getItem("ummahthoughts_user");
-    if (token && stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        /* ignore */
-      }
+    if (token && user) {
+
       authApi.getMe().then(({ data, error }) => {
         if (data?.user) setUser(toAuthUser(data.user));
         else if (error) {

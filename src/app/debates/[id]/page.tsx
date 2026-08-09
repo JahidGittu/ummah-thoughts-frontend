@@ -191,6 +191,8 @@ export default function DebateDetailPage() {
   const [recordingUsers, setRecordingUsers] = useState<{ userId: string; userName: string }[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [evidences, setEvidences] = useState<Evidence[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [handRaisedUsers, setHandRaisedUsers] = useState<any[]>([]);
   const typingTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const lastSentRef = useRef<{ text: string; time: number } | null>(null);
 
@@ -225,6 +227,15 @@ export default function DebateDetailPage() {
       if (!hasMock && clarityRes?.data) setClarityVotes({ positionA: clarityRes.data.positionA, positionB: clarityRes.data.positionB, myVote: clarityRes.data.myVote ?? null });
       if (qRes.data?.questions) setQuestions(qRes.data.questions);
       if (evRes.data?.evidences) setEvidences(evRes.data.evidences);
+
+      // Moderation initial data
+      if (user?.role === 'admin' || data.debate.participants.moderator?.userId === user?.id) {
+        const { data: joinRes } = await debateApi.listJoinRequests(id);
+        if (joinRes?.requests) setJoinRequests(joinRes.requests);
+        
+        const { data: handRes } = await debateApi.listHandRaises(id);
+        if (handRes?.handRaises) setHandRaisedUsers(handRes.handRaises);
+      }
 
       if (user?.id) {
         const bookmarkRes = await debateApi.getBookmark(id);
@@ -292,7 +303,7 @@ export default function DebateDetailPage() {
       });
     });
 
-    ch.bind("phase-changed", (payload: { currentPhase: string; startedAt: string; paused: boolean }) => {
+    ch.bind("phase-changed", (payload: { currentPhase: string; startedAt: string; paused: boolean; elapsedTime: number }) => {
       setDebate((prev) =>
         prev
           ? {
@@ -300,10 +311,25 @@ export default function DebateDetailPage() {
               currentPhase: payload.currentPhase as any,
               phaseStartedAt: payload.startedAt,
               phasePaused: payload.paused,
+              phaseElapsedTime: payload.elapsedTime,
             }
           : null
       );
       toast(`Phase changed: ${payload.currentPhase}`);
+    });
+
+    ch.bind("participant-joined", (payload: { userId: string; name: string; role: string }) => {
+      setDebate((prev) => {
+        if (!prev) return null;
+        // Logic to update speakers list; depends on layout. 
+        // For now, let's just trigger a data refresh or update local state if needed.
+        return { ...prev }; 
+      });
+      toast.success(`${payload.name} joined the debate`);
+    });
+
+    ch.bind("hand-raise-updated", (payload: any[]) => {
+      setHandRaisedUsers(payload);
     });
 
     ch.bind("evidence-added", (payload: { evidence: Evidence }) => {
@@ -497,6 +523,9 @@ export default function DebateDetailPage() {
         onVoteClarity={handleVoteClarity}
         evidences={mappedEvidences}
         initialQuestions={mappedQuestions}
+        initialJoiners={joinRequests}
+        initialHandRaises={handRaisedUsers}
+        phaseElapsedTime={(debate as any).phaseElapsedTime}
       />
     );
   }

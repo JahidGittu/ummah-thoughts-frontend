@@ -106,6 +106,7 @@ export interface DebateParticipant {
   userId: string;
   name: string;
   role: 'Scholar' | 'Moderator';
+  avatarUrl?: string | null;
 }
 
 export interface DebateApi {
@@ -246,10 +247,15 @@ export const debateApi = {
   getPhase: (id: string) =>
     api<{ success: boolean; phase: DebatePhaseState }>(`/api/debates/${id}/phase`),
 
-  updatePhase: (id: string, phase: string, action: 'start' | 'pause' | 'resume') =>
-    api<{ success: boolean; phase: DebatePhaseState }>(`/api/debates/${id}/phase`, {
+  updatePhase: (id: string, phase: string, action?: 'start' | 'pause' | 'resume') =>
+    api<{ success: boolean; debate: DebateApi }>(`/api/debates/${id}/phase`, {
       method: 'PATCH',
       body: JSON.stringify({ phase, action }),
+    }),
+
+  setConcluded: (id: string) =>
+    api<{ success: boolean; debate: DebateApi }>(`/api/debates/${id}/concluded`, {
+      method: 'PATCH',
     }),
 
   // Evidence Management
@@ -279,14 +285,47 @@ export const debateApi = {
       method: 'POST',
     }),
 
-  approveQuestion: (id: string, questionId: string) =>
+  approveQuestion: (id: string, questionId: string, approved: boolean = true) =>
     api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions/${questionId}/approve`, {
       method: 'PATCH',
+      body: JSON.stringify({ approved }),
     }),
 
   answerQuestion: (id: string, questionId: string, answerText: string) =>
     api<{ success: boolean; question: Question }>(`/api/debates/${id}/questions/${questionId}/answer`, {
-      method: 'PATCH',
+      method: 'POST',
       body: JSON.stringify({ answerText }),
     }),
+
+  // Participant & Hand Raise Management
+  requestToJoin: (id: string) =>
+    api<{ success: boolean; request: any }>(`/api/debates/${id}/join-request`, {
+      method: 'POST',
+    }),
+
+  listJoinRequests: (id: string) =>
+    api<{ success: boolean; requests: any[] }>(`/api/debates/${id}/join-requests`),
+
+  admitJoiner: (id: string, userId: string) =>
+    api<{ success: boolean }>(`/api/debates/${id}/join-requests/${userId}/admit`, {
+      method: 'POST',
+    }),
+
+  denyJoiner: (id: string, userId: string) =>
+    api<{ success: boolean }>(`/api/debates/${id}/join-requests/${userId}`, {
+      method: 'DELETE',
+    }),
+
+  raiseHand: (id: string) =>
+    api<{ success: boolean }>(`/api/debates/${id}/hand-raise`, {
+      method: 'POST',
+    }),
+
+  dismissHandRaise: (id: string, userId: string) =>
+    api<{ success: boolean }>(`/api/debates/${id}/hand-raise/${userId}`, {
+      method: 'DELETE',
+    }),
+
+  listHandRaises: (id: string) =>
+    api<{ success: boolean; handRaises: any[] }>(`/api/debates/${id}/hand-raises`),
 };

@@ -22,9 +22,11 @@ import {
   ThumbsUp, CheckCircle, AlertTriangle, BarChart3, BookMarked,
   Star, ArrowRight, Gavel, MessagesSquare, Play, Square, UserX,
   CheckCircle2, XCircle, Lock, CameraOff, Volume2, Sparkles, Radio, ExternalLink,
+  ShieldCheck, Check, X, PlusCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { debateApi } from "@/lib/api";
 import { AuthUser } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { LiveKitRoom } from "@livekit/components-react";
@@ -32,6 +34,7 @@ import "@livekit/components-styles";
 import { DebateVideoConference } from "@/components/debates/DebateVideoConference";
 import { LiveKitEffectHandler } from "@/components/debates/LiveKitEffectHandler";
 import { SidePanelMediaControls } from "@/components/debates/SidePanelMediaControls";
+import { PhaseTimer } from "./live/PhaseTimer";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +44,11 @@ import {
 import { useVirtualBackground, isVirtualBackground, ISLAMIC_BACKGROUNDS, VB_CUSTOM_PREFIX } from "@/hooks/useVirtualBackground";
 import { getStoredCustomBackground } from "@/lib/customBackgroundStorage";
 import { BackgroundEffectsModal } from "@/components/debates/BackgroundEffectsModal";
+import { LiveDebateHeader } from "./live/LiveDebateHeader";
+import { VideoStage } from "./live/VideoStage";
+import { ChatSection } from "./live/ChatSection";
+import { QaSection } from "./live/QaSection";
+import { SidebarControl } from "./live/SidebarControl";
 
 // Types
 interface Participant {
@@ -111,6 +119,9 @@ export interface LiveDebateRoomProps {
   /** Phase timing */
   phaseStartedAt?: string;
   phasePaused?: boolean;
+  phaseElapsedTime?: number;
+  /** Current hand raises */
+  initialHandRaises?: HandRaisedUser[];
 }
 
 // Constants
@@ -233,7 +244,7 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
   const audioContextRef  = useRef<AudioContext | null>(null);
   const analyserRef      = useRef<AnalyserNode | null>(null);
   const animFrameRef     = useRef<number>(0);
-  const activePhaseIdxRef = useRef<number>(phases.indexOf(initialPhase));
+  const activePhaseIdxRef = useRef<number>(phases.indexOf((((initialPhase as any) === "position_a" ? "positionA" : (initialPhase as any) === "position_b" ? "positionB" : initialPhase) as any) as Phase));
   const anonIdRef        = useRef<string | null>(null);
   if (!anonIdRef.current && typeof crypto !== "undefined" && crypto.randomUUID) {
     anonIdRef.current = `anon-${crypto.randomUUID()}`;
@@ -246,8 +257,8 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
   const [iAmSpeaking,     setIAmSpeaking]      = useState(false);
   const [handRaised,      setHandRaised]       = useState(false);
   const [question,        setQuestion]         = useState("");
-  const [activePhaseIdx,  setActivePhaseIdx]   = useState(phases.indexOf(initialPhase as Phase));
-  const [phaseTimeLeft,   setPhaseTimeLeft]    = useState(phaseConfig[initialPhase as Phase]?.duration ?? 0);
+  const [activePhaseIdx,  setActivePhaseIdx]   = useState(phases.indexOf(((initialPhase as any) === "position_a" ? "positionA" : (initialPhase as any) === "position_b" ? "positionB" : initialPhase) as Phase));
+  const [phaseTimeLeft,   setPhaseTimeLeft]    = useState(phaseConfig[((initialPhase as any) === "position_a" ? "positionA" : (initialPhase as any) === "position_b" ? "positionB" : initialPhase) as Phase]?.duration ?? 0);
   const [viewers,         setViewers]          = useState(initialViewers);
   const [activeTab,       setActiveTab]        = useState<"chat" | "evidence">("chat");
   const [evidenceFilter,  setEvidenceFilter]   = useState<"all" | "A" | "B">("all");
@@ -256,8 +267,8 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
   const [myVote,          setMyVote]           = useState<"A" | "B" | null>(externalClarityVotes?.myVote ?? null);
   const [questions,       setQuestions]        = useState<QueuedQuestion[]>(propQuestions);
   const [evidences,       setEvidences]        = useState<Evidence[]>(initialEvidences);
-  const [handRaisedUsers, setHandRaisedUsers]  = useState<HandRaisedUser[]>([]);
-  const [debateStarted,   setDebateStarted]    = useState(initialPhase !== "opening" || !!initialJoiners.length);
+  const [handRaisedUsers, setHandRaisedUsers]  = useState<HandRaisedUser[]>(props.initialHandRaises ?? []);
+  const [debateStarted,   setDebateStarted]    = useState(initialPhase !== "opening" || !!propJoiners.length);
   const [debatePaused,    setDebatePaused]     = useState(!!propsPhasePaused);
   const [debateEnded,     setDebateEnded]      = useState(false);
   const [speakers,        setSpeakers]         = useState(
@@ -280,6 +291,7 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
   const [liveKitToken,    setLiveKitToken]     = useState<string | null>(null);
   const [liveKitServerUrl, setLiveKitServerUrl] = useState<string | null>(null);
   const [liveKitError,    setLiveKitError]     = useState<string | null>(null);
+  const [isJoiningVideoRoom, setIsJoiningVideoRoom] = useState(false);
 
   // Virtual background (only when camera on + non-LiveKit + vb effect selected)
   const vbActive = !useLiveKit && !myVideoOff && isVirtualBackground(cameraEffect);
@@ -401,6 +413,14 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
     setEvidences(initialEvidences);
   }, [initialEvidences]);
 
+  useEffect(() => {
+    if (props.initialHandRaises) setHandRaisedUsers(props.initialHandRaises);
+  }, [props.initialHandRaises]);
+
+  useEffect(() => {
+    if (propJoiners) setJoiners(propJoiners);
+  }, [propJoiners]);
+
   // Timer logic - server authoritative
   useEffect(() => {
     if (debateEnded) return;
@@ -411,39 +431,47 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
         return;
       }
 
+      if (debatePaused) return;
+
       const startedAt = new Date(phaseStartedAt).getTime();
       const now = Date.now();
       const totalDuration = phaseConfig[initialPhase as Phase]?.duration ?? 0;
       
-      let elapsedSeconds = Math.floor((now - startedAt) / 1000);
-      const remaining = Math.max(0, totalDuration - elapsedSeconds);
+      // A6 Fix: Include phaseElapsedTime from props (seconds already spent before this session/pause)
+      const sessionElapsed = Math.floor((now - startedAt) / 1000);
+      const totalElapsed = (props.phaseElapsedTime || 0) + sessionElapsed;
+      const remaining = Math.max(0, totalDuration - totalElapsed);
+      
       setPhaseTimeLeft(remaining);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [initialPhase, phaseStartedAt, propsPhasePaused, debateEnded]);
+  }, [initialPhase, phaseStartedAt, debatePaused, debateEnded, props.phaseElapsedTime]);
+
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+
+  const handleSendMessage = async (text: string) => {
+    if (!debateId || !text.trim() || !canUseChat) return;
+    const { error } = await debateApi.sendMessage(debateId, text.trim());
+    if (error) toast.error(error);
+  };
 
   // ---------------------------------------------------------
   // Debate Actions (API)
   // ---------------------------------------------------------
 
+  // Debate Actions (API)
   const handleToggleDebate = async () => {
     if (!debateId || !isModerator) return;
-    const newPaused = !debatePaused;
-    const { error } = await debateApi.updatePhase(debateId, {
-      phase: initialPhase,
-      paused: newPaused
-    });
+    const action = debatePaused ? "resume" : "pause";
+    const { error } = await debateApi.updatePhase(debateId, currentPhaseName, action);
     if (error) toast.error(error);
   };
 
   const handleAdvancePhase = async () => {
     if (!debateId || !isModerator || activePhaseIdx >= phases.length - 1) return;
     const nextPhase = phases[activePhaseIdx + 1];
-    const { error } = await debateApi.updatePhase(debateId, {
-      phase: nextPhase,
-      paused: false
-    });
+    const { error } = await debateApi.updatePhase(debateId, nextPhase as any, "start");
     if (error) toast.error(error);
   };
 
@@ -451,7 +479,7 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
     if (!debateId || !question.trim() || !canUseQa) return;
     const text = question.trim();
     setQuestion("");
-    const { data, error } = await debateApi.submitQuestion(debateId, text);
+    const { error } = await debateApi.submitQuestion(debateId, text);
     if (error) {
       toast.error(error);
       setQuestion(text);
@@ -468,16 +496,63 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
 
   const handleApproveQuestion = async (qId: string) => {
     if (!debateId || !isModerator) return;
-    const { error } = await debateApi.approveQuestion(debateId, qId);
+    const { error } = await debateApi.approveQuestion(debateId, qId, true);
     if (error) toast.error(error);
     else toast.success("Question approved");
   };
 
-  const handleAnswerQuestion = async (qId: string) => {
+  const handleAnswerQuestion = async (qId: string, answerText: string) => {
     if (!debateId || !isParticipant) return;
-    const { error } = await debateApi.answerQuestion(debateId, qId);
+    if (!answerText) return;
+    const { error } = await debateApi.answerQuestion(debateId, qId, answerText);
     if (error) toast.error(error);
-    else toast.success("Question marked as answering");
+    else toast.success("Answered");
+  };
+
+  const handleEndDebate = async () => {
+    if (!debateId || !isModerator) return;
+    const { error } = await debateApi.setConcluded(debateId);
+    if (error) toast.error(error);
+    else {
+      setDebateEnded(true);
+      setShowEndDialog(false);
+      toast.success("Debate concluded");
+    }
+  };
+
+  const handleJoinRequests = async (uId: string, action: 'admit' | 'deny') => {
+    if (!debateId || !isModerator) return;
+    const { error } = action === 'admit' 
+      ? await debateApi.admitJoiner(debateId, uId)
+      : await debateApi.denyJoiner(debateId, uId);
+    
+    if (error) toast.error(error);
+    else toast.success(action === 'admit' ? "User admitted" : "Request denied");
+  };
+
+  const handleHandRaiseAction = async (uId?: string) => {
+    if (!debateId) return;
+    if (uId && isModerator) {
+      // Moderator dismissing a user's hand
+      const { error } = await debateApi.dismissHandRaise(debateId, uId);
+      if (error) toast.error(error);
+    } else {
+      // User raising/lowering their own hand
+      if (handRaised) {
+        const { error } = await debateApi.dismissHandRaise(debateId, currentUser?.id || "");
+        if (!error) setHandRaised(false);
+      } else {
+        const { error } = await debateApi.raiseHand(debateId);
+        if (!error) setHandRaised(true);
+      }
+    }
+  };
+
+  const handleRequestToJoin = async () => {
+    if (!debateId || !isAuthenticated) return;
+    const { error } = await debateApi.requestToJoin(debateId);
+    if (error) toast.error(error);
+    else toast.success("Join request sent to moderator");
   };
 
   // Viewer simulation
@@ -645,40 +720,22 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
     }
   };
 
-  // Q&A
-  const handleSubmitQuestion = () => {
-    if (!isAuthenticated) { router.push("/login"); return; }
-    if (!canUseQa) return;
-    if (!question.trim()) return;
-    setQuestions(prev => [...prev, {
-      id: `q${Date.now()}`,
-      userId: currentUser?.id,
-      user: currentUser?.name || "You",
-      text: question.trim(),
-      upvotes: 0,
-      upvotedByMe: false,
-      approved: false,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    }]);
-    setQuestion("");
-    toast.success("Question submitted for review");
-  };
-
-  const handleUpvote = (qId: string) => {
-    if (!isAuthenticated) { router.push("/login"); return; }
-    setQuestions(prev => prev.map(q =>
-      q.id === qId ? { ...q, upvotes: q.upvotedByMe ? q.upvotes - 1 : q.upvotes + 1, upvotedByMe: !q.upvotedByMe } : q
-    ));
-  };
+  // Q&A Handlers are now handled by API-based ones at the top
 
   // Clarity Vote
-  const handleVote = (side: "A" | "B") => {
+  const handleVote = async (side: "A" | "B") => {
     if (!isAuthenticated) { router.push("/login"); return; }
-    if (myVote) return;
-    setMyVote(side);
-    if (side === "A") setClarityA(v => v + 1); else setClarityB(v => v + 1);
-    onVoteClarity?.(side);
-    toast.success(`✅ Voted Position ${side}`);
+    if (myVote || !debateId) return;
+    const { data, error } = await debateApi.voteClarity(debateId, side);
+    if (error) {
+      toast.error(error);
+    } else if (data) {
+      setMyVote(side);
+      setClarityA(data.positionA);
+      setClarityB(data.positionB);
+      onVoteClarity?.(side);
+      toast.success(`✅ Voted Position ${side}`);
+    }
   };
 
   // Sync external clarity votes when provided
@@ -716,922 +773,210 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
     toast.success(`${sp?.name ?? "Participant"} removed`);
   };
 
-  // Moderator: Join Requests
-  const handleAdmitJoiner = (id: string) => {
-    const j = joiners.find(x => x.id === id);
-    if (!j) return;
-    setSpeakers(prev => [...prev, { ...j, isSpeaking: false, isMuted: true, isVideoOff: true, isBanned: false }]);
-    setJoiners(prev => prev.filter(x => x.id !== id));
-    toast.success(`✅ ${j.name} admitted`);
-  };
+  // Moderator Notifications/Actions - These will be hooked into real-time later
+  // Consolidated handlers at the top
 
-  const handleDenyJoiner = (id: string) => {
-    const j = joiners.find(x => x.id === id);
-    setJoiners(prev => prev.filter(x => x.id !== id));
-    toast(`❌ ${j?.name ?? "Request"} denied`);
-  };
-
-  // Moderator: Q&A
-  const handleApproveQuestion = (qId: string) => {
-    setQuestions(prev => prev.map(q => q.id === qId ? { ...q, approved: true } : q));
-    toast.success("✅ Question approved");
-  };
-
-  const handleRejectQuestion = (qId: string) => {
-    setQuestions(prev => prev.filter(q => q.id !== qId));
-    toast("❌ Question removed");
-  };
-
-  // Moderator: Hand Raise
-  const handleAdmitFromHandRaise = (userId: string) => {
-    const raised = handRaisedUsers.find(u => u.userId === userId);
-    if (!raised) return;
-    setSpeakers(prev => [...prev, {
-      id: raised.userId,
-      name: raised.name,
-      role: "member" as const,
-      isSpeaking: false,
-      isMuted: true,
-      isVideoOff: true,
-      isBanned: false,
-    }]);
-    setHandRaisedUsers(prev => prev.filter(u => u.userId !== userId));
-    if (userId === currentUser?.id) setHandRaised(false);
-    toast.success(`✅ ${raised.name} admitted as speaker`);
-  };
-
-  const handleDismissHandRaise = (userId: string) => {
-    const raised = handRaisedUsers.find(u => u.userId === userId);
-    setHandRaisedUsers(prev => prev.filter(u => u.userId !== userId));
-    if (userId === currentUser?.id) setHandRaised(false);
-    toast(`${raised?.name ?? "User"}'s hand raise dismissed`);
-  };
-
-  // Moderator: Debate Flow
-  const handleToggleDebate = () => {
-    if (!debateStarted) { setDebateStarted(true); setDebatePaused(false); toast.success("▶ Debate started"); }
-    else if (!debatePaused) { setDebatePaused(true); toast("⏸ Debate paused"); }
-    else { setDebatePaused(false); toast.success("▶ Debate resumed"); }
-  };
-
-  const handleEndDebate = () => {
-    setDebateStarted(false);
-    setDebatePaused(false);
-    setDebateEnded(true);
-    setShowEndDialog(false);
-    toast.success("🏁 Debate ended");
-    setTimeout(() => onLeave?.(), 300);
-  };
-
-  const handleAdvancePhase = () => {
-    const cur = activePhaseIdxRef.current;
-    if (cur < phases.length - 1) {
-      const next = cur + 1;
-      setActivePhaseIdx(next);
-      setPhaseTimeLeft(phaseConfig[phases[next]].duration);
-      toast.success(`⏭ Advanced to: ${phaseConfig[phases[next]].label}`);
-    } else {
-      toast("Already at final phase");
-    }
-  };
+  // Rest of handlers are now consolidated at the top
 
   const handleLiveKitLeave = () => {
     onLeave?.();
     router.push("/debates");
   };
 
-  const mainContent = (
-      <div className="max-w-7xl mx-auto space-y-4">
-
-        {/* Media Permission Dialog */}
-        <Dialog open={showMediaDialog} onOpenChange={open => { if (!open) { setMediaError(null); setShowMediaDialog(false); } }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {mediaAction === "mic" ? <Mic className="h-5 w-5 text-primary" /> : <Video className="h-5 w-5 text-primary" />}
-                Enable {mediaAction === "mic" ? "Microphone" : "Camera"}
-              </DialogTitle>
-              <DialogDescription>
-                {mediaAction === "mic"
-                  ? "Your browser will request microphone permission. The moderator can mute you at any time."
-                  : "Your browser will request camera permission. The moderator can disable it at any time."}
-              </DialogDescription>
-            </DialogHeader>
-            {mediaError && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span>{mediaError}</span>
-              </div>
-            )}
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => { setShowMediaDialog(false); setMediaError(null); }}>Cancel</Button>
-              <Button onClick={handleConfirmMedia} disabled={mediaLoading}>
-                {mediaLoading
-                  ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Requesting…</span>
-                  : `Enable ${mediaAction === "mic" ? "Microphone" : "Camera"}`}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* End Debate Dialog */}
-        <Dialog open={showEndDialog} onOpenChange={setShowEndDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive"><Square className="h-5 w-5" /> End Debate</DialogTitle>
-              <DialogDescription>End the session for all {speakers.length + 1} participants? This cannot be undone.</DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setShowEndDialog(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={handleEndDebate}>End Debate</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Kick Dialog */}
-        <Dialog open={!!showKickDialog} onOpenChange={() => setShowKickDialog(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive"><UserX className="h-5 w-5" /> Remove Participant</DialogTitle>
-              <DialogDescription>Remove {speakers.find(s => s.id === showKickDialog)?.name}? They cannot rejoin.</DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setShowKickDialog(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => showKickDialog && handleKickSpeaker(showKickDialog)}>Remove</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <Badge className={cn("gap-1 border", statusClass)}>
-                {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />}
-                {statusLabel}
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <Clock className="h-3 w-3" />
-                {isRunning || debatePaused ? formatTime(phaseTimeLeft) : "--:--"}
-              </Badge>
-              <Badge variant="outline" className="gap-1"><Users className="h-3 w-3" /> {viewers}</Badge>
-              {isModerator && <Badge className="bg-amber-500/20 text-amber-600 border border-amber-500/30 gap-1"><Shield className="h-3 w-3" /> Admin Moderator</Badge>}
+  if (isJoiningVideoRoom) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[600px] w-full bg-background mt-20 relative overflow-hidden rounded-xl border border-border/50 shadow-2xl">
+        <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+        <div className="relative z-10 flex flex-col items-center max-w-sm text-center">
+            <div className="w-20 h-20 mb-8 relative">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+                <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
             </div>
-            <h1 className="text-lg font-bold text-foreground">{title}</h1>
-            <p className="text-xs text-muted-foreground flex items-center gap-1"><BookOpen className="h-3 w-3" /> {topic}</p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="destructive" size="sm" onClick={onLeave}>Leave</Button>
-              </TooltipTrigger>
-              <TooltipContent>Leave debate room</TooltipContent>
-            </Tooltip>
-          </div>
+            <h2 className="text-2xl font-bold font-display text-foreground mb-3">Admission in Progress</h2>
+            <p className="text-muted-foreground leading-relaxed">
+                The moderator has approved your join request. Connecting you to the secure video room...
+            </p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Layout: main content + side panel */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Side panel: moderator + phase - sticky on right, edge of viewport */}
-          <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 lg:border-l lg:border-border lg:pl-4">
-            <div className="lg:sticky lg:top-4 space-y-4">
-        {isModerator && (
-          <Card className="border-amber-500/30 bg-amber-500/5">
-            <CardHeader className="py-2.5 pb-1">
-              <CardTitle className="text-xs flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-amber-600" /> Controls</CardTitle>
+  const mainContent = (
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700">
+      
+      {/* Media Permission Dialog */}
+      <Dialog open={showMediaDialog} onOpenChange={open => { if (!open) { setMediaError(null); setShowMediaDialog(false); } }}>
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              {mediaAction === "mic" ? <Mic className="h-5 w-5 text-primary" /> : <Video className="h-5 w-5 text-primary" />}
+              Enable {mediaAction === "mic" ? "Microphone" : "Camera"}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {mediaAction === "mic"
+                ? "Your browser will request microphone permission. The moderator can mute you at any time."
+                : "Your browser will request camera permission. The moderator can disable it at any time."}
+            </DialogDescription>
+          </DialogHeader>
+          {mediaError && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{mediaError}</span>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => { setShowMediaDialog(false); setMediaError(null); }} className="border-white/10 hover:bg-white/5">Cancel</Button>
+            <Button onClick={handleConfirmMedia} disabled={mediaLoading} className="bg-primary hover:bg-primary/90">
+              {mediaLoading
+                ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Requesting…</span>
+                : `Enable ${mediaAction === "mic" ? "Microphone" : "Camera"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* End Debate Dialog */}
+      <Dialog open={showEndDialog} onOpenChange={setShowEndDialog}>
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive"><Square className="h-5 w-5" /> End Debate</DialogTitle>
+            <DialogDescription className="text-zinc-400">End the session for all {speakers.length + 1} participants? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowEndDialog(false)} className="border-white/10 hover:bg-white/5">Cancel</Button>
+            <Button variant="destructive" onClick={handleEndDebate}>End Debate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kick Dialog */}
+      <Dialog open={!!showKickDialog} onOpenChange={() => setShowKickDialog(null)}>
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-white/10 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive"><UserX className="h-5 w-5" /> Remove Participant</DialogTitle>
+            <DialogDescription className="text-zinc-400">Remove {speakers.find(s => s.id === showKickDialog)?.name}? They cannot rejoin.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowKickDialog(null)} className="border-white/10 hover:bg-white/5">Cancel</Button>
+            <Button variant="destructive" onClick={() => showKickDialog && handleKickSpeaker(showKickDialog)}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header Section */}
+      <LiveDebateHeader 
+        title={title}
+        topic={topic}
+        viewers={viewers}
+        statusLabel={statusLabel}
+        statusClass={statusClass}
+      />
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Column: Video Stage + Controls (lg:col-span-8) */}
+        <div className="lg:col-span-8 space-y-6">
+          <VideoStage 
+            useLiveKit={useLiveKit && !!debateId}
+            liveKitToken={liveKitToken}
+            liveKitServerUrl={liveKitServerUrl}
+            liveKitError={liveKitError}
+            debateId={debateId}
+            youtubeLiveUrl={youtubeLiveUrl}
+            isParticipant={isParticipant}
+            myMuted={myMuted}
+            myVideoOff={myVideoOff}
+            cameraEffect={cameraEffect}
+            onLiveKitLeave={handleLiveKitLeave}
+            extractYoutubeVideoId={extractYoutubeVideoId}
+            participantIds={[moderator.id, ...speakers.map(s => s.id)]}
+          />
+          
+          <PhaseTimer
+            phases={phases}
+            phaseConfig={phaseConfig}
+            currentPhaseName={currentPhaseName}
+            activePhaseIdx={activePhaseIdx}
+            isRunning={isRunning}
+            debatePaused={debatePaused}
+            phaseTimeLeft={phaseTimeLeft}
+            phaseProgress={phaseProgress}
+            formatTime={formatTime}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ChatSection 
+              messages={chatMessages}
+              currentUserId={currentUser?.id}
+              canUseChat={moderatorUnlocks.chat || isParticipant}
+              onSendMessage={handleSendMessage}
+            />
+            <QaSection 
+              questions={questions}
+              canUseQa={moderatorUnlocks.qa || isParticipant}
+              isParticipant={isParticipant}
+              onUpvote={handleUpvote}
+              onSubmitQuestion={handleSubmitQuestion}
+              onAnswerQuestion={handleAnswerQuestion}
+            />
+          </div>
+          
+          {/* Debate Adab Section */}
+          <Card className="bg-primary/5 border-primary/20 backdrop-blur-md">
+            <CardHeader className="py-2.5 pb-2">
+              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <Scale className="h-3.5 w-3.5" /> 
+                Debate Etiquette (Adab)
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pb-3">
-              {/* Moderator's own mic/camera */}
-              {currentUser?.id === moderator.id && (
-                <>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-semibold text-amber-700 uppercase">My Media</span>
-                    <SidePanelMediaControls myMuted={myMuted} myVideoOff={myVideoOff} onToggleMic={handleToggleMic} onToggleVideo={handleToggleVideo} />
+            <CardContent className="pb-4">
+              <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-[11px] text-muted-foreground font-medium">
+                {[
+                  { icon: CheckCircle,   text: "Arguments must be evidence-based", color: "text-primary" },
+                  { icon: AlertTriangle, text: "Personal attacks are strictly prohibited",  color: "text-red-400" },
+                  { icon: Scale,         text: "Vote on clarity of argument, not who 'won'",   color: "text-secondary" },
+                  { icon: BookOpen,      text: "All citations must be verifiable", color: "text-primary" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2.5 group hover:text-white transition-colors duration-300">
+                    <item.icon className={cn("h-3.5 w-3.5 flex-shrink-0 transition-transform group-hover:scale-110", item.color)} />
+                    <span>{item.text}</span>
                   </div>
-                  <Separator />
-                </>
-              )}
-              <div className="space-y-2">
-                <span className="text-[10px] font-semibold text-amber-700 uppercase">Participants</span>
-              {[moderator, ...speakers].map((p) => (
-                <div key={p.id} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-background border border-border">
-                  <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0", p.id === moderator.id ? "bg-amber-500/20 text-amber-600" : "bg-primary/20 text-primary")}>
-                    {p.name.charAt(0)}
-                  </div>
-                  <span className="text-xs font-medium max-w-[80px] truncate">{p.name}</span>
-                  {speakers.some(s => s.id === p.id) && (
-                    <div className="flex gap-0.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleToggleSpeakerMic(p.id)}>
-                            {speakers.find(s => s.id === p.id)?.isMuted ? <MicOff className="h-3 w-3 text-destructive" /> : <Mic className="h-3 w-3" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{speakers.find(s => s.id === p.id)?.isMuted ? "Unmute" : "Mute"}</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleToggleSpeakerVideo(p.id)}>
-                            {speakers.find(s => s.id === p.id)?.isVideoOff ? <VideoOff className="h-3 w-3 text-destructive" /> : <Video className="h-3 w-3" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{speakers.find(s => s.id === p.id)?.isVideoOff ? "Enable camera" : "Disable camera"}</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => setShowKickDialog(p.id)}>
-                            <UserX className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Remove participant</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  )}
-                </div>
-              ))}
-                </div>
-              <Separator />
-              <div className="space-y-2">
-                <span className="text-[10px] font-semibold text-amber-700 uppercase">Viewers</span>
-                <div className="flex flex-wrap gap-1.5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant={moderatorUnlocks.qa ? "default" : "outline"} className="h-7 text-[10px]" onClick={() => setModeratorUnlocks(u => ({ ...u, qa: !u.qa }))}>
-                        Q&A {moderatorUnlocks.qa ? "✓" : ""}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Allow viewers to ask questions</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant={moderatorUnlocks.chat ? "default" : "outline"} className="h-7 text-[10px]" onClick={() => setModeratorUnlocks(u => ({ ...u, chat: !u.chat }))}>
-                        Chat {moderatorUnlocks.chat ? "✓" : ""}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Allow viewers to chat</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant={moderatorUnlocks.handRaise ? "default" : "outline"} className="h-7 text-[10px]" onClick={() => setModeratorUnlocks(u => ({ ...u, handRaise: !u.handRaise }))}>
-                        Hand {moderatorUnlocks.handRaise ? "✓" : ""}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Allow viewers to raise hand</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <span className="text-[10px] font-semibold text-amber-700 uppercase">Debate</span>
-                <div className="flex flex-wrap gap-1.5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant={debatePaused ? "default" : "outline"} onClick={handleToggleDebate} className="h-7 text-[10px] gap-1">
-                        {!debateStarted || debateEnded ? <Play className="h-3 w-3" /> : debatePaused ? <Play className="h-3 w-3" /> : <Square className="h-3 w-3" />}
-                        {!debateStarted || debateEnded ? "Start" : debatePaused ? "Resume" : "Pause"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{!debateStarted || debateEnded ? "Start debate" : debatePaused ? "Resume" : "Pause debate"}</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={handleAdvancePhase} disabled={activePhaseIdx >= phases.length - 1 || debateEnded}>
-                        Next
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Advance to next phase</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant="destructive" className="h-7 text-[10px]" onClick={() => setShowEndDialog(true)} disabled={debateEnded || !debateStarted}>
-                        End
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>End debate for all</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
-              {/* YouTube Live - moderator can stream */}
-              <Separator />
-              <div className="space-y-2">
-                <span className="text-[10px] font-semibold text-amber-700 uppercase flex items-center gap-1">
-                  <Radio className="h-3 w-3" /> YouTube Live
-                </span>
-                <p className="text-[10px] text-muted-foreground">
-                  Open the stream view in a new tab for OBS Browser Source. No scroll, full quality.
-                </p>
-                {debateId && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-xs gap-1.5"
-                    onClick={() => window.open(`/debates/${debateId}/stream`, "_blank", "noopener,noreferrer")}
-                  >
-                    <ExternalLink className="h-3 w-3" /> Open Stream View (OBS)
-                  </Button>
-                )}
-                <p className="text-[10px] text-muted-foreground">
-                  Use OBS Browser Source with that URL. Add RTMP from YouTube Studio → Go Live. See docs/YOUTUBE_LIVE_STREAMING_GUIDE.md for full steps.
-                </p>
-                {youtubeLiveUrl ? (
-                  <a href={youtubeLiveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline">
-                    <ExternalLink className="h-3 w-3" /> Stream URL set
-                  </a>
-                ) : (
-                  <p className="text-[10px] text-muted-foreground">Add stream URL in debate settings</p>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {/* Phase Progress */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="py-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <PhaseIcon className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{phaseConfig[currentPhaseName].label}</span>
-                <Badge className="bg-primary/20 text-primary text-xs">{isRunning || debatePaused ? formatTime(phaseTimeLeft) : "--:--"}</Badge>
-                {debatePaused && <Badge className="bg-amber-500/20 text-amber-600 text-xs">Paused</Badge>}
-              </div>
-              <span className="text-xs text-muted-foreground">Phase {activePhaseIdx + 1}/{phases.length}</span>
-            </div>
-            <div className="flex items-center gap-0 mb-2">
-              {phases.map((phase, idx) => {
-                const isActive = idx === activePhaseIdx;
-                const isDone   = idx < activePhaseIdx;
-                return (
-                  <div key={phase} className="flex items-center flex-1">
-                    <div className="relative flex flex-col items-center">
-                      <div className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all",
-                        isActive ? "bg-primary text-primary-foreground border-primary scale-110 shadow-md shadow-primary/30"
-                          : isDone ? "bg-primary/20 text-primary border-primary/40"
-                          : "bg-muted text-muted-foreground border-border"
-                      )}>
-                        {isDone ? <CheckCircle className="w-3 h-3" /> : idx + 1}
-                      </div>
-                      <span className={cn("text-[8px] mt-0.5 hidden sm:block whitespace-nowrap", isActive ? "text-primary font-semibold" : "text-muted-foreground")}>
-                        {phaseConfig[phase].label}
-                      </span>
-                    </div>
-                    {idx < phases.length - 1 && <div className={cn("h-0.5 flex-1 mx-0.5", isDone ? "bg-primary/40" : "bg-border")} />}
-                  </div>
-                );
-              })}
-            </div>
-            <Progress value={isRunning || debatePaused ? phaseProgress : 0} className="h-1" />
-          </CardContent>
-        </Card>
-            </div>
-          </aside>
-
-          {/* Main: video + bottom section */}
-          <main className="flex-1 min-w-0 space-y-4 order-2 lg:order-1">
-        {/* LiveKit video (when useLiveKit + debateId) - ControlBar on video for participants */}
-        {useLiveKit && debateId ? (
-          <div className="relative rounded-2xl overflow-hidden border-2 border-border bg-black" style={{ minHeight: 400 }}>
-            <DebateVideoConference
-              participantIds={[moderator.id, ...speakers.map((s) => s.id)]}
-              style={{ height: "100%", minHeight: 400, display: "flex", flexDirection: "column" }}
-              showMediaControls={isParticipant}
-              cssFilter={
-                isParticipant && !isVirtualBackground(cameraEffect)
-                  ? (cameraEffects.find((e) => e.id === cameraEffect)?.filter ?? "")
-                  : undefined
-              }
-              extraControls={
-                isParticipant ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-9 gap-1.5 shrink-0"
-                    onClick={() => setShowBackgroundModal(true)}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    <span className="text-xs font-medium hidden sm:inline">Background</span>
-                  </Button>
-                ) : null
-              }
-            />
-          </div>
-        ) : (
-          <>
-            {/* YouTube Live embed (when admin provides stream URL) */}
-            {youtubeLiveUrl && extractYoutubeVideoId(youtubeLiveUrl) && (
-              <div className="rounded-2xl overflow-hidden border-2 border-border bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${extractYoutubeVideoId(youtubeLiveUrl)}?autoplay=0`}
-                  title="Live debate stream"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full aspect-video"
-                />
-              </div>
-            )}
-
-            {/* Background effects - button opens modal */}
-            {isParticipant && !myVideoOff && (
-              <div className="flex justify-end mb-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-9 gap-1.5 shadow-md"
-                  onClick={() => setShowBackgroundModal(true)}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-medium">Background effects</span>
-                </Button>
-              </div>
-            )}
-
-            {/* Debate Stage: only moderator + scholars (no viewers) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { ...moderator, isMuted: currentUser?.id === moderator.id ? myMuted : false, isVideoOff: currentUser?.id === moderator.id ? myVideoOff : true, isSpeaking: currentUser?.id === moderator.id ? iAmSpeaking : false, position: "mod" as const },
-            ...speakers.slice(0, 2).map((s, i) => ({ ...s, position: (i === 0 ? "A" : "B") as "A" | "B" })),
-          ].map((participant, i) => {
-            const isCurrentUser = participant.id === currentUser?.id;
-            const isMod = participant.position === "mod";
-            const posLabel = isMod ? "Moderator" : `Position ${participant.position}`;
-            const accentBg = isMod ? "rgb(245 158 11 / 0.2)" : i === 1 ? "hsl(var(--primary) / 0.2)" : "hsl(var(--secondary) / 0.2)";
-            const accentClass = isMod ? "text-amber-600" : i === 1 ? "text-primary" : "text-secondary";
-            const accentBgClass = isMod ? "bg-amber-500/20" : i === 1 ? "bg-primary/20" : "bg-secondary/20";
-            return (
-              <motion.div
-                key={participant.id}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={cn(
-                  "relative rounded-2xl border-2 overflow-hidden flex flex-col",
-                  participant.isSpeaking && !participant.isMuted
-                    ? isMod ? "border-amber-500 shadow-lg shadow-amber-500/20" : i === 1 ? "border-primary shadow-lg shadow-primary/20" : "border-secondary shadow-lg shadow-secondary/20"
-                    : "border-border"
-                )}
-                style={{ minHeight: 280 }}
-              >
-                {/* Top indicators */}
-                <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest z-10"
-                  style={{ backgroundColor: accentBg }}>
-                  {posLabel}
-                </div>
-                <div className="absolute top-3 right-3 flex gap-1 z-10">
-                  {participant.isMuted && (
-                    <div className="w-7 h-7 rounded-full bg-destructive/20 border border-destructive/30 flex items-center justify-center" title="Muted">
-                      <MicOff className="h-3.5 w-3.5 text-destructive" />
-                    </div>
-                  )}
-                  {participant.isVideoOff && (
-                    <div className="w-7 h-7 rounded-full bg-destructive/20 border border-destructive/30 flex items-center justify-center" title="Camera off">
-                      <VideoOff className="h-3.5 w-3.5 text-destructive" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Main content - camera fills full card when current user has it on */}
-                <div className={cn(
-                  "flex-1 flex flex-col relative overflow-hidden",
-                  isCurrentUser && !myVideoOff ? "min-h-[260px]" : ""
-                )}>
-                  {isCurrentUser && !myVideoOff ? (
-                    // Camera fills entire card - effect applied only when user selects
-                    <div className="absolute inset-0 bg-black">
-                      <video
-                        ref={localVideoRef}
-                        autoPlay
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                        style={{
-                          transform: "scaleX(-1)",
-                          filter: vbActive ? "" : (cameraEffects.find(e => e.id === cameraEffect)?.filter ?? ""),
-                        }}
-                        onLoadedData={(e) => e.currentTarget.play().catch(() => {})}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-card to-muted/60">
-                      <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-2", accentBgClass)}>
-                        <span className={cn("text-2xl font-bold", accentClass)}>
-                          {participant.name.charAt(0)}
-                        </span>
-                      </div>
-                      <p className="font-bold text-foreground text-sm">{participant.name}</p>
-                      <Badge className={cn(roleLabels[participant.role]?.color ?? "bg-muted text-muted-foreground", "mt-1 text-[10px]")}>
-                        {roleLabels[participant.role]?.label ?? "Member"}
-                      </Badge>
-                      {participant.isSpeaking && !participant.isMuted && (
-                        <div className="flex items-end gap-1 mt-3">
-                          {[2, 3, 5, 4, 6, 4, 5, 3, 2].map((h, j) => (
-                            <div key={j} className={cn("w-1 rounded-full animate-pulse", accentClass)} style={{ height: `${h * 2.5}px`, animationDelay: `${j * 0.08}s` }} />
-                          ))}
-                          <span className={cn("text-[10px] ml-1.5 font-medium", accentClass)}>Speaking</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Controls bar when camera on - no overlay/background color */}
-                  {isCurrentUser && !myVideoOff && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-                      <p className="font-bold text-white text-sm">{participant.name}</p>
-                      <Badge className={cn(roleLabels[participant.role]?.color ?? "bg-muted text-muted-foreground", "mt-1 text-[10px]")}>
-                        {roleLabels[participant.role]?.label ?? "Member"}
-                      </Badge>
-                      {participant.isSpeaking && !participant.isMuted && (
-                        <div className="flex items-end gap-1 mt-2">
-                          {[2, 3, 5, 4, 6, 4, 5, 3, 2].map((h, j) => (
-                            <div key={j} className={cn("w-1 rounded-full animate-pulse", accentClass)} style={{ height: `${h * 2.5}px`, animationDelay: `${j * 0.08}s` }} />
-                          ))}
-                          <span className={cn("text-[10px] ml-1.5 font-medium", accentClass)}>Speaking</span>
-                        </div>
-                      )}
-                      <div className="mt-3 flex justify-center items-center gap-2 flex-wrap">
-                        <MediaControls myMuted={myMuted} myVideoOff={myVideoOff} onToggleMic={handleToggleMic} onToggleVideo={handleToggleVideo} variant="video" />
-                        <Button size="icon" variant="outline" className="h-8 w-8" title="Background effects" onClick={() => setShowBackgroundModal(true)}>
-                          <Sparkles className="h-3.5 w-3.5" />
-                        </Button>
-                        {!myMuted && (
-                          <div className="relative h-8 min-w-[48px] flex items-center gap-1">
-                            <Volume2 className="h-4 w-4 text-foreground shrink-0" />
-                            <div className="h-2 w-8 bg-muted rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min((audioLevel / 255) * 100, 100)}%` }} />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Local controls – only for current user (when camera off; when camera on, controls are in overlay) */}
-                  {isCurrentUser && myVideoOff && (
-                    <div className="mt-4 w-full border-t pt-3 flex justify-center gap-3 items-start">
-                      <div className="flex flex-col items-center gap-1">
-                        <MediaControls myMuted={myMuted} myVideoOff={myVideoOff} onToggleMic={handleToggleMic} onToggleVideo={handleToggleVideo} variant="video" />
-                        <span className="text-[8px] text-muted-foreground">{myMuted ? "Muted" : "Live"} · {myVideoOff ? "Cam Off" : "Cam On"}</span>
-                      </div>
-
-                      {/* Audio level indicator (only when mic on) */}
-                      {!myMuted && (
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="relative h-8 min-w-[48px] flex items-center gap-1">
-                            <Volume2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <div className="h-2 w-8 bg-muted rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min((audioLevel / 255) * 100, 100)}%` }} />
-                            </div>
-                          </div>
-                          <span className="text-[8px] text-muted-foreground">Level</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-          </>
-        )}
-
-        {/* Bottom Section */}
-        <div className="grid lg:grid-cols-3 gap-4">
-
-          {/* Left: Voting + Participants (no separate "Your Controls" card) */}
-          <div className="space-y-4">
-
-            {/* Clarity Voting */}
-            {isAuthenticated ? (
-              <Card>
-                <CardHeader className="py-2.5 pb-1">
-                  <CardTitle className="text-xs flex items-center gap-2">
-                    <BarChart3 className="h-3.5 w-3.5 text-primary" /> Clarity Voting
-                    <span className="text-[10px] font-normal text-muted-foreground ml-auto">{totalVotes} votes</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3 space-y-2.5">
-                  {[
-                    { side: "A" as const, name: speakers[0]?.name.split(" ")[0] ?? "—", pct: pctA, bg: "bg-primary" },
-                    { side: "B" as const, name: speakers[1]?.name.split(" ")[0] ?? "—", pct: pctB, bg: "bg-secondary" },
-                  ].map(({ side, name, pct, bg }) => (
-                    <div key={side}>
-                      <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span className={cn("font-medium", side === "A" ? "text-primary" : "text-secondary")}>Position {side} · {name}</span>
-                        <span className="text-muted-foreground">{pct}%</span>
-                      </div>
-                      <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
-                        <motion.div className={cn("absolute inset-y-0 left-0 rounded-full", bg)} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }} />
-                      </div>
-                    </div>
-                  ))}
-                  <div className="grid grid-cols-2 gap-2">
-                    {(["A", "B"] as const).map(side => (
-                      <Tooltip key={side}>
-                        <TooltipTrigger asChild>
-                          <Button size="sm" variant={myVote === side ? "default" : "outline"} className="text-xs" onClick={() => handleVote(side)} disabled={!!myVote || !isAuthenticated}>
-                            <Star className="h-3 w-3 mr-1" /> {myVote === side ? `✓ Voted ${side}` : `Position ${side}`}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{myVote === side ? `You voted for Position ${side}` : `Vote for Position ${side} clarity`}</TooltipContent>
-                      </Tooltip>
-                    ))}
-                  </div>
-                  {myVote && (
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-center text-muted-foreground">
-                      ✓ Your vote for Position {myVote} is recorded
-                    </motion.p>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="py-4 text-center">
-                  <Lock className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Sign in to vote on clarity</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Participants */}
-            <Card>
-              <CardHeader className="py-2.5 pb-1">
-                <CardTitle className="text-xs flex items-center gap-2"><Users className="h-3.5 w-3.5" /> Participants</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3">
-                <div className="space-y-1.5">
-                  {/* Moderator */}
-                  <div className="flex items-center gap-2 p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <div className="w-7 h-7 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-600">{moderator.name.charAt(0)}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{moderator.name}</p>
-                      <p className="text-[10px] text-amber-600">Moderator</p>
-                    </div>
-                    <Gavel className="h-3 w-3 text-amber-500" />
-                  </div>
-                  {/* Speakers */}
-                  {speakers.map((s, i) => (
-                    <div key={s.id} className={cn(
-                      "flex items-center gap-2 p-1.5 rounded-lg border",
-                      s.isSpeaking && !s.isMuted ? "bg-primary/5 border-primary/20" : "bg-background/50 border-transparent"
-                    )}>
-                      <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold", i === 0 ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary")}>
-                        {s.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{s.name}</p>
-                        <p className={cn("text-[10px]", i === 0 ? "text-primary" : "text-secondary")}>
-                          Pos. {i === 0 ? "A" : "B"}{s.isMuted ? " · 🔇" : ""}{s.isVideoOff ? " · 📷" : ""}
-                        </p>
-                      </div>
-                      {s.isSpeaking && !s.isMuted && (
-                        <div className="flex items-end gap-0.5">
-                          {[2, 3, 4, 3, 2].map((h, j) => (
-                            <div key={j} className="w-0.5 bg-primary rounded-full animate-pulse" style={{ height: `${h * 2}px`, animationDelay: `${j * 0.1}s` }} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {/* Current user speaking indicator */}
-                  {iAmSpeaking && isSpeaker && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                      <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">{currentUser?.name?.charAt(0) ?? "Y"}</div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium">{currentUser?.name ?? "You"}</p>
-                        <p className="text-[10px] text-emerald-600 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Speaking (live)
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                  {handRaised && canUseHandRaise && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs">{currentUser?.name?.charAt(0) ?? "Y"}</div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium">{currentUser?.name ?? "You"}</p>
-                        <p className="text-[10px] text-amber-600">✋ Hand Raised</p>
-                      </div>
-                      <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={handleRaiseHand}>Lower</Button>
-                    </motion.div>
-                  )}
-                  {!handRaised && canUseHandRaise && !isSpeaker && currentUser?.id !== moderator.id && (
-                    <Button size="sm" variant="outline" className="w-full mt-2 gap-1.5" onClick={handleRaiseHand}>
-                      <Hand className="h-3.5 w-3.5" /> Raise Hand
-                    </Button>
-                  )}
-                  {/* Moderator media controls - same as side panel (synced) */}
-                  {currentUser?.id === moderator.id && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border mt-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium">{currentUser?.name ?? "You"}</p>
-                        <p className="text-[10px] text-muted-foreground">Your media</p>
-                      </div>
-                      <SidePanelMediaControls myMuted={myMuted} myVideoOff={myVideoOff} onToggleMic={handleToggleMic} onToggleVideo={handleToggleVideo} />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right: Q&A + Evidence */}
-          <div className="lg:col-span-2 space-y-4">
-            <Card className="flex flex-col" style={{ minHeight: 380 }}>
-              <CardHeader className="py-2.5 pb-0">
-                <div className="flex gap-1 border-b border-border pb-2">
-                  {availableTabs.map((tab: "chat" | "evidence") => (
-                    <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={cn("text-xs px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1",
-                        activeTab === tab ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
-                      )}>
-                      {tab === "chat"
-                        ? <><MessageSquare className="h-3 w-3" /> Q&A {pendingQs.length > 0 && isModerator && <span className="ml-0.5 px-1 py-0.5 rounded-full bg-red-500 text-white text-[9px]">{pendingQs.length}</span>}</>
-                        : <><BookMarked className="h-3 w-3" /> Evidence</>}
-                    </button>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col py-2 pb-3 overflow-hidden">
-                <AnimatePresence mode="wait">
-                  {activeTab === "chat" ? (
-                    <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col flex-1 overflow-hidden">
-                      <ScrollArea className="flex-1 pr-1">
-                        <div className="space-y-2 pb-1">
-                          {questions
-                            .sort((a, b) => b.upvotes - a.upvotes)
-                            .filter(q => q.approved || isModerator || q.userId === currentUser?.id)
-                            .map(q => (
-                              <div key={q.id} className={cn(
-                                "p-2.5 rounded-lg text-xs border",
-                                q.approved ? "bg-primary/5 border-primary/20" : "bg-muted/50 border-border"
-                              )}>
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <span className="font-semibold text-foreground">{q.user}</span>
-                                      {!q.approved && <Badge className="text-[9px] bg-amber-500/20 text-amber-600 py-0 px-1.5">Pending</Badge>}
-                                      <span className="text-muted-foreground/50 text-[10px]">{q.timestamp}</span>
-                                    </div>
-                                    <p className="text-muted-foreground leading-snug">{q.text}</p>
-                                  </div>
-                                  <button onClick={() => handleUpvote(q.id)} disabled={!isAuthenticated}
-                                    className={cn(
-                                      "flex flex-col items-center gap-0.5 px-1.5 py-1 rounded-md transition-colors flex-shrink-0",
-                                      q.upvotedByMe ? "text-primary bg-primary/10"
-                                        : isAuthenticated ? "text-muted-foreground hover:text-primary hover:bg-primary/5"
-                                        : "text-muted-foreground/40 cursor-not-allowed"
-                                    )}>
-                                    <ThumbsUp className="h-3 w-3" />
-                                    <span className="text-[10px] font-bold">{q.upvotes}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          {questions.filter(q => q.approved || isModerator || q.userId === currentUser?.id).length === 0 && (
-                            <div className="text-center py-8 text-muted-foreground">
-                              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                              <p className="text-xs">No questions yet — be the first!</p>
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
-                      {!currentUser ? (
-                        <div className="mt-2 p-2 text-center border border-dashed border-border rounded-lg">
-                          <p className="text-[10px] text-muted-foreground">
-                            <Lock className="h-3 w-3 inline mr-1" />
-                            <button onClick={() => router.push("/login")} className="underline text-primary">Sign in</button> to participate
-                          </p>
-                        </div>
-                      ) : !canUseQa ? (
-                        <div className="mt-2 p-2 text-center border border-dashed border-border rounded-lg">
-                          <p className="text-[10px] text-muted-foreground">
-                            <Lock className="h-3 w-3 inline mr-1" />
-                            Q&A is currently locked by moderator
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="flex gap-1.5 mt-2">
-                          <Input
-                            placeholder="Ask a question…"
-                            value={question}
-                            onChange={e => setQuestion(e.target.value)}
-                            onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSubmitQuestion()}
-                            className="text-xs h-8"
-                            maxLength={300}
-                            disabled={!canUseQa}
-                          />
-                          <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={handleSubmitQuestion} disabled={!question.trim()}>
-                            <Send className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                        <Shield className="h-2.5 w-2.5" /> Questions reviewed by moderator before appearing publicly
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.div key="evidence" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col flex-1 overflow-hidden">
-                      <div className="flex gap-1 mb-2">
-                        {(["all", "A", "B"] as const).map(f => (
-                          <Tooltip key={f}>
-                            <TooltipTrigger asChild>
-                              <button onClick={() => setEvidenceFilter(f)}
-                                className={cn("text-[10px] px-2.5 py-1 rounded-full font-semibold transition-colors",
-                                  evidenceFilter === f
-                                    ? f === "A" ? "bg-primary text-primary-foreground"
-                                      : f === "B" ? "bg-secondary text-secondary-foreground"
-                                      : "bg-foreground text-background"
-                                    : "bg-muted text-muted-foreground hover:text-foreground"
-                                )}>
-                                {f === "all" ? "All Evidence" : `Position ${f}`}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>{f === "all" ? "Show all evidence" : `Show ${f === "A" ? "পক্ষ (Position A)" : "বিপক্ষ (Position B)"} evidence only`}</TooltipContent>
-                          </Tooltip>
-                        ))}
-                      </div>
-                      <ScrollArea className="flex-1">
-                        {/* Position A left, Position B right - দুই পাশে আলাদা */}
-                        <div className={cn(
-                          "grid gap-3 pb-1",
-                          evidenceFilter === "all" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
-                        )}>
-                          {(evidenceFilter === "all" ? ["A", "B"] as const : [evidenceFilter]).map(side => {
-                            const sideEvs = evidences.filter(e => e.scholar === side);
-                            return (
-                              <div key={side} className={cn(
-                                "space-y-2",
-                                evidenceFilter === "all" && side === "B" && "md:border-l md:border-secondary/20 md:pl-3"
-                              )}>
-                                <p className={cn("text-[10px] font-bold uppercase", side === "A" ? "text-primary" : "text-secondary")}>
-                                  {side === "A" ? "পক্ষ (Position A)" : "বিপক্ষ (Position B)"}
-                                </p>
-                                {sideEvs.length === 0 ? (
-                                  <div className="text-center py-4 text-muted-foreground text-xs">No evidence</div>
-                                ) : (
-                                  sideEvs.map((ev, idx) => (
-                                    <div key={idx} className={cn(
-                                      "p-3 rounded-xl border text-xs",
-                                      side === "A"
-                                        ? "border-primary/20 bg-primary/5 text-left"
-                                        : "border-secondary/20 bg-secondary/5 text-right"
-                                    )}>
-                                      <div className={cn("flex items-center gap-1.5 mb-1.5", side === "B" && "justify-end")}>
-                                        <Badge className={cn("text-[9px] py-0 border", evidenceTypeConfig[ev.type].color)}>{evidenceTypeConfig[ev.type].label}</Badge>
-                                      </div>
-                                      {ev.arabic && <p className={cn("text-base font-arabic text-foreground leading-relaxed mb-1.5", side === "A" ? "text-left" : "text-right")} dir="rtl">{ev.arabic}</p>}
-                                      <p className={cn("text-muted-foreground italic", side === "B" && "text-right")}>&ldquo;{ev.translation}&rdquo;</p>
-                                      <p className={cn("text-muted-foreground/60 mt-1", side === "B" && "text-right")}>— {ev.reference}</p>
-                                    </div>
-                                  ))
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
-
-            {/* Debate Adab */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader className="py-2.5 pb-1">
-                <CardTitle className="text-xs flex items-center gap-2"><Scale className="h-3.5 w-3.5 text-primary" /> Debate Adab</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3">
-                <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground">
-                  {[
-                    { icon: CheckCircle,   text: "Arguments must be evidence-based", color: "text-primary" },
-                    { icon: AlertTriangle, text: "Personal attacks are prohibited",  color: "text-destructive" },
-                    { icon: Scale,         text: "Vote on clarity, not who 'won'",   color: "text-secondary" },
-                    { icon: BookOpen,      text: "All dalils are cited & verifiable", color: "text-primary" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <item.icon className={cn("h-3.5 w-3.5 flex-shrink-0", item.color)} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-          </main>
         </div>
 
-      {/* Floating "Your camera" preview - when user is viewer (not speaker) and camera is on */}
-      {isAuthenticated && !myVideoOff && !isSpeaker && (
-        <div className="fixed bottom-24 right-6 z-50 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-xl bg-black">
-          <div className="flex items-center justify-between px-2 py-1">
-            <p className="text-[10px] font-semibold text-primary">Your camera</p>
+        {/* Right Column: Sidebar (lg:col-span-4) */}
+        <aside className="lg:col-span-4 h-full sticky top-6">
+          <SidebarControl 
+            speakers={speakers.map(s => ({ ...s, role: "scholar" as const }))}
+            moderator={{ ...moderator, role: "moderator" as const }}
+            joiners={joiners.map(j => ({ ...j, role: "scholar" as const }))}
+            handRaisedUsers={handRaisedUsers}
+            isModerator={isModerator}
+            clarityA={clarityA}
+            clarityB={clarityB}
+            myVote={myVote}
+            onAdmit={(uid) => handleJoinRequests(uid, 'admit')}
+            onDeny={(uid) => handleJoinRequests(uid, 'deny')}
+            onDismissHand={(uid) => handleHandRaiseAction(uid)}
+            onVote={handleVote}
+          />
+        </aside>
+      </div>
+
+      {/* Floating Preview for non-speakers */}
+      {isAuthenticated && !myVideoOff && !isSpeaker && currentUser?.id !== moderator.id && (
+        <div className="fixed bottom-24 right-6 z-50 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-2xl bg-black transition-all hover:scale-105 duration-300">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-950 border-b border-white/5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary">Your Preview</p>
             <Button size="icon" variant="ghost" className="h-6 w-6 text-primary hover:bg-primary/20" onClick={() => setShowBackgroundModal(true)}>
               <Sparkles className="h-3 w-3" />
             </Button>
           </div>
-          <div className="w-40 h-32 bg-black">
+          <div className="w-56 h-40 bg-zinc-900">
             <video
               ref={localVideoRef}
               autoPlay
@@ -1647,8 +992,7 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
           </div>
         </div>
       )}
-
-      </div>
+    </div>
   );
 
   return (
@@ -1668,8 +1012,8 @@ export const LiveDebateRoom = (props: LiveDebateRoomProps) => {
         </div>
       ) : useLiveKit && debateId && liveKitToken && liveKitServerUrl ? (
         <LiveKitRoom
-          token={liveKitToken}
-          serverUrl={liveKitServerUrl}
+          token={liveKitToken ?? undefined}
+          serverUrl={liveKitServerUrl ?? undefined}
           connect={true}
           audio={isParticipant}
           video={isParticipant}

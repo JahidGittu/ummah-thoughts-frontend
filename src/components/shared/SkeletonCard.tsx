@@ -93,3 +93,49 @@ export function SkeletonStatCard() {
         </div>
     );
 }
+
+/**
+ * Scholar-style skeleton card for loading states.
+ */
+export function SkeletonScholarCard() {
+    return (
+        <div
+            className="rounded-2xl border border-border bg-card p-6 h-full flex flex-col overflow-hidden shadow-sm"
+            aria-hidden="true"
+            role="presentation"
+        >
+            <div className="flex items-center gap-4 mb-5">
+                <SkeletonBox className="w-16 h-16 rounded-2xl flex-shrink-0" />
+                <div className="space-y-2 flex-1">
+                    <SkeletonBox className="h-5 w-3/4" />
+                    <SkeletonBox className="h-3 w-1/2" />
+                </div>
+            </div>
+            <div className="space-y-2 mb-6">
+                <SkeletonBox className="h-3 w-full" />
+                <SkeletonBox className="h-3 w-5/6" />
+            </div>
+            <div className="mt-auto pt-4 border-t border-border/60 flex justify-between items-center">
+                <SkeletonBox className="h-3 w-24" />
+                <SkeletonBox className="h-3 w-12" />
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Grid of skeleton scholar cards.
+ */
+export function SkeletonScholarGrid({ count = 4 }: { count?: number }) {
+    return (
+        <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            aria-label="Loading scholars…"
+            aria-busy="true"
+        >
+            {Array.from({ length: count }).map((_, i) => (
+                <SkeletonScholarCard key={i} />
+            ))}
+        </div>
+    );
+}

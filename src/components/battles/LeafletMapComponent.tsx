@@ -70,6 +70,15 @@ const LeafletMapComponent = ({
         subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(mapRef.current);
+
+      // IMPORTANT: Invalide size after a short delay.
+      // This fix solves the "blank map" bug when Leaflet is rendered inside
+      // an animating container (like Framer Motion's AnimatePresence).
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+        }
+      }, 250);
     }
 
     return () => {

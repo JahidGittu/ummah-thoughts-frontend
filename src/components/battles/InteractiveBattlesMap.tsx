@@ -182,7 +182,7 @@ const InteractiveBattlesMap = ({ battles, isBn, onBattleSelect }: InteractiveBat
      *                The tooltip is clamped by calcTooltipPos, so it will
      *                never actually try to render outside these bounds.
      * ─────────────────────────────────────────────────────────────────── */
-    <div className="relative z-[1] w-full h-[750px] flex bg-card rounded-lg overflow-hidden border border-border">
+    <div className="relative z-[1] w-full min-h-[600px] h-[75vh] md:h-[750px] flex flex-col md:flex-row bg-card rounded-lg overflow-hidden border border-border shadow-2xl">
 
       {/* ── Sidebar ── z-10 ──────────────────────────────────────────────── */}
       <div className="relative z-10 w-80 flex-shrink-0 flex flex-col bg-muted/30 border-r border-border">

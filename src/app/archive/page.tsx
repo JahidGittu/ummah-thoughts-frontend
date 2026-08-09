@@ -191,89 +191,48 @@ const Archive = () => {
       excerptEn:
         'Understanding the consultative process mandated by the Quran and practiced by the Khulafa Rashidun...',
       excerptBn:
-        'কুরআন দ্বারা নির্দেশিত এবং খুলাফায়ে রাশেদীন দ্বারা অনুশীলিত পরামর্শ প্রক্রিয়া বোঝা...',
-      category: 'Role of Shura',
-      categoryBn: 'শূরার ভূমিকা',
-      scholar: 'Maulana Mawdudi',
-      scholarBn: 'মাওলানা মওদুদী',
-      references: 15,
-      complexity: 'intermediate',
-      date: '1445 Jumada II 28',
-      dateBn: '১৪৪৫ জুমাদাল আখির ২৮',
-      views: 1567,
-    },
-  ];
-
-  const toggleFilter = (filter: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
-    );
-  };
-
-  const clearFilters = () => setSelectedFilters([]);
-
-  const getFilteredDiscussions = () => {
-    if (selectedFilters.length === 0) return discussions;
-    
-    return discussions.filter((discussion) => {
-      const categoryMatch = selectedFilters.some(
-        (f) =>
-          f === discussion.category ||
-          f === discussion.categoryBn
-      );
-      const complexityMatch = selectedFilters.some((f) => f === discussion.complexity);
-      const scholarMatch = selectedFilters.some(
-        (f) =>
-          f === discussion.scholar ||
-          f === discussion.scholarBn
-      );
-
-      // If there are category/complexity/scholar filters, at least one must match
-      const hasFilters = selectedFilters.length > 0;
-      return hasFilters && (categoryMatch || complexityMatch || scholarMatch);
-    });
-  };
-
-  const filteredDiscussions = getFilteredDiscussions();
-
-  const viewIcons = {
-    grid: Grid,
-    list: List,
-    timeline: Clock,
-    mindmap: Brain,
-  };
-
-  return (
-    <TooltipProvider> 
-      <div className="min-h-screen bg-background">
+        'কুরআন দ্বারা নির্দেশিত এবং খুলাফায়ে রাশেদীন দ্বারা অনুশীলিত পরামর্শ প্রক্র�    <TooltipProvider> 
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute inset-0 islamic-pattern opacity-[0.03] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
         {/* Header */}
-        <section className="pt-32 pb-12 border-b border-border">
-          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="page-hero border-b border-border/50 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-3xl"
             >
-              <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
+              <Badge variant="outline" className="mb-6 px-4 py-1 border-primary/20 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom-2 duration-700">
+                Knowledge Repository
+              </Badge>
+              <h1 className="font-display text-5xl sm:text-6xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
                 {t('archive.title')}
               </h1>
-              <p className="text-muted-foreground text-lg">{t('archive.subtitle')}</p>
+              <p className="text-muted-foreground text-xl leading-relaxed max-w-2xl font-medium opacity-80">
+                {t('archive.subtitle')}
+              </p>
             </motion.div>
 
             {/* Search Bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-8 max-w-2xl"
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="mt-12 max-w-2xl relative group"
             >
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/60 group-focus-within:text-primary transition-colors" />
                 <input
                   type="text"
                   placeholder={t('archive.searchPlaceholder')}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full pl-14 pr-6 py-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-foreground text-lg placeholder:text-muted-foreground/40 shadow-2xl"
                 />
               </div>
             </motion.div>
@@ -281,21 +240,24 @@ const Archive = () => {
         </section>
 
         {/* Main Content */}
-        <section className="py-8">
-          <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row gap-8">
+        <section className="py-12 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row gap-10">
               {/* Sidebar Filters */}
               <motion.aside
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="lg:w-72 shrink-0"
+                transition={{ duration: 0.6 }}
+                className="lg:w-80 shrink-0"
               >
-                <div className="sticky top-24 space-y-6">
+                <div className="sticky top-28 space-y-8 glass p-6 rounded-3xl border-white/10 shadow-2xl shadow-primary/5">
                   {/* Filter Header */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Filter className="w-5 h-5 text-primary" />
-                      <h2 className="font-display font-semibold text-foreground">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Filter className="w-5 h-5 text-primary" />
+                      </div>
+                      <h2 className="font-display font-bold text-xl text-foreground">
                         {t('archive.filters')}
                       </h2>
                     </div>
@@ -304,7 +266,7 @@ const Archive = () => {
                         variant="ghost"
                         size="sm"
                         onClick={clearFilters}
-                        className="text-xs"
+                        className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5"
                       >
                         {t('archive.clearAll')}
                       </Button>
@@ -315,28 +277,28 @@ const Archive = () => {
                   {selectedFilters.length > 0 && (
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="w-full gap-2 border-dashed"
+                      size="lg"
+                      className="w-full gap-3 border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 text-xs font-bold uppercase tracking-widest transition-all duration-300"
                       onClick={() =>
                         toast.success(isBengali ? 'ফিল্টার সংরক্ষিত!' : 'Filter saved!')
                       }
                     >
-                      <Save className="w-4 h-4" />
+                      <Save className="w-4 h-4 text-primary" />
                       {isBengali ? 'এই ফিল্টার সংরক্ষণ করুন' : 'Save this filter'}
-                      <Badge variant="secondary" className="ml-auto text-[10px]">
-                        {isBengali ? 'শীঘ্রই' : 'Soon'}
+                      <Badge className="ml-auto text-[9px] bg-secondary text-secondary-foreground font-black">
+                        PRO
                       </Badge>
                     </Button>
                   )}
 
-                  {/* Selected Filters */}
+                  {/* Selected Filters Chips */}
                   {selectedFilters.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 animate-in fade-in duration-500">
                       {selectedFilters.map((filter) => (
-                        <Badge key={filter} variant="secondary" className="gap-1">
+                        <Badge key={filter} variant="secondary" className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
                           {filter}
                           <X
-                            className="w-3 h-3 cursor-pointer"
+                            className="w-3 h-3 cursor-pointer hover:scale-125 transition-transform"
                             onClick={() => toggleFilter(filter)}
                           />
                         </Badge>
@@ -344,116 +306,62 @@ const Archive = () => {
                     </div>
                   )}
 
-                  {/* Categories */}
+                  <Separator className="bg-white/5" />
+
+                  {/* Categories Collapsible */}
                   <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                      <span className="font-medium text-foreground">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
+                      <span className="font-bold text-xs uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary transition-colors">
                         {t('archive.categories')}
                       </span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-300 group-data-[state=open]:rotate-180" />
                     </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="space-y-2 mt-2">
-                        {categories.map((category) => (
-                          <label
-                            key={category.id}
-                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
+                    <CollapsibleContent className="space-y-1.5 mt-4 animate-in slide-in-from-top-2 duration-300">
+                      {categories.map((category) => (
+                        <label
+                          key={category.id}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 border border-transparent",
+                            selectedFilters.includes(category.nameEn) 
+                              ? "bg-primary/10 border-primary/20 text-primary shadow-sm shadow-primary/5" 
+                              : "hover:bg-white/5 text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-4 h-4 rounded border transition-colors flex items-center justify-center",
+                              selectedFilters.includes(category.nameEn) ? "bg-primary border-primary" : "border-white/20"
+                            )}>
                               <input
                                 type="checkbox"
-                                className="rounded border-border text-primary focus:ring-primary"
+                                className="hidden"
                                 checked={selectedFilters.includes(category.nameEn)}
                                 onChange={() => toggleFilter(category.nameEn)}
                               />
-                              <span className="text-sm text-foreground">
-                                {isBengali ? category.nameBn : category.nameEn}
-                              </span>
+                              {selectedFilters.includes(category.nameEn) && <Check className="w-3 h-3 text-white" />}
                             </div>
-                            <span className="text-xs text-muted-foreground">
-                              {category.count}
+                            <span className="text-sm font-semibold tracking-tight">
+                              {isBengali ? category.nameBn : category.nameEn}
                             </span>
-                          </label>
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Scholars */}
-                  <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                      <span className="font-medium text-foreground">
-                        {t('archive.scholars')}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="space-y-2 mt-2">
-                        {scholars.map((scholar) => (
-                          <label
-                            key={scholar.id}
-                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          >
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                className="rounded border-border text-primary focus:ring-primary"
-                                checked={selectedFilters.includes(scholar.nameEn)}
-                                onChange={() => toggleFilter(scholar.nameEn)}
-                              />
-                              <span className="text-sm text-foreground">
-                                {isBengali ? scholar.nameBn : scholar.nameEn}
-                              </span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {scholar.count}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Complexity */}
-                  <Collapsible defaultOpen>
-                    <CollapsibleTrigger className="flex items-center justify-between w-full py-2">
-                      <span className="font-medium text-foreground">
-                        {t('archive.complexity')}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="space-y-2 mt-2">
-                        {complexityLevels.map((level) => (
-                          <label
-                            key={level.id}
-                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              className="rounded border-border text-primary focus:ring-primary"
-                              checked={selectedFilters.includes(level.nameEn)}
-                              onChange={() => toggleFilter(level.nameEn)}
-                            />
-                            <span className="text-sm text-foreground">
-                              {isBengali ? level.nameBn : level.nameEn}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                          </div>
+                          <span className="text-[10px] font-bold opacity-40 px-2 py-0.5 rounded-full bg-black/20">
+                            {category.count}
+                          </span>
+                        </label>
+                      ))}
                     </CollapsibleContent>
                   </Collapsible>
 
                   {/* Timeline Filter */}
-                  <div className="space-y-2">
-                    <span className="font-medium text-foreground">
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <span className="font-bold text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       {t('archive.timeline')}
                     </span>
                     <Select>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl hover:bg-white/[0.08] transition-all">
                         <SelectValue placeholder={t('archive.selectPeriod')} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-zinc-900 border-white/10">
                         <SelectItem value="all">{t('archive.allTime')}</SelectItem>
                         <SelectItem value="week">{t('archive.thisWeek')}</SelectItem>
                         <SelectItem value="month">{t('archive.thisMonth')}</SelectItem>
@@ -465,31 +373,33 @@ const Archive = () => {
               </motion.aside>
 
               {/* Main Content Area */}
-              <div className="flex-1">
+              <div className="flex-1 space-y-10">
                 {/* View Options & Sort */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-4 glass rounded-3xl border-white/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-sm font-medium text-muted-foreground">
                       {t('archive.showing')}{' '}
-                      <strong className="text-foreground">{discussions.length}</strong>{' '}
+                      <strong className="text-foreground text-base tracking-tight">{filteredDiscussions.length}</strong>{' '}
                       {t('archive.results')}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-6">
                     {/* View Toggle */}
-                    <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+                    <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/40 border border-white/5">
                       {(['grid', 'list', 'timeline', 'mindmap'] as ViewType[]).map((viewType) => {
                         const Icon = viewIcons[viewType];
                         return (
                           <button
                             key={viewType}
                             onClick={() => setView(viewType)}
-                            className={`p-2 rounded-md transition-colors ${
+                            className={cn(
+                              "p-2.5 rounded-xl transition-all duration-300 transform",
                               view === viewType
-                                ? 'bg-card text-primary shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-110"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            )}
                             title={t(`archive.view.${viewType}`)}
                           >
                             <Icon className="w-4 h-4" />
@@ -500,10 +410,10 @@ const Archive = () => {
 
                     {/* Sort */}
                     <Select defaultValue="newest">
-                      <SelectTrigger className="w-40">
+                      <SelectTrigger className="w-48 h-11 bg-black/40 border-white/5 rounded-2xl hover:bg-black/60 transition-all font-semibold text-xs uppercase tracking-widest">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-zinc-900 border-white/10">
                         <SelectItem value="newest">{t('archive.sort.newest')}</SelectItem>
                         <SelectItem value="oldest">{t('archive.sort.oldest')}</SelectItem>
                         <SelectItem value="popular">{t('archive.sort.popular')}</SelectItem>
@@ -513,116 +423,118 @@ const Archive = () => {
                   </div>
                 </div>
 
-                {/* Explainable Search - Why These Results */}
-                {selectedFilters.length > 0 && (
-                  <SearchExplanation
-                    filters={{
-                      topic: selectedFilters.find((f) =>
-                        categories.some((c) => c.nameEn === f)
-                      ),
-                      complexity: selectedFilters.find((f) =>
-                        complexityLevels.some((l) => l.nameEn === f)
-                      ),
-                      scholar: selectedFilters.find((f) =>
-                        scholars.some((s) => s.nameEn === f)
-                      ),
-                    }}
-                    className="mb-6"
-                  />
-                )}
-
-                {/* Smart Suggestions */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/20"
-                >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">
-                      {t('archive.recommended')}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                    >
-                      {isBengali ? 'নেতৃত্বের বৈশিষ্ট্য' : 'Leadership Qualities'}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                    >
-                      {isBengali ? 'শূরা ও পরামর্শ' : 'Shura & Consultation'}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                    >
-                      {isBengali ? 'আধুনিক চ্যালেঞ্জ' : 'Modern Challenges'}
-                    </Badge>
-                  </div>
-                </motion.div>
-
                 {/* Discussions Grid/List */}
                 <div
                   className={
                     view === 'grid'
-                      ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
-                      : 'space-y-4'
+                      ? 'grid grid-cols-1 md:grid-cols-2 gap-8'
+                      : 'space-y-6'
                   }
                 >
                   {filteredDiscussions.length > 0 ? (
                     filteredDiscussions.map((discussion, index) => (
                     <motion.article
                       key={discussion.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1, duration: 0.5 }}
                       onClick={() => router.push(`/archive/${discussion.id}`)}
-                      className={`group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all cursor-pointer ${
-                        view === 'list' ? 'flex gap-6' : ''
-                      }`}
+                      className={cn(
+                        "premium-card group p-8 flex flex-col justify-between min-h-[320px] transition-all duration-500 hover:scale-[1.02]",
+                        view === 'list' && "flex-row min-h-0 py-6 items-center"
+                      )}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <Badge variant="secondary" className="text-xs">
-                            {isBengali ? discussion.categoryBn : discussion.category}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {discussion.complexity}
-                          </Badge>
-                          {/* Bias Transparency Badge - show on some discussions */}
+                      <div className="space-y-5">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-2">
+                             <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20 px-2.5 py-1">
+                               {isBengali ? discussion.categoryBn : discussion.category}
+                             </Badge>
+                             <Badge variant="outline" className={cn(
+                               "text-[9px] font-black uppercase tracking-widest px-2.5 py-1 border-white/10",
+                               discussion.complexity === 'advanced' ? "text-secondary border-secondary/20 bg-secondary/5" : "text-muted-foreground"
+                             )}>
+                               {discussion.complexity}
+                             </Badge>
+                          </div>
                           {discussion.id % 2 === 0 && (
                             <BiasTransparencyBadge hasDisagreement={true} />
                           )}
                         </div>
 
-                        <h3 className="font-display text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                        <h3 className="font-display text-2xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-2 drop-shadow-sm">
                           {isBengali ? discussion.titleBn : discussion.titleEn}
                         </h3>
 
-                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 opacity-70 group-hover:opacity-100 transition-opacity">
                           {isBengali ? discussion.excerptBn : discussion.excerptEn}
                         </p>
+                      </div>
 
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3.5 h-3.5" />
-                            <span>{isBengali ? discussion.scholarBn : discussion.scholar}</span>
+                      <div className="mt-8 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-6">
+                        <div className="flex flex-wrap items-center gap-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+                          <div className="flex items-center gap-2 group/meta">
+                            <Users className="w-3.5 h-3.5 text-primary group-hover/meta:scale-110 transition-transform" />
+                            <span className="text-muted-foreground group-hover/meta:text-foreground transition-colors">{isBengali ? discussion.scholarBn : discussion.scholar}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <BookOpen className="w-3.5 h-3.5" />
-                            <span>
+                          <div className="flex items-center gap-2 group/meta">
+                            <BookOpen className="w-3.5 h-3.5 text-secondary group-hover/meta:scale-110 transition-transform" />
+                            <span className="text-muted-foreground group-hover/meta:text-foreground transition-colors">
                               {discussion.references} {t('archive.references')}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-2 group/meta">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground/30" />
                             <span>{isBengali ? discussion.dateBn : discussion.date}</span>
                           </div>
-                          <div className="flex items-center gap-1">
+                        </div>
+
+                        <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500">
+                          Explore <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </motion.article>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-32 text-center glass rounded-[40px] border-dashed border-white/5">
+                      <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/10">
+                        <AlertCircle className="w-10 h-10 text-primary/40 animate-pulse" />
+                      </div>
+                      <h3 className="text-2xl font-display font-bold text-foreground mb-3 font-display">
+                        {isBengali ? 'কোনো ফলাফল পাওয়া যায়নি' : 'Silence of the Archive'}
+                      </h3>
+                      <p className="text-muted-foreground mb-8 max-w-sm mx-auto text-sm font-medium">
+                        {isBengali ? 'আপনার অনুসন্ধান কোনো রেকর্ডের সাথে মেলেনি। ফিল্টার পরিবর্তন করে দেখুন।' : 'No records match your current intellectual journey. Try adjusting your perspective (filters).'}
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={clearFilters}
+                        size="lg"
+                        className="rounded-2xl border-primary/20 hover:bg-primary hover:text-white transition-all shadow-xl shadow-primary/5 px-8"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        {isBengali ? 'ফিল্টার সাফ করুন' : 'Reset My Journey'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {filteredDiscussions.length > 0 && (
+                  <div className="text-center pt-12 pb-24">
+                    <Button variant="ghost" size="lg" className="h-16 px-12 rounded-[2rem] border border-white/5 hover:bg-primary hover:text-white transition-all duration-500 group shadow-2xl">
+                      <span className="text-xs font-black uppercase tracking-[0.3em] mr-3">Deepen Your Search</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform duration-500" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </TooltipProvider>
+r gap-1">
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>
                               {discussion.views.toLocaleString()} {t('archive.views')}
