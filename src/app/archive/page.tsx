@@ -23,6 +23,7 @@ import {
   X,
   Save,
   AlertCircle,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import {
   SearchExplanation,
   BiasTransparencyBadge,
@@ -47,6 +50,13 @@ import { toast } from 'sonner';
 
 type ViewType = 'grid' | 'list' | 'timeline' | 'mindmap';
 
+const viewIcons: Record<ViewType, any> = {
+  grid: Grid,
+  list: List,
+  timeline: Clock,
+  mindmap: Brain,
+};
+
 const Archive = () => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -54,6 +64,8 @@ const Archive = () => {
   const [view, setView] = useState<ViewType>('grid');
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const clearFilters = () => setSelectedFilters([]);
+  const toggleFilter = (filter: string) => setSelectedFilters(prev => prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]);
 
   const categories = [
     {
@@ -191,7 +203,26 @@ const Archive = () => {
       excerptEn:
         'Understanding the consultative process mandated by the Quran and practiced by the Khulafa Rashidun...',
       excerptBn:
-        'কুরআন দ্বারা নির্দেশিত এবং খুলাফায়ে রাশেদীন দ্বারা অনুশীলিত পরামর্শ প্রক্র�    <TooltipProvider> 
+        'কুরআন দ্বারা নির্দেশিত এবং খুলাফায়ে রাশেদীন দ্বারা অনুশীলিত পরামর্শ প্রক্রিয়া...',
+      category: 'Shura & Governance',
+      categoryBn: 'শূরা ও শাসনব্যবস্থা',
+      scholar: 'Al-Mawardi',
+      scholarBn: 'আল-মাওয়ার্দী',
+      references: 15,
+      complexity: 'intermediate',
+      date: '1445 Rajab 1',
+      dateBn: '১৪৪৫ রজব ১',
+      views: 2450,
+    },
+  ];
+
+  const filteredDiscussions = discussions.filter(discussion => {
+    if (selectedFilters.length === 0) return true;
+    return selectedFilters.includes(discussion.category) || selectedFilters.includes(discussion.categoryBn);
+  });
+
+  return (
+    <TooltipProvider> 
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Background Decorative Elements */}
         <div className="absolute inset-0 islamic-pattern opacity-[0.03] pointer-events-none" />
@@ -533,50 +564,7 @@ const Archive = () => {
           </div>
         </section>
       </div>
-    </TooltipProvider>
-r gap-1">
-                            <BarChart3 className="w-3.5 h-3.5" />
-                            <span>
-                              {discussion.views.toLocaleString()} {t('archive.views')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 self-center" />
-                    </motion.article>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-12">
-                      <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg text-muted-foreground mb-4">
-                        {isBengali ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found'}
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={clearFilters}
-                        className="gap-2"
-                      >
-                        <X className="w-4 h-4" />
-                        {isBengali ? 'ফিল্টার সাফ করুন' : 'Clear filters'}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Load More */}
-                <div className="text-center mt-12">
-                  <Button variant="outline" className="gap-2">
-                    {t('archive.loadMore')}
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </TooltipProvider>
+                                </TooltipProvider>
   );
 };
 
