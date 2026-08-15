@@ -83,7 +83,7 @@ export const FoundationsGrid = () => {
               className={`group relative rounded-2xl p-8 bg-gradient-to-br ${foundation.gradient} border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl cursor-pointer`}
             >
               {/* Islamic Pattern Overlay */}
-              <div className="absolute inset-0 islamic-pattern opacity-30 rounded-2xl" />
+              <div className="absolute inset-0 islamic-pattern-stars opacity-70 rounded-2xl" />
               
               <div className="relative z-10">
                 <div className={`w-16 h-16 rounded-xl ${foundation.iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>

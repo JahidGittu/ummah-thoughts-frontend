@@ -191,7 +191,7 @@ export const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleSearch}
-                className="hidden sm:flex h-9 w-9 rounded-xl hover:bg-muted/60"
+                className="hidden sm:flex h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label={t('common.search')}
               >
                 <Search className="w-4 h-4" />
@@ -210,7 +210,7 @@ export const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleThemeToggle}
-                className="h-9 w-9 rounded-xl hover:bg-muted/60"
+                className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label={t('common.toggleTheme', 'Toggle theme')}
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -247,7 +247,7 @@ export const Navbar = () => {
                         variant="ghost"
                         size="icon"
                         onClick={handleLogout}
-                        className="h-9 w-9 rounded-xl hover:bg-muted/60"
+                        className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                         aria-label={t('common.logout', 'Logout')}
                       >
                         <User className="w-4 h-4" />

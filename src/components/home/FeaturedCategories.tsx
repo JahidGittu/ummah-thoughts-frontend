@@ -73,7 +73,7 @@ export const FeaturedCategories = () => {
   ];
 
   return (
-    <section className="py-24 relative bg-muted/20">
+    <section className="relative overflow-hidden py-24 relative bg-muted/20">
       {/* Subtle divider */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -149,6 +149,7 @@ export const FeaturedCategories = () => {
           ))}
         </motion.div>
       </div>
-    </section>
+      <div className="absolute inset-0 islamic-pattern opacity-50 pointer-events-none" />
+</section>
   );
 };

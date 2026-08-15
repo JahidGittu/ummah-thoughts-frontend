@@ -36,7 +36,7 @@ export const HowToUseGuide = () => {
   ];
 
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+    <section className="relative overflow-hidden py-20 bg-gradient-to-b from-background to-muted/30">
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -110,6 +110,7 @@ export const HowToUseGuide = () => {
           </motion.div>
         </div>
       </div>
-    </section>
+      <div className="absolute inset-0 islamic-pattern-arch opacity-40 pointer-events-none" />
+</section>
   );
 };

@@ -27,7 +27,7 @@ export const FeaturedTopic = () => {
   };
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="relative overflow-hidden py-24 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
       
@@ -120,6 +120,7 @@ export const FeaturedTopic = () => {
           </div>
         </motion.div>
       </div>
-    </section>
+      <div className="absolute inset-0 islamic-pattern-arabesque opacity-40 pointer-events-none" />
+</section>
   );
 };

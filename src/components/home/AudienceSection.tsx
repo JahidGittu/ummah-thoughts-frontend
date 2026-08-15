@@ -41,7 +41,7 @@ export const AudienceSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-muted/30 border-y border-border">
+    <section className="relative overflow-hidden py-20 bg-muted/30 border-y border-border">
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -141,6 +141,7 @@ export const AudienceSection = () => {
           </motion.div>
         </div>
       </div>
-    </section>
+      <div className="absolute inset-0 islamic-pattern-arch opacity-40 pointer-events-none" />
+</section>
   );
 };

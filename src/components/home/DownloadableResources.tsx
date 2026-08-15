@@ -60,7 +60,7 @@ export const DownloadableResources = () => {
   ];
 
   return (
-    <section className="py-24 bg-muted/30 relative">
+    <section className="relative overflow-hidden py-24 bg-muted/30 relative">
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -136,6 +136,7 @@ export const DownloadableResources = () => {
           </Button>
         </motion.div>
       </div>
-    </section>
+      <div className="absolute inset-0 islamic-pattern-arch opacity-40 pointer-events-none" />
+</section>
   );
 };
