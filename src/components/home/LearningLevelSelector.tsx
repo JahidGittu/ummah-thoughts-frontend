@@ -84,10 +84,10 @@ export const LearningLevelSelector = () => {
               className={`relative cursor-pointer p-6 rounded-2xl border-2 transition-all ${
                 selectedLevel === level.id
                   ? 'border-primary bg-primary/5 shadow-lg'
-                  : 'border-border hover:border-primary/30 bg-card/95 backdrop-blur-md shadow-sm z-10'
+                  : 'border-border hover:border-primary/30 bg-card/90 backdrop-blur-sm relative overflow-hidden shadow-sm z-10'
               }`}
             >
-              <div className="flex items-center gap-3 mb-4">
+              <div className="absolute inset-0 islamic-pattern-sm opacity-15 pointer-events-none rounded-2xl" /><div className="flex items-center gap-3 mb-4 relative z-10">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   selectedLevel === level.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
                 }`}>
@@ -134,7 +134,7 @@ export const LearningLevelSelector = () => {
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-stars opacity-12 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-stars opacity-85 pointer-events-none" />
 </section>
   );
 };

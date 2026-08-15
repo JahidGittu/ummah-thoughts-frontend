@@ -82,8 +82,8 @@ export const HowToUseGuide = () => {
                       {step.number}
                     </span>
                   </div>
-                  <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-sm z-10 border border-border p-6 flex-1">
-                    <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  <div className="bg-card/90 backdrop-blur-sm relative overflow-hidden rounded-xl shadow-sm z-10 border border-border p-6 flex-1">
+                    <div className="absolute inset-0 islamic-pattern-sm opacity-15 pointer-events-none rounded-xl" /><h3 className="font-display relative z-10 text-lg font-semibold text-foreground mb-2">
                       {isBengali ? step.titleBn : step.titleEn}
                     </h3>
                     <p className="text-muted-foreground">
@@ -110,7 +110,7 @@ export const HowToUseGuide = () => {
           </motion.div>
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-12 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arch opacity-85 pointer-events-none" />
 </section>
   );
 };
