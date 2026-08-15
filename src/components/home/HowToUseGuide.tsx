@@ -82,7 +82,7 @@ export const HowToUseGuide = () => {
                       {step.number}
                     </span>
                   </div>
-                  <div className="bg-card rounded-xl border border-border p-6 flex-1">
+                  <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-sm z-10 border border-border p-6 flex-1">
                     <h3 className="font-display text-lg font-semibold text-foreground mb-2">
                       {isBengali ? step.titleBn : step.titleEn}
                     </h3>
@@ -110,7 +110,7 @@ export const HowToUseGuide = () => {
           </motion.div>
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arch opacity-12 pointer-events-none" />
 </section>
   );
 };

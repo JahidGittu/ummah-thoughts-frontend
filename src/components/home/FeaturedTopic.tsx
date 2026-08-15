@@ -50,7 +50,7 @@ export const FeaturedTopic = () => {
           {/* Featured Topic Card */}
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-8 shadow-lg">
+            <div className="lg:col-span-2 bg-card/95 backdrop-blur-md rounded-2xl shadow-md z-10 border border-border p-8 shadow-lg">
               <Badge variant="secondary" className="mb-4">
                 {featuredTopic.category}
               </Badge>
@@ -120,7 +120,7 @@ export const FeaturedTopic = () => {
           </div>
         </motion.div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arabesque opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arabesque opacity-12 pointer-events-none" />
 </section>
   );
 };

@@ -84,7 +84,7 @@ export const LearningLevelSelector = () => {
               className={`relative cursor-pointer p-6 rounded-2xl border-2 transition-all ${
                 selectedLevel === level.id
                   ? 'border-primary bg-primary/5 shadow-lg'
-                  : 'border-border hover:border-primary/30 bg-card'
+                  : 'border-border hover:border-primary/30 bg-card/95 backdrop-blur-md shadow-sm z-10'
               }`}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -134,7 +134,7 @@ export const LearningLevelSelector = () => {
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-stars opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-stars opacity-12 pointer-events-none" />
 </section>
   );
 };

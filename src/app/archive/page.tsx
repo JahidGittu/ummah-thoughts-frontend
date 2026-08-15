@@ -225,7 +225,7 @@ const Archive = () => {
     <TooltipProvider> 
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Background Decorative Elements */}
-        <div className="absolute inset-0 islamic-pattern opacity-60 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 

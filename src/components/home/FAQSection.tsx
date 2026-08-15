@@ -82,7 +82,7 @@ export const FAQSection = () => {
                 <AccordionItem
                   key={index}
                   value={`item-${index}`}
-                  className="bg-card rounded-xl border border-border px-6 data-[state=open]:border-primary/30 transition-colors"
+                  className="bg-card/95 backdrop-blur-md shadow-sm z-10 rounded-xl border border-border px-6 data-[state=open]:border-primary/30 transition-colors"
                 >
                   <AccordionTrigger className="text-left font-display font-semibold text-foreground hover:no-underline py-5">
                     {isBengali ? faq.questionBn : faq.questionEn}

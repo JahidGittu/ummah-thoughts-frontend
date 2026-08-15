@@ -127,7 +127,7 @@ export default function DebatesPage() {
       <div className="min-h-screen bg-background">
         <main className="relative overflow-hidden pt-28 pb-24 px-4" id="main-content">
         {/* Background Islamic Pattern */}
-        <div className="absolute inset-0 islamic-pattern-arch opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern-arch opacity-12 pointer-events-none" />
         <div className="absolute top-10 right-10 w-64 h-64 islamic-pattern-stars opacity-35 pointer-events-none rounded-full blur-[1px]" />
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">

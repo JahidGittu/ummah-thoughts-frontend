@@ -136,7 +136,7 @@ export const DownloadableResources = () => {
           </Button>
         </motion.div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arch opacity-12 pointer-events-none" />
 </section>
   );
 };

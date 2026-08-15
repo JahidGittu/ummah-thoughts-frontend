@@ -305,7 +305,7 @@ export default function ToolsPage() {
         {/* Header */}
         <section className="page-hero relative overflow-hidden border-b border-border/50">
         {/* Background Islamic Pattern */}
-        <div className="absolute inset-0 islamic-pattern-stars opacity-60 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern-stars opacity-12 pointer-events-none" />
         <div className="absolute top-4 right-4 w-48 h-48 islamic-pattern-stars opacity-30 pointer-events-none rounded-full blur-[1px]" />
         <div className="absolute bottom-4 left-4 w-48 h-48 islamic-pattern-arch opacity-30 pointer-events-none" />
           <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

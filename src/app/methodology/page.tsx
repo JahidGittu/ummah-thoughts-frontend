@@ -53,7 +53,7 @@ export default function MethodologyPage() {
       <div className="min-h-screen bg-background">
         <main className="relative overflow-hidden max-w-11/12 mx-auto px-4 py-16 pt-28">
         {/* Background Islamic Pattern */}
-        <div className="absolute inset-0 islamic-pattern opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
         <div className="absolute top-10 right-10 w-64 h-64 islamic-pattern-stars opacity-35 pointer-events-none rounded-full blur-[1px]" />
           {/* Header */}
           <motion.div

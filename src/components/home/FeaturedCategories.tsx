@@ -149,7 +149,7 @@ export const FeaturedCategories = () => {
           ))}
         </motion.div>
       </div>
-      <div className="absolute inset-0 islamic-pattern opacity-50 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
 </section>
   );
 };
