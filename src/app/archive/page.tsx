@@ -225,7 +225,7 @@ const Archive = () => {
     <TooltipProvider> 
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Background Decorative Elements */}
-        <div className="absolute inset-0 islamic-pattern opacity-[0.03] pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern opacity-60 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
@@ -257,7 +257,7 @@ const Archive = () => {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="mt-12 max-w-2xl relative group"
             >
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-600 transition-opacity duration-500" />
               <div className="relative">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/60 group-focus-within:text-primary transition-colors" />
                 <input
@@ -498,7 +498,7 @@ const Archive = () => {
                           {isBengali ? discussion.titleBn : discussion.titleEn}
                         </h3>
 
-                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 opacity-70 group-hover:opacity-600 transition-opacity">
                           {isBengali ? discussion.excerptBn : discussion.excerptEn}
                         </p>
                       </div>
@@ -521,7 +521,7 @@ const Archive = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500">
+                        <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-600 group-hover:translate-x-2 transition-all duration-500">
                           Explore <ArrowRight className="w-4 h-4" />
                         </div>
                       </div>
