@@ -374,13 +374,14 @@ export default function ToolsPage() {
                   transition={{ delay: index * 0.03 }}
                   onClick={() => handleToolClick(tool.id, tool.isWorking)}
                   disabled={!tool.isWorking}
-                  className={`group flex flex-col items-start gap-3 p-4 rounded-lg border text-left transition-all ${
+                  className={`group relative overflow-hidden flex flex-col items-start gap-3 p-4 rounded-xl border text-left transition-all duration-300 shadow-sm ${
                     tool.isWorking
-                      ? 'border-border/50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer'
-                      : 'border-border/30 opacity-60 cursor-not-allowed'
+                      ? 'bg-card/95 border-border/80 hover:border-primary/50 hover:bg-primary/10 hover:shadow-md cursor-pointer'
+                      : 'bg-muted/40 border-border/40 opacity-60 cursor-not-allowed'
                   }`}
                 >
-                  <div className="w-full flex items-start justify-between">
+                  <div className="absolute inset-0 islamic-pattern-sm opacity-10 pointer-events-none rounded-xl" />
+                  <div className="w-full flex items-start justify-between relative z-10">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                       tool.isWorking
                         ? 'bg-primary/10 text-primary group-hover:bg-primary/20'
@@ -391,7 +392,7 @@ export default function ToolsPage() {
                     {/* Tool Credibility Label - Now works because of TooltipProvider */}
                     <ToolCredibilityLabel status={tool.credibility} />
                   </div>
-                  <div className="flex-1 min-w-0 w-full">
+                  <div className="flex-1 min-w-0 w-full relative z-10">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-sm text-foreground truncate">
                         {t(tool.nameKey)}
