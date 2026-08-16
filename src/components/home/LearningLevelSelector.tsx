@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { GraduationCap, BookOpen, Brain, ArrowRight } from 'lucide-react';
+import { BookOpen, GraduationCap, Brain, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 export const LearningLevelSelector = () => {
   const { i18n } = useTranslation();
+  const [selectedLevel, setSelectedLevel] = useState('beginner');
   const isBengali = i18n.language === 'bn';
-  const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
 
   const levels = [
     {
@@ -21,7 +20,7 @@ export const LearningLevelSelector = () => {
       descEn: 'New to Islamic political thought. Start with foundational concepts.',
       descBn: 'ইসলামী রাজনৈতিক চিন্তায় নতুন। মৌলিক ধারণা দিয়ে শুরু করুন।',
       topicsEn: ['What is Khilafah?', 'Basic Shura Concepts', 'Islamic Leadership Basics'],
-      topicsBn: ['খিলাফাহ কী?', 'শূরার মৌলিক ধারণা', 'ইসলামী নেতৃত্বের মূলনীতি'],
+      topicsBn: ['খিলাফত কি?', 'মৌলিক শূরা ধারণা', 'ইসলামী নেতৃত্বের ভিত্তি'],
       color: 'primary'
     },
     {
@@ -49,30 +48,30 @@ export const LearningLevelSelector = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-20 bg-background">
-      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden py-20 bg-muted/20">
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <Badge variant="outline" className="mb-4">
-            <GraduationCap className="w-4 h-4 mr-1" />
+          <div className="badge-islamic mb-5 hover:border-secondary/50 transition-all">
+            <BookOpen className="w-4 h-4" />
             {isBengali ? 'আপনার শেখার পথ' : 'Your Learning Path'}
-          </Badge>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
-            {isBengali ? 'আপনার স্তর নির্বাচন করুন' : 'What is your learning level?'}
+          </div>
+          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3">
+            {isBengali ? 'আপনার জ্ঞানের স্তর কত?' : 'What is your learning level?'}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
             {isBengali 
-              ? 'আপনার জ্ঞানের স্তর অনুযায়ী কিউরেটেড কন্টেন্ট পান'
+              ? 'আপনার জ্ঞানের স্তর অনুযায়ী সাজানো বিষয়বস্তু পান'
               : 'Get curated content tailored to your knowledge level'
             }
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {levels.map((level, index) => (
             <motion.div
               key={level.id}
@@ -81,14 +80,14 @@ export const LearningLevelSelector = () => {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               onClick={() => setSelectedLevel(level.id)}
-              className={`relative cursor-pointer p-6 rounded-2xl border-2 transition-all ${
-                selectedLevel === level.id
-                  ? 'border-primary bg-primary/5 shadow-lg'
-                  : 'border-border hover:border-primary/30 bg-card/90 backdrop-blur-sm relative overflow-hidden shadow-sm z-10'
+              className={`card-islamic-glow relative overflow-hidden p-7 rounded-3xl border transition-all duration-300 relative z-10 cursor-pointer group ${
+                selectedLevel === level.id 
+                  ? 'border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20' 
+                  : 'border-border/80 hover:border-primary/50'
               }`}
             >
-              <div className="absolute inset-0 islamic-pattern-sm opacity-15 pointer-events-none rounded-2xl" /><div className="flex items-center gap-3 mb-4 relative z-10">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              <div className="flex items-center gap-3 mb-4 relative z-10">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                   selectedLevel === level.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
                 }`}>
                   <level.icon className="w-6 h-6" />
@@ -100,19 +99,19 @@ export const LearningLevelSelector = () => {
                 </div>
               </div>
 
-              <p className="text-muted-foreground text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
                 {isBengali ? level.descBn : level.descEn}
               </p>
 
               <div className="space-y-2">
-                <p className="text-xs font-medium text-foreground uppercase tracking-wide">
+                <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
                   {isBengali ? 'সুপারিশকৃত বিষয়:' : 'Recommended Topics:'}
                 </p>
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {(isBengali ? level.topicsBn : level.topicsEn).map((topic, idx) => (
                     <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      {topic}
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      <span>{topic}</span>
                     </li>
                   ))}
                 </ul>
@@ -124,7 +123,7 @@ export const LearningLevelSelector = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-6"
                 >
-                  <Button className="w-full gap-2">
+                  <Button className="w-full gap-2 rounded-xl">
                     {isBengali ? 'শুরু করুন' : 'Start Learning'}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -134,7 +133,7 @@ export const LearningLevelSelector = () => {
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-stars opacity-45 pointer-events-none" />
-</section>
+      <div className="absolute inset-0 islamic-pattern-stars opacity-35 pointer-events-none" />
+    </section>
   );
 };

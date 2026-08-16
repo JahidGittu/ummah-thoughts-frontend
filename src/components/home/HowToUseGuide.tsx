@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Compass, BookOpen, Users, Gavel, ArrowRight } from 'lucide-react';
+import { Compass, BookOpen, Users, Gavel } from 'lucide-react';
 
 export const HowToUseGuide = () => {
   const { i18n } = useTranslation();
@@ -37,13 +37,6 @@ export const HowToUseGuide = () => {
 
   return (
     <section className="relative overflow-hidden py-20 bg-gradient-to-b from-background to-muted/30">
-      {/* Section Arabic Calligraphy Watermark */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 text-center w-full opacity-[0.05] dark:opacity-[0.065] pointer-events-none select-none z-0">
-        <span className="font-arabic font-bold text-foreground leading-none block whitespace-nowrap text-[9vw] sm:text-[12vw]">
-          ادْعُ إِلَىٰ سَبِيلِ رَبِّكَ بِالْحِكْمَةِ
-        </span>
-      </div>
-
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -51,14 +44,14 @@ export const HowToUseGuide = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/10 text-secondary text-sm font-medium mb-4">
+          <div className="badge-islamic mb-5 hover:border-secondary/50 transition-all">
             <Compass className="w-4 h-4" />
             {isBengali ? 'কীভাবে ব্যবহার করবেন' : 'How to Use Ummah Thoughts'}
           </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
+          <h2 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3">
             {isBengali ? 'আমাদের পদ্ধতি অনুসরণ করুন' : 'Follow Our Methodology'}
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
             {isBengali 
               ? 'আমরা আপনাকে কী ভাবতে হবে তা শেখাই না, কীভাবে ভাবতে হবে তা শেখাই'
               : "We teach you how to think, not what to think"
@@ -89,11 +82,11 @@ export const HowToUseGuide = () => {
                       {step.number}
                     </span>
                   </div>
-                  <div className="bg-card/90 backdrop-blur-sm relative overflow-hidden rounded-xl shadow-sm z-10 border border-border p-6 flex-1">
-                    <div className="absolute inset-0 islamic-pattern-sm opacity-15 pointer-events-none rounded-xl" /><h3 className="font-display relative z-10 text-lg font-semibold text-foreground mb-2">
+                  <div className="card-islamic-glow relative overflow-hidden p-7 rounded-2xl border border-border/80 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/15 transition-all duration-300 group shadow-md flex-1">
+                    <h3 className="font-display text-lg font-semibold text-foreground mb-2">
                       {isBengali ? step.titleBn : step.titleEn}
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed">
                       {isBengali ? step.descBn : step.descEn}
                     </p>
                   </div>
@@ -117,7 +110,7 @@ export const HowToUseGuide = () => {
           </motion.div>
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-45 pointer-events-none" />
-</section>
+      <div className="absolute inset-0 islamic-pattern-arch opacity-35 pointer-events-none" />
+    </section>
   );
 };
