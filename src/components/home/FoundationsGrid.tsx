@@ -50,7 +50,14 @@ export const FoundationsGrid = () => {
 
   return (
     <section className="py-24 relative">
-      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Section Arabic Calligraphy Watermark */}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 text-center w-full opacity-[0.05] dark:opacity-[0.065] pointer-events-none select-none z-0">
+        <span className="font-arabic font-bold text-foreground leading-none block whitespace-nowrap text-[10vw] sm:text-[14vw]">
+          إِنِ الْحُكْمُ إِلَّا لِلَّهِ
+        </span>
+      </div>
+
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -37,7 +37,14 @@ export const HowToUseGuide = () => {
 
   return (
     <section className="relative overflow-hidden py-20 bg-gradient-to-b from-background to-muted/30">
-      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Section Arabic Calligraphy Watermark */}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 text-center w-full opacity-[0.05] dark:opacity-[0.065] pointer-events-none select-none z-0">
+        <span className="font-arabic font-bold text-foreground leading-none block whitespace-nowrap text-[9vw] sm:text-[12vw]">
+          ادْعُ إِلَىٰ سَبِيلِ رَبِّكَ بِالْحِكْمَةِ
+        </span>
+      </div>
+
+      <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
