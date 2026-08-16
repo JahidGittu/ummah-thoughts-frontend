@@ -143,10 +143,10 @@ const TimelineView = ({ battles, isBn, periods, onViewDetails, onStartQuiz }: Ti
 
             {/* Battle Card with Glassmorphism */}
             <Card className={`
-              overflow-hidden backdrop-blur-md bg-card/80 
+              overflow-hidden backdrop-blur-md bg-card relative z-10 
               border border-white/10 dark:border-white/5
               hover:shadow-2xl transition-all duration-500 group
-              hover:bg-card/95 hover:-translate-y-1
+              hover:bg-card relative z-10 hover:-translate-y-1
             `}>
               <CardContent className="p-0">
                 {/* Battle Header */}
@@ -262,7 +262,7 @@ const TimelineView = ({ battles, isBn, periods, onViewDetails, onStartQuiz }: Ti
                               </h4>
                               <div className="flex flex-wrap gap-2">
                                 {battle.keyFigures.map(figure => (
-                                  <Badge key={figure} variant="outline" className="text-xs bg-card/50">
+                                  <Badge key={figure} variant="outline" className="text-xs bg-card relative z-10">
                                     {figure}
                                   </Badge>
                                 ))}

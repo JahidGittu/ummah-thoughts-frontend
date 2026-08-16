@@ -121,7 +121,7 @@ export default function ScholarsPage() {
                   placeholder={t('scholars.searchPlaceholder', 'Search scholars...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 h-11 rounded-xl border border-border bg-card/80 backdrop-blur focus:border-primary focus:ring-2 focus:ring-primary/15 outline-none transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-2.5 h-11 rounded-xl border border-border bg-card relative z-10 backdrop-blur focus:border-primary focus:ring-2 focus:ring-primary/15 outline-none transition-all text-sm"
                 />
               </div>
               <Select 
@@ -163,7 +163,7 @@ export default function ScholarsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             whileHover={{ y: -4 }}
                             transition={{ delay: index * 0.05, duration: 0.3 }}
-                            className="relative bg-card hover:bg-card/98 border border-border rounded-2xl p-6 transition-all h-full flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/30"
+                            className="relative bg-card hover:bg-card relative z-10 border border-border rounded-2xl p-6 transition-all h-full flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/30"
                         >
                             {/* Decorative background element */}
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />

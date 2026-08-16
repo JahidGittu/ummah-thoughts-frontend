@@ -89,10 +89,10 @@ export const FoundationsGrid = () => {
             <motion.div
               key={foundation.titleKey}
               variants={item}
-              className={`group relative rounded-3xl p-8 bg-card/98 backdrop-blur-xl border border-border/80 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1.5 cursor-pointer shadow-lg`}
+              className={`group relative rounded-3xl p-8 bg-card relative z-10 backdrop-blur-xl border border-border/80 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1.5 cursor-pointer shadow-lg`}
             >
               {/* Islamic Pattern Overlay */}
-              <div className="absolute inset-0 islamic-pattern-stars opacity-50 rounded-2xl" />
+              
               
               <div className="relative z-10">
                 <div className={`w-16 h-16 rounded-xl ${foundation.iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>

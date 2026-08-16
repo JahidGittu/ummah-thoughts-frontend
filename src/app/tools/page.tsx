@@ -337,7 +337,7 @@ export default function ToolsPage() {
         </section>
 
         {/* Search and Filter */}
-        <section className="py-4 border-b border-border/50 bg-card/60 backdrop-blur sticky top-16 z-40 shadow-[var(--shadow-xs)]">
+        <section className="py-4 border-b border-border/50 bg-card relative z-10 backdrop-blur sticky top-16 z-40 shadow-[var(--shadow-xs)]">
           <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="relative w-full sm:w-80">
@@ -382,11 +382,11 @@ export default function ToolsPage() {
                   disabled={!tool.isWorking}
                   className={`group relative overflow-hidden flex flex-col items-start gap-3 p-4 rounded-xl border text-left transition-all duration-300 shadow-sm ${
                     tool.isWorking
-                      ? 'bg-card/95 border-border/80 hover:border-primary/50 hover:bg-primary/10 hover:shadow-md cursor-pointer'
+                      ? 'bg-card relative z-10 border-border/80 hover:border-primary/50 hover:bg-primary/10 hover:shadow-md cursor-pointer'
                       : 'bg-muted/40 border-border/40 opacity-35 cursor-not-allowed'
                   }`}
                 >
-                  <div className="absolute inset-0 islamic-pattern-sm opacity-55 pointer-events-none rounded-xl" />
+                  
                   <div className="w-full flex items-start justify-between relative z-10">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                       tool.isWorking

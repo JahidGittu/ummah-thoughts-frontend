@@ -98,7 +98,7 @@ export const DownloadableResources = () => {
             <motion.div
               key={index}
               variants={item}
-              className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+              className="group bg-card relative z-10 rounded-2xl border border-border/80 p-6 hover:border-primary/50 hover:shadow-xl transition-all duration-300 shadow-sm"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">

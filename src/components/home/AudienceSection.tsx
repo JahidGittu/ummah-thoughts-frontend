@@ -76,7 +76,7 @@ export const AudienceSection = () => {
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="bg-card/95 backdrop-blur-md rounded-2xl shadow-md z-10 border border-primary/25 p-7 relative overflow-hidden"
+            className="bg-card relative z-10 backdrop-blur-md rounded-2xl shadow-md z-10 border border-primary/25 p-7 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="flex items-center gap-3 mb-6">
@@ -114,7 +114,7 @@ export const AudienceSection = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="bg-card/95 backdrop-blur-md rounded-2xl shadow-md z-10 border border-destructive/20 p-7 relative overflow-hidden"
+            className="bg-card relative z-10 backdrop-blur-md rounded-2xl shadow-md z-10 border border-destructive/20 p-7 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
             <div className="flex items-center gap-3 mb-6">
