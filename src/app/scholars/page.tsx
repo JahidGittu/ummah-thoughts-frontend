@@ -82,6 +82,12 @@ export default function ScholarsPage() {
 
         {/* Header */}
         <section className="page-hero relative overflow-hidden border-b border-border/50">
+        {/* Grand Page Watermark — Middle Centered */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 text-center w-full px-4 opacity-[0.035] dark:opacity-[0.048] pointer-events-none select-none z-0 overflow-hidden">
+          <span className="font-arabic font-bold text-foreground leading-none block max-w-6xl mx-auto text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] tracking-wider whitespace-nowrap">
+            إِنَّمَا يَخْشَى اللَّهَ الْعُلَمَاءُ
+          </span>
+        </div>
         {/* Page Hero Calligraphy Watermark */}
         <div className="absolute top-6 sm:top-10 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
           <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">

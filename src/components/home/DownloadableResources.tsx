@@ -68,6 +68,13 @@ export const DownloadableResources = () => {
         </span>
       </div>
 
+      {/* Grand Arabic Watermark — Middle Centered */}
+      <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 text-center w-full px-4 opacity-[0.035] dark:opacity-[0.048] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-none block max-w-6xl mx-auto text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] tracking-wider whitespace-nowrap">
+          ن وَالْقَلَمِ وَمَا يَسْطُرُونَ
+        </span>
+      </div>
+
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
