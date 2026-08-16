@@ -315,7 +315,7 @@ export default function ToolsPage() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="max-w-2xl"
             >
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
+              <span className="badge-islamic mb-5 hover:border-primary/50 transition-all">
                 <Calculator className="w-3.5 h-3.5" />
                 {t('tools.badge')}
               </span>

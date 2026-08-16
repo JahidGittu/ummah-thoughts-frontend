@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { LiveStatusBar } from '../home/LiveStatusBar';
 import { BackToTop } from '../shared/BackToTop';
+import { IslamicAmbientBackground } from './IslamicAmbientBackground';
 import { ErrorBoundary } from '../shared/ErrorBoundary';
 
 const HIDE_LAYOUT_PATHS = [
@@ -32,6 +33,7 @@ export function LayoutManager({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <IslamicAmbientBackground />
       <Navbar />
       <main id="main-content" className="flex-1">
         <ErrorBoundary>{children}</ErrorBoundary>

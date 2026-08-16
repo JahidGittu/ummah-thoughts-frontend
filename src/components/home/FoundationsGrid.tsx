@@ -58,7 +58,7 @@ export const FoundationsGrid = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+          <span className="badge-islamic mb-4 hover:border-primary/50 transition-all">
             {t('foundations.badge')}
           </span>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
@@ -80,7 +80,7 @@ export const FoundationsGrid = () => {
             <motion.div
               key={foundation.titleKey}
               variants={item}
-              className={`group relative rounded-2xl p-8 bg-card/95 backdrop-blur-md bg-gradient-to-br ${foundation.gradient} border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl cursor-pointer`}
+              className={`group relative rounded-3xl p-8 bg-card/85 backdrop-blur-xl border border-border/80 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1.5 cursor-pointer shadow-lg`}
             >
               {/* Islamic Pattern Overlay */}
               <div className="absolute inset-0 islamic-pattern-stars opacity-15 rounded-2xl" />

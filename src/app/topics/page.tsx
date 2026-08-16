@@ -115,7 +115,7 @@ const Topics = () => {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl"
           >
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium mb-5">
+            <span className="badge-islamic mb-5 hover:border-primary/50 transition-all">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               {t('topics.badge')}
             </span>

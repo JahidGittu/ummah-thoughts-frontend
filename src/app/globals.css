@@ -934,3 +934,53 @@
 .article-editor-prose th[data-cell-border-width="2"] { border-width: 2px !important; border-top-width: 2px !important; border-bottom-width: 2px !important; border-left-width: 2px !important; border-right-width: 2px !important; }
 .article-editor-prose td[data-cell-border-width="3"],
 .article-editor-prose th[data-cell-border-width="3"] { border-width: 3px !important; border-top-width: 3px !important; border-bottom-width: 3px !important; border-left-width: 3px !important; border-right-width: 3px !important; }
+
+  /* ── Luxury Islamic UI Utilities ── */
+  .card-islamic-glow {
+    background-color: hsl(var(--card) / 0.88);
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-islamic-glow:hover {
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 20px 40px -15px hsl(var(--primary) / 0.18), 0 0 20px 0 hsl(var(--primary) / 0.08);
+    transform: translateY(-3px);
+  }
+
+  .badge-islamic {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--secondary) / 0.1), hsl(var(--primary) / 0.15));
+    border: 1px solid hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary));
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    box-shadow: 0 2px 10px -2px hsl(var(--primary) / 0.1);
+  }
+
+  .divider-islamic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin: 1.5rem 0;
+  }
+  .divider-islamic-line {
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  }
+  .divider-islamic-diamond {
+    width: 6px;
+    height: 6px;
+    background-color: hsl(var(--secondary));
+    transform: rotate(45deg);
+    box-shadow: 0 0 8px hsl(var(--secondary) / 0.6);
+  }
