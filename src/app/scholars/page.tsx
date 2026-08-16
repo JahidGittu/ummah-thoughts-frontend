@@ -163,7 +163,7 @@ export default function ScholarsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             whileHover={{ y: -4 }}
                             transition={{ delay: index * 0.05, duration: 0.3 }}
-                            className="relative bg-card hover:bg-card/90 border border-border rounded-2xl p-6 transition-all h-full flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/30"
+                            className="relative bg-card hover:bg-card/98 border border-border rounded-2xl p-6 transition-all h-full flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/30"
                         >
                             {/* Decorative background element */}
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />

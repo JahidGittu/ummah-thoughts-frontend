@@ -1013,7 +1013,7 @@
 
   /* ── Luxury Islamic UI Utilities ── */
   .card-islamic-glow {
-    background-color: hsl(var(--card) / 0.88);
+    background-color: hsl(var(--card) / 0.97);
     backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--border) / 0.8);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
