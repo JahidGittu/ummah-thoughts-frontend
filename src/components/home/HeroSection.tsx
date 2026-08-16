@@ -61,7 +61,7 @@ export const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Background Pattern */}
-      <div className="absolute inset-0 islamic-pattern opacity-40" />
+      <div className="absolute inset-0 islamic-pattern opacity-55" />
       
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/20 to-background" />
@@ -81,6 +81,13 @@ export const HeroSection = () => {
       {/* Hero Arabic Calligraphy Watermark — One Ummah */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 text-center w-full opacity-[0.04] dark:opacity-[0.055] pointer-events-none select-none z-0">
         <span className="font-arabic font-bold text-foreground leading-none block whitespace-nowrap text-[14vw] sm:text-[18vw]">
+          أُمَّةً وَاحِدَةً
+        </span>
+      </div>
+
+      {/* Section Calligraphy Watermark */}
+      <div className="absolute top-6 sm:top-8 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
           أُمَّةً وَاحِدَةً
         </span>
       </div>

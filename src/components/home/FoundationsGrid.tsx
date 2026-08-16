@@ -52,6 +52,13 @@ export const FoundationsGrid = () => {
     <section className="py-24 relative">
       
 
+      {/* Section Calligraphy Watermark */}
+      <div className="absolute top-6 sm:top-8 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+          إِنِ الْحُكْمُ إِلَّا لِلَّهِ
+        </span>
+      </div>
+
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <motion.div
@@ -85,7 +92,7 @@ export const FoundationsGrid = () => {
               className={`group relative rounded-3xl p-8 bg-card/85 backdrop-blur-xl border border-border/80 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1.5 cursor-pointer shadow-lg`}
             >
               {/* Islamic Pattern Overlay */}
-              <div className="absolute inset-0 islamic-pattern-stars opacity-15 rounded-2xl" />
+              <div className="absolute inset-0 islamic-pattern-stars opacity-50 rounded-2xl" />
               
               <div className="relative z-10">
                 <div className={`w-16 h-16 rounded-xl ${foundation.iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>

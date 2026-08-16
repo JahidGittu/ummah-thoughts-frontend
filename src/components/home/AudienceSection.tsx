@@ -42,6 +42,13 @@ export const AudienceSection = () => {
 
   return (
     <section className="relative overflow-hidden py-20 bg-muted/30 border-y border-border">
+      {/* Section Calligraphy Watermark */}
+      <div className="absolute top-6 sm:top-8 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+          فَبَشِّرْ عِبَادِ الَّذِينَ يَسْتَمِعُونَ الْقَوْلَ
+        </span>
+      </div>
+
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -141,7 +148,7 @@ export const AudienceSection = () => {
           </motion.div>
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-45 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arch opacity-50 pointer-events-none" />
 </section>
   );
 };

@@ -104,10 +104,16 @@ const Topics = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <section className="page-hero relative overflow-hidden border-b border-border/50">
+        {/* Page Hero Calligraphy Watermark */}
+        <div className="absolute top-6 sm:top-10 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+          <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+            يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ
+          </span>
+        </div>
         {/* Background Islamic Pattern */}
-        <div className="absolute inset-0 islamic-pattern-stars opacity-12 pointer-events-none" />
-        <div className="absolute top-4 right-4 w-48 h-48 islamic-pattern-stars opacity-30 pointer-events-none rounded-full blur-[1px]" />
-        <div className="absolute bottom-4 left-4 w-48 h-48 islamic-pattern-arch opacity-30 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern-stars opacity-55 pointer-events-none" />
+        <div className="absolute top-4 right-4 w-48 h-48 islamic-pattern-stars opacity-55 pointer-events-none rounded-full blur-[1px]" />
+        <div className="absolute bottom-4 left-4 w-48 h-48 islamic-pattern-arch opacity-55 pointer-events-none" />
         <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

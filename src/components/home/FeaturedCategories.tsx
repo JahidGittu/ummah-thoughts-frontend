@@ -78,6 +78,13 @@ export const FeaturedCategories = () => {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
+      {/* Section Calligraphy Watermark */}
+      <div className="absolute top-6 sm:top-8 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+          وَتَعَاوَنُوا عَلَى الْبِرِّ وَالتَّقْوَىٰ
+        </span>
+      </div>
+
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -149,7 +156,7 @@ export const FeaturedCategories = () => {
           ))}
         </motion.div>
       </div>
-      <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern opacity-50 pointer-events-none" />
 </section>
   );
 };

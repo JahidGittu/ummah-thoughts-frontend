@@ -225,12 +225,18 @@ const Archive = () => {
     <TooltipProvider> 
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Background Decorative Elements */}
-        <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
+        <div className="absolute inset-0 islamic-pattern opacity-55 pointer-events-none" />
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
         {/* Header */}
         <section className="page-hero border-b border-border/50 relative overflow-hidden group">
+        {/* Page Hero Calligraphy Watermark */}
+        <div className="absolute top-6 sm:top-10 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+          <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+            وَفَوْقَ كُلِّ ذِي عِلْمٍ عَلِيمٌ
+          </span>
+        </div>
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-30" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div

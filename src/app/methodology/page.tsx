@@ -52,9 +52,15 @@ export default function MethodologyPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-background">
         <main className="relative overflow-hidden max-w-11/12 mx-auto px-4 py-16 pt-28">
+        {/* Page Hero Calligraphy Watermark */}
+        <div className="absolute top-6 sm:top-10 left-0 right-0 text-center w-full px-4 opacity-[0.045] dark:opacity-[0.06] pointer-events-none select-none z-0 overflow-hidden">
+          <span className="font-arabic font-bold text-foreground leading-tight block max-w-4xl mx-auto text-2xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide">
+            أَفَلَا يَتَدَبَّرُونَ الْقُرْآنَ
+          </span>
+        </div>
         {/* Background Islamic Pattern */}
-        <div className="absolute inset-0 islamic-pattern opacity-12 pointer-events-none" />
-        <div className="absolute top-10 right-10 w-64 h-64 islamic-pattern-stars opacity-35 pointer-events-none rounded-full blur-[1px]" />
+        <div className="absolute inset-0 islamic-pattern opacity-55 pointer-events-none" />
+        <div className="absolute top-10 right-10 w-64 h-64 islamic-pattern-stars opacity-55 pointer-events-none rounded-full blur-[1px]" />
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
