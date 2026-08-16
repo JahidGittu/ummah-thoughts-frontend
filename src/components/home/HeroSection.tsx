@@ -85,9 +85,9 @@ export const HeroSection = () => {
         </span>
       </div>
 
-      {/* Grand Arabic Watermark — Tuned Position & Scale */}
-      <div className="absolute top-[calc(50%+10px)] -translate-y-1/2 left-0 right-0 text-center w-full px-4 sm:px-6 opacity-[0.038] dark:opacity-[0.052] pointer-events-none select-none z-0 overflow-hidden">
-        <span className="font-arabic font-bold text-foreground leading-none block w-full text-[13vw] sm:text-[15vw] md:text-[17vw] lg:text-[19vw] xl:text-[20.5vw] tracking-wider whitespace-nowrap">
+      {/* Grand Arabic Watermark — Horizontally Expanded Left & Right */}
+      <div className="absolute top-[calc(50%+10px)] -translate-y-1/2 left-0 right-0 text-center w-full px-2 opacity-[0.038] dark:opacity-[0.052] pointer-events-none select-none z-0 overflow-hidden">
+        <span className="font-arabic font-bold text-foreground leading-none inline-block text-[13vw] sm:text-[15vw] md:text-[17vw] lg:text-[19vw] xl:text-[20.5vw] tracking-[0.08em] scale-x-110 sm:scale-x-115 md:scale-x-125 whitespace-nowrap">
           أُمَّةً وَاحِدَةً
         </span>
       </div>
