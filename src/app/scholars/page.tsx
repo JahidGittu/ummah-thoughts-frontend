@@ -205,7 +205,7 @@ export default function ScholarsPage() {
                 </div>
             ) : (
                 <div className="text-center py-24 text-muted-foreground">
-                    <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>No scholars found matching your criteria.</p>
                 </div>
             )}

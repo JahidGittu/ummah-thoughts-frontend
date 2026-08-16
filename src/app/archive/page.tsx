@@ -231,7 +231,7 @@ const Archive = () => {
 
         {/* Header */}
         <section className="page-hero border-b border-border/50 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-30" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -257,7 +257,7 @@ const Archive = () => {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="mt-12 max-w-2xl relative group"
             >
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-600 transition-opacity duration-500" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-350 transition-opacity duration-500" />
               <div className="relative">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-primary/60 group-focus-within:text-primary transition-colors" />
                 <input
@@ -498,7 +498,7 @@ const Archive = () => {
                           {isBengali ? discussion.titleBn : discussion.titleEn}
                         </h3>
 
-                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 opacity-70 group-hover:opacity-600 transition-opacity">
+                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 opacity-40 group-hover:opacity-350 transition-opacity">
                           {isBengali ? discussion.excerptBn : discussion.excerptEn}
                         </p>
                       </div>
@@ -521,7 +521,7 @@ const Archive = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-600 group-hover:translate-x-2 transition-all duration-500">
+                        <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-350 group-hover:translate-x-2 transition-all duration-500">
                           Explore <ArrowRight className="w-4 h-4" />
                         </div>
                       </div>

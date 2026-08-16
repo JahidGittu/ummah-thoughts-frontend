@@ -110,7 +110,7 @@ export const HowToUseGuide = () => {
           </motion.div>
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arch opacity-85 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arch opacity-45 pointer-events-none" />
 </section>
   );
 };

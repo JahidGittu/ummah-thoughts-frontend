@@ -120,7 +120,7 @@ export const FeaturedTopic = () => {
           </div>
         </motion.div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-arabesque opacity-85 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-arabesque opacity-45 pointer-events-none" />
 </section>
   );
 };

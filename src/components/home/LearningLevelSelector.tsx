@@ -134,7 +134,7 @@ export const LearningLevelSelector = () => {
           ))}
         </div>
       </div>
-      <div className="absolute inset-0 islamic-pattern-stars opacity-85 pointer-events-none" />
+      <div className="absolute inset-0 islamic-pattern-stars opacity-45 pointer-events-none" />
 </section>
   );
 };

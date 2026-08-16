@@ -377,7 +377,7 @@ export default function ToolsPage() {
                   className={`group relative overflow-hidden flex flex-col items-start gap-3 p-4 rounded-xl border text-left transition-all duration-300 shadow-sm ${
                     tool.isWorking
                       ? 'bg-card/95 border-border/80 hover:border-primary/50 hover:bg-primary/10 hover:shadow-md cursor-pointer'
-                      : 'bg-muted/40 border-border/40 opacity-60 cursor-not-allowed'
+                      : 'bg-muted/40 border-border/40 opacity-35 cursor-not-allowed'
                   }`}
                 >
                   <div className="absolute inset-0 islamic-pattern-sm opacity-10 pointer-events-none rounded-xl" />

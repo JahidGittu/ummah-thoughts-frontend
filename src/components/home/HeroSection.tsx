@@ -86,7 +86,7 @@ export const HeroSection = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="font-arabic text-lg text-muted-foreground mb-6 opacity-70"
+            className="font-arabic text-lg text-muted-foreground mb-6 opacity-40"
           >
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </motion.p>
