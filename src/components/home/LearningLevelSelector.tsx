@@ -49,6 +49,13 @@ export const LearningLevelSelector = () => {
 
   return (
     <section className="relative overflow-hidden py-20 bg-muted/20">
+      {/* Section Calligraphy Watermark — Rabbi Zidnee Ilma */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 text-center w-full opacity-[0.035] dark:opacity-[0.045] pointer-events-none select-none z-0">
+        <span className="font-arabic font-bold text-foreground leading-none block whitespace-nowrap text-[10vw] sm:text-[13vw]">
+          وَقُل رَّبِّ زِدْنِي عِلْمًا
+        </span>
+      </div>
+
       <div className="max-w-11/12 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
